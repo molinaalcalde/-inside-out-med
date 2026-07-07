@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>InsideOutMed — Análisis facial inteligente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f3f1; --card:#ffffff; --ink:#2a2630; --muted:#8a8290;
+  --rose:#b76e79; --rose-d:#9a565f; --rose-l:#f3e3e5;
+  --gold:#c9a24b; --green:#5b8c6e; --amber:#d39a4f; --red:#c4685f;
+  --line:#ece5e3; --shadow:0 8px 30px rgba(60,40,45,.08);
+  --shadow-s:0 2px 10px rgba(60,40,45,.06);
+  --r:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:500;letter-spacing:-.01em;margin:0 0 .3em}
+button{font-family:inherit;cursor:pointer;border:none}
+.app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;overflow-x:hidden}
+.screen{display:none;animation:fade .4s ease;padding:0 0 120px}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.pad{padding:0 22px}
+.muted{color:var(--muted)}
+.center{text-align:center}
+.pill{display:inline-block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--rose-d);background:var(--rose-l);padding:5px 12px;border-radius:99px;font-weight:600}
+.btn{display:block;width:100%;background:var(--ink);color:#fff;padding:17px;border-radius:14px;
+  font-size:16px;font-weight:600;text-align:center;transition:.15s;letter-spacing:.01em}
+.btn:active{transform:scale(.98)}
+.btn.rose{background:var(--rose)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.sm{padding:12px;font-size:14px;border-radius:11px}
+.bottombar{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;padding:14px 22px calc(14px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(247,243,241,0) 0%,var(--bg) 26%);z-index:40}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow-s);padding:18px;margin-bottom:14px;border:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:12px}
+.between{justify-content:space-between}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tag{font-size:11px;padding:3px 9px;border-radius:8px;background:#f1eceb;color:var(--muted);font-weight:600}
+.hr{height:1px;background:var(--line);margin:16px 0}
+input,select,textarea{width:100%;padding:14px;border:1.5px solid var(--line);border-radius:12px;font-size:16px;
+  font-family:inherit;background:#fff;color:var(--ink);outline:none;transition:.15s}
+input:focus,select,textarea:focus{border-color:var(--rose)}
+label.fld{display:block;font-size:13px;font-weight:600;margin:14px 0 6px;color:var(--ink)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line);
+  background:#fff;font-size:14px;font-weight:500;transition:.15s;user-select:none}
+.chip.on{border-color:var(--rose);background:var(--rose-l);color:var(--rose-d)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+/* top */
+.top{display:flex;align-items:center;justify-content:space-between;padding:16px 22px 8px}
+.brand{font-family:'Fraunces';font-size:19px;font-weight:600}
+.brand b{color:var(--rose)}
+.back{font-size:22px;color:var(--muted);background:none;padding:4px 8px}
+.prog{height:4px;background:var(--line);border-radius:9px;margin:0 22px 10px;overflow:hidden}
+.prog>i{display:block;height:100%;background:var(--rose);border-radius:9px;transition:.4s width}
+/* welcome */
+.hero{background:linear-gradient(160deg,#2a2630 0%,#4a3a42 55%,#8a5560 100%);color:#fff;border-radius:0 0 32px 32px;
+  padding:54px 26px 40px;position:relative;overflow:hidden}
+.hero h1{color:#fff;font-size:34px;line-height:1.08}
+.hero .pill{background:rgba(255,255,255,.16);color:#fff}
+.glow{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,75,.5),transparent 70%);top:-90px;right:-90px;filter:blur(10px)}
+.feat{display:flex;gap:12px;align-items:flex-start;margin:14px 0}
+.feat .ic{flex:0 0 38px;height:38px;border-radius:11px;background:var(--rose-l);display:flex;align-items:center;justify-content:center;font-size:18px}
+/* scan */
+.cam{position:relative;width:100%;aspect-ratio:3/4;background:#15131a;border-radius:24px;overflow:hidden}
+.cam video,.cam canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.cam .ring{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.cam .ring svg{width:78%;height:78%}
+.scanstat{position:absolute;left:0;right:0;bottom:0;padding:16px;background:linear-gradient(0deg,rgba(0,0,0,.7),transparent);color:#fff;text-align:center;font-size:14px;font-weight:500}
+.count{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);color:#fff;padding:7px 16px;border-radius:99px;font-weight:600;font-size:14px;backdrop-filter:blur(6px)}
+/* score ring */
+.scorewrap{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap}
+.ringbox{position:relative;width:150px;height:150px}
+.ringbox .lbl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ringbox .lbl b{font-family:'Fraunces';font-size:40px;font-weight:600;line-height:1}
+.ringbox .lbl span{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+/* metric bar */
+.metric{margin:13px 0}
+.metric .mh{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px}
+.metric .mh b{font-weight:600}
+.bar{height:8px;background:#efe9e7;border-radius:9px;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:9px;transition:.7s width}
+.sub{font-size:12px;color:var(--muted);margin-top:3px}
+/* zone accordion */
+.zone{border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden;background:#fff}
+.zone>.zh{display:flex;align-items:center;gap:12px;padding:15px;cursor:pointer}
+.zone .zh .zi{font-size:20px}
+.zone .zh .zscore{margin-left:auto;font-weight:700;font-size:15px}
+.zone .zb{display:none;padding:0 15px 15px}
+.zone.open .zb{display:block}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+/* phases */
+.phase{display:flex;gap:12px;margin-bottom:6px}
+.phase .tl{display:flex;flex-direction:column;align-items:center}
+.phase .tl .pn{width:30px;height:30px;border-radius:50%;background:var(--rose);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:0 0 auto}
+.phase .tl .ln{width:2px;flex:1;background:var(--line);margin:4px 0}
+.phase:last-child .tl .ln{display:none}
+.phase .pc{flex:1;padding-bottom:20px}
+/* category tabs */
+.tabs{display:flex;gap:7px;overflow-x:auto;padding:4px 22px 10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:9px 14px;border-radius:11px;background:#fff;border:1.5px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* rec card */
+.rec{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.rec h4{font-family:'Inter';font-size:15.5px;font-weight:700;margin:0 0 2px}
+.rec .why{font-size:13px;color:var(--rose-d);background:var(--rose-l);padding:8px 11px;border-radius:9px;margin:9px 0}
+.recgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:12.5px;margin:10px 0}
+.recgrid div b{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.evi{font-size:11.5px;color:var(--muted);font-style:italic;border-left:2px solid var(--gold);padding-left:9px;margin-top:8px}
+.eng{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+.eng button{flex:1;min-width:max-content;padding:8px;font-size:11.5px;border-radius:9px;border:1.5px solid var(--line);background:#fff;color:var(--muted);font-weight:600}
+.eng button.on{background:var(--green);color:#fff;border-color:var(--green)}
+.eng button.no.on{background:#bdb6bd;border-color:#bdb6bd}
+/* projection */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.shot{border-radius:16px;overflow:hidden;position:relative;background:#15131a;aspect-ratio:3/4;border:1px solid var(--line)}
+.shot canvas,.shot .ph{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
+.shot .cap{position:absolute;left:0;right:0;bottom:0;padding:9px;background:linear-gradient(0deg,rgba(0,0,0,.75),transparent);color:#fff;font-size:12px;font-weight:600;text-align:center}
+.shot .cap small{display:block;font-weight:400;opacity:.85;font-size:10px}
+.tier{border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;transition:.15s}
+.tier.on{border-color:var(--rose);background:var(--rose-l)}
+.tier .yr{font-family:'Fraunces';font-size:26px;font-weight:600;color:var(--rose-d)}
+/* misc */
+.note{font-size:11.5px;color:var(--muted);line-height:1.5;background:#f3efed;border-radius:11px;padding:11px 13px;margin:10px 0}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:99px;font-size:13px;z-index:90;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+.spin{width:30px;height:30px;border:3px solid var(--rose-l);border-top-color:var(--rose);border-radius:50%;animation:sp 1s linear infinite;margin:0 auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loadlist div{opacity:.3;padding:7px 0;font-size:14px;transition:.4s;display:flex;gap:9px;align-items:center}
+.loadlist div.on{opacity:1}
+.loadlist div.done{opacity:.55}
+.chk{width:18px;height:18px;border-radius:50%;border:2px solid var(--rose);flex:0 0 auto}
+.chk.f{background:var(--rose)}
+table.cmp{width:100%;border-collapse:collapse;font-size:13px}
+table.cmp td{padding:9px 6px;border-bottom:1px solid var(--line)}
+table.cmp td:last-child{text-align:right;font-weight:600}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:5px}
+.qcheck{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0;font-size:12px;color:var(--muted)}
+.qcheck div{display:flex;align-items:center;gap:7px}
+.qcheck .qd{width:10px;height:10px;border-radius:50%;background:#d8cfcd;flex:0 0 auto;transition:.2s}
+.qcheck div.ok .qd{background:var(--green)}
+.qcheck div.ok{color:var(--ink);font-weight:600}
+.exp{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:12px}
+.exp .vb{font-size:10.5px;color:var(--green);font-weight:700;background:#e8f2ec;padding:2px 8px;border-radius:7px}
+.wa{display:block;width:100%;background:#25D366;color:#063;padding:14px;border-radius:13px;font-weight:700;text-align:center;font-size:15px;margin-top:10px;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(37,211,102,.28)}
+.wa:active{transform:scale(.985)}
+
+/* ============ UX POLISH PASS (UX senior) ============ */
+:root{--ring:0 0 0 3px rgba(183,110,121,.30)}
+html{scroll-behavior:smooth}
+body{text-rendering:optimizeLegibility}
+/* Motion: entrada más natural y respeto a accesibilidad */
+.screen{animation:fadeUp .42s cubic-bezier(.22,.61,.36,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Tipografía: mejor ritmo */
+h1{letter-spacing:-.02em}
+h2{font-size:25px;line-height:1.15}
+.sub{line-height:1.45}
+p{line-height:1.55}
+/* Top bar: sticky con desenfoque, da orientación */
+.top{position:sticky;top:0;z-index:30;background:rgba(247,243,241,.82);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);padding-top:14px;padding-bottom:10px}
+.prog{height:5px}
+/* Botones: estados claros, foco accesible, primario con profundidad */
+.btn{transition:transform .12s ease, box-shadow .2s ease, opacity .2s}
+.btn.rose{box-shadow:0 6px 18px rgba(183,110,121,.32)}
+.btn:not(.ghost):active{transform:translateY(1px) scale(.99)}
+.btn:disabled{opacity:.55;cursor:default;box-shadow:none}
+.btn.ghost{background:#fff}
+.btn.ghost:active{background:var(--rose-l)}
+button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{outline:none;box-shadow:var(--ring)}
+/* Tap targets cómodos */
+.chip{min-height:44px}
+.eng button{min-height:40px}
+.back{min-width:40px;min-height:40px;border-radius:10px}
+.back:active{background:var(--rose-l)}
+/* Tarjetas con un poco más de aire y profundidad */
+.card{padding:20px;box-shadow:0 4px 22px rgba(60,40,45,.06)}
+/* Chips: micro-interacción al activar */
+.chip{transition:transform .12s ease, background .15s, border-color .15s, color .15s}
+.chip:active{transform:scale(.96)}
+.chip.on{box-shadow:0 2px 8px rgba(183,110,121,.18)}
+/* Inputs más suaves */
+input,select,textarea{transition:border-color .15s, box-shadow .15s}
+input:focus,select:focus,textarea:focus{box-shadow:var(--ring)}
+/* SLIDERS con la identidad rosa (antes salían azules del navegador) */
+input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:99px;background:linear-gradient(90deg,var(--rose) 0%,var(--rose) var(--p,55%),#e7dedb var(--p,55%));padding:0;margin:10px 0 4px;border:none;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--rose);box-shadow:0 2px 8px rgba(60,40,45,.22);cursor:pointer;transition:transform .12s}
+input[type=range]::-webkit-slider-thumb:active{transform:scale(1.12)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--rose);box-shadow:0 2px 8px rgba(60,40,45,.22);cursor:pointer}
+input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:#e7dedb}
+input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:var(--rose)}
+/* Bottom bar más limpia */
+.bottombar{padding-top:18px}
+/* Metric bars un poco más suaves */
+.bar{height:9px}
+/* Zona accordion: indicador de abrir/cerrar */
+.zone .zh::after{content:'⌄';margin-left:8px;color:var(--muted);transition:transform .2s;font-size:14px}
+.zone.open .zh::after{transform:rotate(180deg)}
+.zone .zh{gap:10px}
+.zone.open{box-shadow:0 4px 18px rgba(60,40,45,.07)}
+/* Scrollbar discreta */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#e0d6d3;border-radius:9px}
+/* Tarjeta de recomendación compacta y escaneable */
+.rec{padding:15px}
+.rec.sel{border-color:var(--green);box-shadow:0 0 0 1.5px var(--green) inset}
+.rec h4{margin:0;font-size:15px}
+.rec-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.rec-what{font-size:13px;margin:7px 0 9px;line-height:1.45;color:#4a444e}
+.rec-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px}
+.rec-chips span{font-size:11.5px;background:#f5f0ee;color:var(--ink);padding:5px 10px;border-radius:9px;font-weight:600;white-space:nowrap}
+.rec-toggle{background:none;border:none;color:var(--rose-d);font-size:12.5px;font-weight:700;padding:10px 0 2px;cursor:pointer}
+.rec-more{display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:12px}
+.rec.open .rec-more{display:block}
+.eng-label{font-size:11px;color:var(--muted);font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.05em}
+/* Bienvenida magnética */
+.hero{background:linear-gradient(155deg,#221e29 0%,#4a3540 48%,#a65f6d 100%)}
+.hero h1{font-size:36px;line-height:1.06}
+.hero-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.hero-badges span{font-size:12px;font-weight:600;background:rgba(255,255,255,.16);color:#fff;padding:7px 12px;border-radius:99px}
+.steps{margin:6px 0 6px}
+.step{display:flex;gap:13px;align-items:flex-start;margin:14px 0}
+.step .n{flex:0 0 30px;height:30px;border-radius:50%;background:var(--rose);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;box-shadow:0 3px 10px rgba(183,110,121,.3)}
+.step b{font-size:14.5px;display:block}
+.step .d{font-size:13px;color:var(--muted);line-height:1.4}
+.eyebrow{text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose-d);font-weight:700;margin:22px 0 4px}
+.quote{font-family:'Fraunces';font-size:18px;line-height:1.35;color:var(--ink)}
+/* Momento WOW: revelación de edad visible */
+#s-reveal{background:linear-gradient(160deg,#201c27 0%,#48333e 52%,#a65f6d 100%);min-height:100vh;padding-bottom:40px;overflow:hidden;position:relative}
+#s-reveal .rvglow{position:absolute;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,75,.5),transparent 70%);top:-80px;left:50%;transform:translateX(-50%);filter:blur(8px);pointer-events:none}
+.reveal-wrap{text-align:center;color:#fff;padding:86px 24px 40px;position:relative}
+.reveal-eyebrow{letter-spacing:.18em;text-transform:uppercase;font-size:12px;opacity:.82}
+.reveal-num{font-family:'Fraunces';font-size:90px;line-height:1;margin-top:10px;font-weight:600;text-shadow:0 6px 30px rgba(0,0,0,.3)}
+.reveal-unit{opacity:.85;margin-top:2px;font-size:15px}
+.reveal-head{font-family:'Fraunces';font-size:25px;line-height:1.25;margin-top:28px}
+.reveal-head b{color:#ffdcb8}
+.reveal-sub{font-size:14px;opacity:.9;margin-top:12px}
+#s-reveal .btn.rose{background:#fff;color:#2a2630;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.reveal-fade{opacity:0;transform:translateY(8px);transition:opacity .55s ease, transform .55s ease}
+.reveal-fade.in{opacity:1;transform:none}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.reveal-num.pop{animation:pop .5s ease both}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ============ WELCOME ============ -->
+  <section class="screen active" id="s-welcome">
+    <div class="hero">
+      <div class="glow"></div>
+      <div class="brand" style="color:#fff;font-size:16px;opacity:.9">Inside<b style="color:#f3c9cf">Out</b>Med</div>
+      <span class="pill" style="margin-top:16px">Análisis facial médico · 100% gratis</span>
+      <h1 style="margin-top:14px">¿Qué edad<br>aparenta tu rostro?</h1>
+      <p style="opacity:.92;font-size:15.5px;line-height:1.5;margin-top:12px">
+        Descúbrelo en 90 segundos con el análisis facial más completo fuera de una clínica de $300
+        — y recibe tu <b>plan exacto</b> para verte años más joven.</p>
+      <div class="hero-badges"><span>💎 $300 → Gratis</span><span>🔒 100% privado</span><span>⏱️ 90 segundos</span></div>
+    </div>
+    <div class="pad" style="margin-top:22px">
+      <div class="eyebrow">Cómo funciona</div>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><div><b>Escanea tu rostro</b><div class="d">La cámara analiza 478 puntos. Tu foto <b>nunca sale de tu teléfono</b>.</div></div></div>
+        <div class="step"><div class="n">2</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible, tu score y un análisis honesto por zona — como el de una dermatóloga.</div></div></div>
+        <div class="step"><div class="n">3</div><div><b>Sigue tu plan y transfórmate</b><div class="d">Tu ruta personalizada de 12 meses, y cada 90 días ves bajar tu edad visible en números.</div></div></div>
+      </div>
+      <div class="eyebrow" style="margin-top:24px">Lo que obtienes</div>
+      <div class="feat"><div class="ic">🔬</div><div><b>478 puntos faciales</b><br><span class="muted" style="font-size:13.5px">Mediciones reales por zona, no horóscopo de cremas.</span></div></div>
+      <div class="feat"><div class="ic">📈</div><div><b>Tu edad visible y tu percentil</b><br><span class="muted" style="font-size:13.5px">Qué tan adelantada o atrasada vas vs tu edad.</span></div></div>
+      <div class="feat"><div class="ic">🗓️</div><div><b>Plan personalizado de 12 meses</b><br><span class="muted" style="font-size:13.5px">Skincare · hábitos · suplementos · tratamientos · capilar.</span></div></div>
+      <div class="feat"><div class="ic">✨</div><div><b>Tu progreso en números</b><br><span class="muted" style="font-size:13.5px">Mira caer tu edad visible escaneo tras escaneo.</span></div></div>
+      <div class="card center" style="margin-top:16px;background:linear-gradient(160deg,#fff,#faf1f0)">
+        <div class="quote">"Sabe más sobre mi cara que mi última consulta — y me dijo exactamente qué hacer."</div>
+        <p class="sub" style="margin-top:8px">Ciencia dermatológica, no marketing de cremas.</p>
+      </div>
+      <div class="note">🔒 <b>Privacidad real:</b> el análisis de imagen ocurre en tu dispositivo con IA local. Tu rostro nunca se envía a ningún servidor.</div>
+    </div>
+    <div class="bottombar">
+      <button class="btn rose" onclick="go('onboarding')">Escanear mi rostro gratis →</button>
+      <p class="center sub" style="margin-top:7px">Sin registro previo · Resultados al instante</p>
+      <button class="btn ghost sm" style="margin-top:8px" onclick="go('returning')">Ya tengo cuenta — ver mi progreso</button>
+      <p class="center" style="margin-top:8px"><a onclick="go('admin')" style="font-size:10px;color:var(--muted);cursor:pointer;opacity:.7">·</a></p>
+    </div>
+  </section>
+
+  <!-- ============ ONBOARDING ============ -->
+  <section class="screen" id="s-onboarding">
+    <div class="top"><button class="back" onclick="obBack()">‹</button><span class="brand">Inside<b>Out</b>Med</span><span class="muted" id="ob-step" style="font-size:13px">1/6</span></div>
+    <div class="prog"><i id="ob-prog" style="width:16%"></i></div>
+    <div class="pad" id="ob-body"></div>
+    <div class="bottombar"><button class="btn rose" id="ob-next" onclick="obNext()">Continuar</button></div>
+  </section>
+
+  <!-- ============ SCAN ============ -->
+  <section class="screen" id="s-scan">
+    <div class="top"><button class="back" onclick="go('onboarding')">‹</button><span class="brand">Escaneo facial</span><span></span></div>
+    <div class="pad">
+      <div class="cam" id="cam">
+        <video id="vid" autoplay playsinline muted></video>
+        <canvas id="overlay"></canvas>
+        <div class="count" id="count">Listo</div>
+        <div class="ring" id="ring"><svg viewBox="0 0 100 130"><ellipse cx="50" cy="60" rx="34" ry="46" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.2" stroke-dasharray="4 4"/></svg></div>
+        <div class="scanstat" id="scanstat">Centra tu rostro en el óvalo</div>
+      </div>
+      <div class="qcheck" id="qcheck">
+        <div data-q="bright"><span class="qd"></span> Luz suficiente y pareja</div>
+        <div data-q="size"><span class="qd"></span> Rostro llena el óvalo</div>
+        <div data-q="center"><span class="qd"></span> Centrado</div>
+        <div data-q="front"><span class="qd"></span> De frente</div>
+      </div>
+      <div class="prog" style="margin:12px 22px 4px"><i id="scanprog" style="width:0%"></i></div>
+      <div class="note" id="scannote">Buena luz natural y uniforme, sin lentes ni maquillaje pesado, cabello fuera de la cara y rostro de frente. El escaneo se toma su tiempo (~20–30 s) y acumula cientos de muestras de píxeles por zona para precisión. Mantente quieta; puedes finalizar antes cuando aparezca el botón.</div>
+      <button class="btn rose" id="scanbtn" onclick="startScan()">Iniciar escaneo</button>
+      <button class="btn ghost sm" style="margin-top:8px" onclick="demoScan()">Sin cámara — usar modo demo</button>
+    </div>
+  </section>
+
+  <!-- ============ PROCESSING ============ -->
+  <section class="screen" id="s-processing">
+    <div class="pad center" style="padding-top:80px">
+      <div class="spin"></div>
+      <h2 style="margin-top:22px">Analizando tu rostro</h2>
+      <p class="muted" style="font-size:13.5px">Procesando en tu dispositivo · 0 datos enviados</p>
+      <div class="card" style="text-align:left;margin-top:24px">
+        <div class="loadlist" id="loadlist">
+          <div data-i="0"><span class="chk"></span> Detectando 478 puntos faciales</div>
+          <div data-i="1"><span class="chk"></span> Midiendo 8 zonas faciales</div>
+          <div data-i="2"><span class="chk"></span> Muestreando biomarcadores cutáneos</div>
+          <div data-i="3"><span class="chk"></span> Calculando edad visible y percentil</div>
+          <div data-i="4"><span class="chk"></span> Generando tu plan de 12 meses</div>
+          <div data-i="5"><span class="chk"></span> Proyectando tu transformación</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ REVEAL (momento wow) ============ -->
+  <section class="screen" id="s-reveal">
+    <div class="rvglow"></div>
+    <div id="reveal-body"></div>
+  </section>
+
+  <!-- ============ REPORT ============ -->
+  <section class="screen" id="s-report">
+    <div class="top"><span class="brand">Tu análisis</span><span class="muted" id="rep-date" style="font-size:12px"></span></div>
+    <div class="pad" id="rep-body"></div>
+    <div class="bottombar"><button class="btn rose" onclick="go('plan')">Ver mi plan de 12 meses →</button></div>
+  </section>
+
+  <!-- ============ PLAN ============ -->
+  <section class="screen" id="s-plan">
+    <div class="top"><button class="back" onclick="go('report')">‹</button><span class="brand">Tu plan · 12 meses</span><span></span></div>
+    <div class="tabs" id="plan-tabs"></div>
+    <div class="pad" id="plan-body"></div>
+    <div class="bottombar"><button class="btn rose" onclick="go('projection')">Ver mi transformación ✨</button></div>
+  </section>
+
+  <!-- ============ PROJECTION ============ -->
+  <section class="screen" id="s-projection">
+    <div class="top"><button class="back" onclick="go('plan')">‹</button><span class="brand">Tu transformación</span><span></span></div>
+    <div class="pad" id="proj-body"></div>
+    <div class="bottombar"><button class="btn rose" onclick="finishFlow()">Guardar y terminar</button></div>
+  </section>
+
+  <!-- ============ RETURNING ============ -->
+  <section class="screen" id="s-returning">
+    <div class="top"><button class="back" onclick="go('welcome')">‹</button><span class="brand">Bienvenida de vuelta</span><span></span></div>
+    <div class="pad" style="padding-top:30px">
+      <h2>Ver mi progreso</h2>
+      <p class="muted" style="font-size:14px">Tu email es la llave. Ingrésalo para recuperar tus escaneos y tu plan.</p>
+      <label class="fld">Email</label>
+      <input id="ret-email" type="email" placeholder="tu@email.com" />
+      <button class="btn rose" style="margin-top:16px" onclick="loadReturning()">Entrar</button>
+      <p class="muted center" id="ret-msg" style="font-size:13px;margin-top:14px"></p>
+    </div>
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section class="screen" id="s-dash">
+    <div class="top"><span class="brand">Inside<b>Out</b>Med</span><button class="back" style="font-size:14px" onclick="logout()">salir</button></div>
+    <div class="pad" id="dash-body"></div>
+    <div class="bottombar"><button class="btn rose" onclick="rescan()">Re-escanear y comparar</button></div>
+  </section>
+
+  <!-- ============ EXPERTS / CONSULTA ============ -->
+  <section class="screen" id="s-experts">
+    <div class="top"><button class="back" onclick="go('report')">‹</button><span class="brand">Consulta con experto</span><span></span></div>
+    <div class="pad" id="experts-body" style="padding-top:8px"></div>
+  </section>
+
+  <!-- ============ ADMIN ============ -->
+  <section class="screen" id="s-admin">
+    <div class="top"><button class="back" onclick="go('welcome')">‹</button><span class="brand">Panel admin</span><span></span></div>
+    <div class="pad" id="admin-body" style="padding-top:8px"></div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script type="module">
+import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.12";
+
+/* ============================================================
+   STATE
+============================================================ */
+const STATE = {
+  profile:{ name:'', age:34, email:'', phone:'', goals:[], sensitivity:'media',
+    budget:'medio', fitz:3, sleep:7, stress:'medio', diet:'omnivora', exercise:2,
+    sun:'media', routine:[], prior:[], conditions:[], invasive:'todo', commitment:'full-home' },
+  scan:null, photo:null, plan:null, engagement:{}, activeCat:'skincare'
+};
+const $=id=>document.getElementById(id);
+function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('s-'+id).classList.add('active'); window.scrollTo(0,0); }
+window.go=go;
+function toast(t){ const e=$('toast'); e.textContent=t; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),1800); }
+
+/* ============================================================
+   CONFIG · CONSULTA WHATSAPP · EXPERTOS
+============================================================ */
+const CONFIG={ whatsapp:'5491123892912', clinic:'InsideOutMed',
+  endpoint:'https://script.google.com/macros/s/AKfycbzHAtSFkIDq41CPRWHpyEr5tOxisReT8-uEc2xCzQQg588EixtYucUH4pQxHf8J17TQlQ/exec', // Google Apps Script (Web App)
+  adminPass:'iom-admin', // ← cambia esta clave por una tuya; es para entrar al Panel de administrador
+  shareUrl:'' }; // ← pega aquí la URL pública de tu app (ej. tu link de Netlify) para que se incluya al compartir
+const EXPERTS=[
+  {n:'Dra. Ana Robles',spec:'Dermatología clínica y estética',city:'CDMX · presencial y online',rating:4.9,for:['piel','periocular','frente']},
+  {n:'Dr. Luis Mendoza',spec:'Medicina estética · inyectables y contorno',city:'Guadalajara · presencial',rating:4.8,for:['mandibula','labios','mejillas','nariz']},
+  {n:'Dra. Carla Nieto',spec:'Tricología y restauración capilar',city:'Monterrey · online',rating:4.9,for:['cabello']}
+];
+function consultMsg(pro){ const s=STATE.scan,p=STATE.profile;
+  const weak=(STATE.plan&&STATE.plan.weak||[]).map(z=>ZMETA[z]?ZMETA[z][0]:z).join(', ');
+  let m=`Hola${pro?', quiero agendar con '+pro:''}. Soy ${p.name||'(mi nombre)'} y acabo de hacer mi análisis en ${CONFIG.clinic}.`;
+  if(s) m+=` Edad visible estimada: ${s.visibleAge} años (cronológica ${p.age}). Zonas prioritarias: ${weak||'—'}.`;
+  const conds=(p.conditions||[]).filter(c=>c&&c!=='Ninguna');
+  if(conds.length) m+=` Condiciones de piel declaradas: ${conds.join(', ')}.`;
+  m+=` Me gustaría una consulta personalizada para revisar mi plan.`; return m; }
+function waLink(pro){ return `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(consultMsg(pro))}`; }
+window.waConsult=function(pro){ window.open(waLink(pro),'_blank'); };
+window.openConsult=function(){ renderExperts(); go('experts'); };
+function consultCard(){ return `<div class="card" style="background:linear-gradient(160deg,#2a2630,#8a5560);color:#fff">
+  <b style="font-family:Fraunces;font-size:18px">¿Quieres un plan validado por un experto?</b>
+  <p style="font-size:13px;opacity:.92;margin:6px 0 12px">Agenda una consulta personalizada: te conectamos por WhatsApp con un profesional verificado que revisa tu escaneo contigo.</p>
+  <button class="wa" onclick="openConsult()">Agendar consulta personalizada 🩺</button></div>`; }
+function shareCard(){ return `<div class="card center" style="background:linear-gradient(160deg,#fff,#faf1f0)">
+  <b style="font-family:Fraunces;font-size:18px">Presume tu resultado ✨</b>
+  <p class="sub" style="margin:6px 0 12px">Comparte tu edad visible con una amiga y rétala a descubrir la suya. (No se comparte tu foto.)</p>
+  <button class="btn rose" onclick="shareResult()">Compartir mi resultado 📲</button></div>`; }
+function renderExperts(){
+  let h=`<div class="card center"><span class="pill">Consulta personalizada</span>
+    <h2 style="margin-top:12px">Habla con un experto</h2>
+    <p class="sub">Un profesional revisa tu análisis y ajusta tu plan a tu caso real. La conversación inicia por WhatsApp.</p>
+    <button class="wa" onclick="waConsult('')">Iniciar por WhatsApp ahora 💬</button></div>
+    <div class="note">Se abre WhatsApp con un mensaje pre-llenado con tu resumen. No se envía tu foto. No sustituye una valoración médica presencial.</div>`;
+  $('experts-body').innerHTML=h;
+}
+
+/* ============================================================
+   ONBOARDING (6 pasos)
+============================================================ */
+let obStep=0;
+const GOALS=[['edad','Conocer mi edad visible'],['piel','Mejorar mi piel'],['mandibula','Definir mi mandíbula'],
+  ['ojos','Rejuvenecer mi mirada'],['cabello','Restaurar cabello'],['labios','Realzar labios'],
+  ['longevidad','Longevidad facial integral'],['evento','Prepararme para un evento/boda']];
+const GMAP=Object.fromEntries(GOALS);
+const FITZ=[['I','Muy clara, siempre se quema'],['II','Clara, se quema fácil'],['III','Media, a veces se quema'],
+  ['IV','Morena clara, rara vez se quema'],['V','Morena oscura, casi nunca'],['VI','Muy oscura, nunca se quema']];
+const ROUTINE=['Limpiador','Protector solar','Retinol','Vitamina C','Hidratante','Ácidos (AHA/BHA)','Ninguna estable'];
+const PRIOR=['Bótox','Rellenos','Peels','Microneedling','Láser/IPL','PRP','Ninguno'];
+const CONDITIONS=['Rosácea','Melasma / manchas','Acné activo','Dermatitis / eccema','Psoriasis','Piel muy reactiva / alergias','Ninguna'];
+// precauciones automáticas por condición → activos/tratamientos a advertir
+const COND_WARN={
+ 'Rosácea':{kw:['Retinol','AHA','BHA','Peel','IPL','Microneedling','Vitamina C'],txt:'Con rosácea, los activos fuertes, ácidos, calor (IPL/láser) y microneedling pueden brotar la piel. Introduce muy gradual y consulta a tu dermatólogo.'},
+ 'Melasma / manchas':{kw:['IPL','Láser','Peel'],txt:'Con melasma, el IPL y algunos láseres/peels mal indicados pueden EMPEORAR las manchas. Prioriza SPF estricto y despigmentantes suaves; hazlo solo con dermatólogo.'},
+ 'Acné activo':{kw:['Rellenos','Bioestimulador','Microneedling'],txt:'Con acné activo, evita inyecciones y microneedling sobre lesiones (riesgo de infección/cicatriz). Trata primero el acné con tu médico.'},
+ 'Dermatitis / eccema':{kw:['Retinol','AHA','BHA','Peel','Vitamina C'],txt:'Con dermatitis/eccema, prioriza barrera e hidratación; los activos irritantes pueden desencadenar brotes. Consulta antes de empezar.'},
+ 'Psoriasis':{kw:['Peel','Microneedling','Láser'],txt:'Con psoriasis, algunos procedimientos pueden gatillar lesiones (fenómeno de Koebner). Valóralo con dermatólogo.'},
+ 'Piel muy reactiva / alergias':{kw:[],txt:'Piel reactiva: haz prueba de parche 24-48h antes de cualquier producto nuevo y ve de a un activo por vez.'}
+};
+
+const obSteps=[
+ ()=>`<h2>Hola 👋 Empecemos</h2><p class="muted" style="font-size:14px">Tu email es obligatorio: es la llave para volver y ver tu progreso.</p>
+   <label class="fld">Tu nombre</label><input id="f-name" value="${STATE.profile.name}" placeholder="Nombre"/>
+   <label class="fld">Edad</label><input id="f-age" type="number" min="18" max="80" value="${STATE.profile.age}"/>
+   <label class="fld">Email *</label><input id="f-email" type="email" value="${STATE.profile.email}" placeholder="tu@email.com"/>
+   <label class="fld">Celular (opcional)</label><input id="f-phone" value="${STATE.profile.phone}" placeholder="+52..."/>
+   <div class="note" style="max-height:150px;overflow:auto;margin-top:14px">
+     <b>Aviso importante y Términos de uso</b><br>
+     InsideOutMed ofrece <b>información educativa y estimaciones generadas por software</b>. <b>No es consejo médico, diagnóstico ni tratamiento.</b>
+     Los scores, la edad visible, las proyecciones y las recomendaciones son <b>orientativos</b>, se basan en estimaciones y en la literatura general, <b>no garantizan ningún resultado</b> y <b>no sustituyen la valoración de un profesional de la salud matriculado</b>.
+     Cualquier producto, suplemento, medicamento o procedimiento que decidas realizar es <b>bajo tu propia responsabilidad y decisión</b>, y debe hacerse previa consulta médica, especialmente si tienes condiciones de salud, embarazo o lactancia.
+     En la máxima medida permitida por la ley, <b>InsideOutMed, sus creadores y afiliados no serán responsables</b> por decisiones, tratamientos, reacciones, gastos o daños derivados del uso de esta herramienta o de la información aquí provista. Al continuar, aceptas estos términos y liberas de responsabilidad a InsideOutMed y a sus creadores.
+   </div>
+   <label style="display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:13.5px;cursor:pointer">
+     <input type="checkbox" id="f-consent" ${STATE.profile.consent?'checked':''} style="width:20px;height:20px;flex:0 0 auto;margin-top:1px"/>
+     <span>He leído y <b>acepto los Términos y el aviso médico</b>. Entiendo que esto no reemplaza una consulta médica.</span>
+   </label>`,
+ ()=>`<h2>¿Qué te trae aquí?</h2><p class="muted" style="font-size:14px">Elige todo lo que aplique. Esto prioriza tu plan.</p>
+   <div class="chips" id="f-goals">${GOALS.map(g=>`<div class="chip ${STATE.profile.goals.includes(g[0])?'on':''}" data-v="${g[0]}">${g[1]}</div>`).join('')}</div>`,
+ ()=>`<h2>Tu piel y tu tono</h2><p class="muted" style="font-size:14px">Esto nos dice qué tan fuerte y rápido puede ir tu plan sin lastimarte.</p>
+   <label class="fld">Sensibilidad de la piel</label>
+   <p class="sub" style="margin:-2px 0 6px">¿Tu piel se irrita, enrojece o pica fácil con productos nuevos o el sol? Si es así, empezamos los activos (como el retinol) más suaves y lento.</p>
+   <div class="chips" id="f-sens">${['baja','media','alta'].map(s=>`<div class="chip ${STATE.profile.sensitivity===s?'on':''}" data-v="${s}">${s[0].toUpperCase()+s.slice(1)}</div>`).join('')}</div>
+   <label class="fld">Fototipo Fitzpatrick</label>
+   <p class="sub" style="margin:-2px 0 6px">Tu tono de piel y cómo reacciona al sol, del más claro (Tipo I) al más oscuro (Tipo VI). Es clave para tu <b>seguridad</b>: define qué peels, láser o IPL son seguros para ti y cuáles podrían mancharte.</p>
+   <div class="chips" id="f-fitz">${FITZ.map((f,i)=>`<div class="chip ${STATE.profile.fitz===i+1?'on':''}" data-v="${i+1}" title="${f[1]}">Tipo ${f[0]}</div>`).join('')}</div>
+   <p class="sub" id="fitz-desc">${FITZ[STATE.profile.fitz-1][1]}</p>
+   <label class="fld">¿Tienes alguna enfermedad de la piel diagnosticada?</label>
+   <p class="sub" style="margin:-2px 0 6px">Importante para tu seguridad: con estas condiciones ciertos activos o procedimientos requieren precaución. Ajustamos tu plan y te avisamos.</p>
+   <div class="chips" id="f-cond">${CONDITIONS.map(c=>`<div class="chip ${STATE.profile.conditions.includes(c)?'on':''}" data-v="${c}">${c}</div>`).join('')}</div>`,
+ ()=>`<h2>Tu presupuesto y tolerancia</h2><p class="muted" style="font-size:14px">Para mostrarte solo lo que de verdad harías — nada de recomendarte cosas fuera de tu alcance o que no quieres.</p>
+   <label class="fld">¿Cuánto quieres invertir al mes?</label>
+   <p class="sub" style="margin:-2px 0 6px">Gratis/bajo = cremas y hábitos en casa. Medio = + algún tratamiento ocasional. Premium = acceso a todo (inyectables, láser, etc.).</p>
+   <div class="chips" id="f-budget">
+     ${[['gratis','Gratis / bajo'],['medio','Medio'],['premium','Premium']].map(b=>`<div class="chip ${STATE.profile.budget===b[0]?'on':''}" data-v="${b[0]}">${b[1]}</div>`).join('')}</div>
+   <label class="fld">Tolerancia a procedimientos</label>
+   <p class="sub" style="margin:-2px 0 6px">¿Hasta dónde estás dispuesta a llegar? "Solo en casa" = nada de clínica. "Sin agujas" = peels/láser sí, inyecciones no. "Todo el espectro" = abierta a inyectables.</p>
+   <div class="chips" id="f-inv">
+     ${[['casa','Solo en casa'],['no-aguja','Sin agujas'],['todo','Todo el espectro']].map(b=>`<div class="chip ${STATE.profile.invasive===b[0]?'on':''}" data-v="${b[0]}">${b[1]}</div>`).join('')}</div>
+   <label class="fld">¿Qué tan constante vas a ser?</label>
+   <p class="sub" style="margin:-2px 0 6px">Tu honestidad aquí calibra la proyección: a más constancia, más cambio realista. Sin trampas.</p>
+   <div class="chips" id="f-commit">
+     ${[['half','~50% (lo básico)'],['full-home','Plan completo de casa'],['plus','Casa + tratamientos'],['premium','Todo / premium']].map(b=>`<div class="chip ${STATE.profile.commitment===b[0]?'on':''}" data-v="${b[0]}">${b[1]}</div>`).join('')}</div>`,
+ ()=>`<h2>Tu estilo de vida</h2><p class="muted" style="font-size:14px">Tu rostro refleja tus hábitos. Esto nos deja darte consejos honestos — a veces dormir mejor cambia más tu piel que una crema cara.</p>
+   <label class="fld">Horas de sueño que duermes: <b id="sl-v">${STATE.profile.sleep}</b></label>
+   <p class="sub" style="margin:-2px 0 4px">Dormir poco sube el cortisol, que rompe el colágeno y da ojeras e hinchazón.</p>
+   <input id="f-sleep" type="range" min="4" max="10" value="${STATE.profile.sleep}" oninput="document.getElementById('sl-v').textContent=this.value"/>
+   <label class="fld">Nivel de estrés</label>
+   <p class="sub" style="margin:-2px 0 6px">El estrés crónico inflama la piel y acelera el envejecimiento.</p>
+   <div class="chips" id="f-stress">${['bajo','medio','alto'].map(s=>`<div class="chip ${STATE.profile.stress===s?'on':''}" data-v="${s}">${s}</div>`).join('')}</div>
+   <label class="fld">Dieta</label>
+   <p class="sub" style="margin:-2px 0 6px">El azúcar y los ultraprocesados aceleran la "glicación" — la piel se ve apagada y rígida.</p>
+   <div class="chips" id="f-diet">${['omnivora','vegetariana','keto','otra'].map(s=>`<div class="chip ${STATE.profile.diet===s?'on':''}" data-v="${s}">${s}</div>`).join('')}</div>
+   <label class="fld">Ejercicio / semana: <b id="ex-v">${STATE.profile.exercise}</b> días</label>
+   <p class="sub" style="margin:-2px 0 4px">Mejora circulación y oxigenación — más glow natural.</p>
+   <input id="f-ex" type="range" min="0" max="7" value="${STATE.profile.exercise}" oninput="document.getElementById('ex-v').textContent=this.value"/>
+   <label class="fld">Exposición solar semanal (sin protector)</label>
+   <p class="sub" style="margin:-2px 0 6px">El sol es la causa #1 del envejecimiento visible y las manchas. Aquí ajustamos cuánta protección y reparación necesitas.</p>
+   <div class="chips" id="f-sun">${['baja','media','alta'].map(s=>`<div class="chip ${STATE.profile.sun===s?'on':''}" data-v="${s}">${s}</div>`).join('')}</div>`,
+ ()=>`<h2>Tu historial</h2>
+   <label class="fld">Rutina actual de skincare</label>
+   <div class="chips" id="f-routine">${ROUTINE.map(r=>`<div class="chip ${STATE.profile.routine.includes(r)?'on':''}" data-v="${r}">${r}</div>`).join('')}</div>
+   <label class="fld">Procedimientos previos</label>
+   <div class="chips" id="f-prior">${PRIOR.map(r=>`<div class="chip ${STATE.profile.prior.includes(r)?'on':''}" data-v="${r}">${r}</div>`).join('')}</div>
+   <div class="note">Con esto armamos tu análisis. El siguiente paso es el escaneo facial.</div>`
+];
+
+function renderOb(){
+  $('ob-body').innerHTML=obSteps[obStep]();
+  $('ob-step').textContent=(obStep+1)+'/6';
+  $('ob-prog').style.width=((obStep+1)/6*100)+'%';
+  $('ob-next').textContent= obStep===5?'Ir al escaneo →':'Continuar';
+  // chip handlers
+  bindChips('f-goals',true,'goals'); bindChips('f-sens',false,'sensitivity');
+  bindChips('f-budget',false,'budget'); bindChips('f-inv',false,'invasive');
+  bindChips('f-commit',false,'commitment'); bindChips('f-stress',false,'stress');
+  bindChips('f-diet',false,'diet'); bindChips('f-sun',false,'sun');
+  bindChips('f-routine',true,'routine'); bindChips('f-prior',true,'prior'); bindChips('f-cond',true,'conditions');
+  const fz=$('f-fitz'); if(fz) fz.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    fz.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); c.classList.add('on');
+    STATE.profile.fitz=+c.dataset.v; $('fitz-desc').textContent=FITZ[STATE.profile.fitz-1][1];});
+  // relleno de sliders acorde a la marca
+  $('ob-body').querySelectorAll('input[type=range]').forEach(r=>{
+    const upd=()=>{ const mn=+r.min||0, mx=+r.max||100; r.style.setProperty('--p', ((r.value-mn)/(mx-mn)*100)+'%'); };
+    upd(); r.addEventListener('input',upd);
+  });
+}
+function bindChips(id,multi,key){ const el=$(id); if(!el)return;
+  el.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    if(multi){ c.classList.toggle('on');
+      const v=c.dataset.v; const arr=STATE.profile[key];
+      if(c.classList.contains('on')){if(!arr.includes(v))arr.push(v);} else {STATE.profile[key]=arr.filter(x=>x!==v);}
+    } else { el.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); c.classList.add('on');
+      STATE.profile[key]= isNaN(+c.dataset.v)? c.dataset.v : +c.dataset.v; }
+  });
+}
+window.obNext=function(){
+  if(obStep===0){ // capture text fields
+    STATE.profile.name=$('f-name').value.trim();
+    STATE.profile.age=+$('f-age').value||34;
+    STATE.profile.email=$('f-email').value.trim();
+    STATE.profile.phone=$('f-phone').value.trim();
+    if(!STATE.profile.email||!/.+@.+\..+/.test(STATE.profile.email)){toast('Ingresa un email válido');return;}
+    const cons=$('f-consent'); if(!cons||!cons.checked){ toast('Debes aceptar los Términos para continuar'); return; }
+    STATE.profile.consent={accepted:true, ts:new Date().toISOString(), version:'1.0'};
+  }
+  if(obStep===4){ STATE.profile.sleep=+$('f-sleep').value; STATE.profile.exercise=+$('f-ex').value; }
+  if(obStep<5){ obStep++; renderOb(); } else { go('scan'); }
+};
+window.obBack=function(){ if(obStep>0){obStep--;renderOb();} else go('welcome'); };
+
+/* ============================================================
+   FACE SCAN — MediaPipe FaceLandmarker on-device
+============================================================ */
+let landmarker=null, stream=null, scanning=false, capturedLandmarks=null;
+async function initLandmarker(){
+  if(landmarker)return landmarker;
+  const fileset=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.12/wasm");
+  landmarker=await FaceLandmarker.createFromOptions(fileset,{
+    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"},
+    runningMode:"VIDEO", numFaces:1, outputFaceBlendshapes:false });
+  return landmarker;
+}
+window.startScan=async function(){
+  const btn=$('scanbtn'); btn.textContent='Activando cámara...'; btn.disabled=true;
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:480,height:640},audio:false});
+    $('vid').srcObject=stream;
+    $('scanstat').textContent='Cargando IA local...';
+    await initLandmarker();
+    runScanLoop();
+  }catch(e){
+    toast('No se pudo acceder a la cámara'); btn.textContent='Iniciar escaneo'; btn.disabled=false;
+    $('scannote').innerHTML='⚠️ Cámara no disponible o permiso denegado. Usa el <b>modo demo</b> para ver el flujo completo.';
+  }
+};
+function evalQuality(lm,pix,W,H){
+  const faceW=D(lm[234],lm[454]); const axis=lm[168].x; const cy=lm[168].y;
+  const sizeOK=faceW>0.42 && faceW<0.86;
+  const centerOK=Math.abs(axis-0.5)<0.11 && cy>0.27 && cy<0.56;
+  const dl=Math.abs(axis-lm[234].x), dr=Math.abs(lm[454].x-axis), ratio=dl/(dr||1e-3);
+  const frontOK=ratio>0.76 && ratio<1.30;
+  const c=sampleRegion(pix,W,H,lm[151].x*W,lm[151].y*H,Math.max(5,faceW*W*0.05));
+  const brightVal=c?c.lum:0; const brightOK=brightVal>85 && brightVal<206;
+  const ok=sizeOK&&centerOK&&frontOK&&brightOK;
+  const score=(sizeOK+centerOK+frontOK+brightOK)/4*100;
+  let hint='';
+  if(!brightOK) hint= brightVal<=85?'busca mas luz':'demasiada luz o contraluz';
+  else if(!sizeOK) hint= faceW<=0.42?'acercate un poco':'alejate un poco';
+  else if(!centerOK) hint='centra tu rostro en el ovalo';
+  else if(!frontOK) hint='mira de frente a la camara';
+  return {sizeOK,centerOK,frontOK,brightOK,ok,score,hint};
+}
+function updateQCheck(q){ const el=$('qcheck'); if(!el)return;
+  const map={bright:q.brightOK,size:q.sizeOK,center:q.centerOK,front:q.frontOK};
+  el.querySelectorAll('div').forEach(d=>{ d.classList.toggle('ok',!!map[d.dataset.q]); }); }
+function runScanLoop(){
+  scanning=true;
+  const vid=$('vid'), cv=$('overlay'), ctx=cv.getContext('2d');
+  const work=document.createElement('canvas'); let wctx=null;
+  let elapsed=0,last=Date.now(),det=0,samples=0,qSum=0,qN=0; const frames=[]; const acc={};
+  const MINS=20, MAXS=42, FINS=14;
+  $('scanbtn').style.display='none';
+  let finBtn=$('finbtn');
+  if(!finBtn){ finBtn=document.createElement('button'); finBtn.id='finbtn'; finBtn.className='btn rose';
+    finBtn.style.marginTop='10px'; finBtn.style.display='none';
+    $('scanbtn').parentNode.insertBefore(finBtn,$('scanbtn').nextSibling); }
+  finBtn.onclick=()=>{ if(samples>=15){ scanning=false; STATE._quality=qN?Math.round(qSum/qN):60; finishScan(frames,acc,vid); } };
+  const STAGES=['frente y entrecejo','contorno de ojos','nariz y mejillas','labios y mandíbula','piel y biomarcadores','consolidando lecturas'];
+  function frame(){
+    if(!scanning)return;
+    if(vid.videoWidth){ cv.width=vid.videoWidth; cv.height=vid.videoHeight;
+      const res=landmarker.detectForVideo(vid,performance.now());
+      ctx.clearRect(0,0,cv.width,cv.height);
+      if(res.faceLandmarks&&res.faceLandmarks.length){
+        const lm=res.faceLandmarks[0]; frames.push(lm); det++;
+        if($('ring')) $('ring').style.display='none';
+        // alineación geométrica instantánea (sin píxeles): tamaño + centro + frontal
+        const fw=D(lm[234],lm[454]), ax=lm[168].x, cyy=lm[168].y;
+        const alignOK = fw>0.42 && fw<0.86 && Math.abs(ax-0.5)<0.11 && cyy>0.27 && cyy<0.56;
+        // malla sutil
+        ctx.fillStyle='rgba(255,255,255,.30)';
+        for(let i=0;i<lm.length;i+=6){ ctx.beginPath(); ctx.arc(lm[i].x*cv.width,lm[i].y*cv.height,0.9,0,7); ctx.fill(); }
+        // ÓVALO que sigue tu cara (verde = bien alineada, ámbar = ajusta)
+        ctx.beginPath();
+        FACE_OVAL.forEach((idx,j)=>{ const P=lm[idx],X=P.x*cv.width,Y=P.y*cv.height; j?ctx.lineTo(X,Y):ctx.moveTo(X,Y); });
+        ctx.closePath();
+        ctx.fillStyle= alignOK?'rgba(91,140,110,.12)':'rgba(211,154,79,.10)'; ctx.fill();
+        ctx.lineWidth=3; ctx.strokeStyle= alignOK?'rgba(91,140,110,.95)':'rgba(211,154,79,.95)'; ctx.stroke();
+        if(det>6 && det%3===0){
+          work.width=vid.videoWidth; work.height=vid.videoHeight;
+          wctx=wctx||work.getContext('2d',{willReadFrequently:true});
+          wctx.drawImage(vid,0,0);
+          const pix=wctx.getImageData(0,0,work.width,work.height);
+          const q=evalQuality(lm,pix,work.width,work.height);
+          updateQCheck(q); qSum+=q.score; qN++;
+          if(q.ok){ accumulate(lm,pix,work.width,work.height,acc); samples++;
+            const st=STAGES[Math.min(STAGES.length-1,Math.floor(elapsed/4))];
+            $('scanstat').textContent='Analizando '+st+' — '+samples+' muestras';
+          } else { $('scanstat').textContent='Ajusta: '+(q.hint||'posicion'); }
+        }
+      } else { $('scanstat').textContent='Centra tu rostro en el ovalo'; }
+    }
+    const now=Date.now(); if(now-last>=1000){ elapsed++; last=now; }
+    const sp=$('scanprog'); if(sp)sp.style.width=Math.min(100,Math.round(samples/60*100))+'%';
+    $('count').textContent= samples+' muestras validas';
+    if(elapsed>=FINS && samples>=30){ finBtn.style.display='block'; finBtn.textContent='Finalizar ahora ('+samples+' muestras)'; }
+    if((samples>=60) || elapsed>=MAXS){ scanning=false; finBtn.style.display='none'; STATE._quality=qN?Math.round(qSum/qN):60; finishScan(frames,acc,vid); return; }
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+function averageLandmarks(frames){
+  const use=frames.slice(-Math.min(120,frames.length));
+  const n=use.length, L=use[0].length, out=[];
+  for(let i=0;i<L;i++){ let x=0,y=0,z=0; for(const f of use){ x+=f[i].x; y+=f[i].y; z+=f[i].z||0; } out.push({x:x/n,y:y/n,z:z/n}); }
+  return out;
+}
+function finishScan(frames,acc,vid){
+  scanning=false;
+  const fb=$('finbtn'); if(fb)fb.style.display='none';
+  const lm = (frames&&frames.length)? averageLandmarks(frames) : null;
+  STATE.lm = lm;
+  STATE._frames = frames? frames.length : 1;
+  let smp=0; for(const k in acc){ if(k[0]==='_')continue; smp=Math.max(smp,acc[k].n||0); } STATE._samples=smp;
+  STATE._light = acc.__ln? Math.round(acc.__light/acc.__ln) : 0;
+  const c=document.createElement('canvas'); c.width=vid.videoWidth; c.height=vid.videoHeight;
+  const cx=c.getContext('2d'); cx.drawImage(vid,0,0);
+  STATE.photo=c.toDataURL('image/jpeg',0.85);
+  if(stream){stream.getTracks().forEach(t=>t.stop());}
+  const R=finalizeAcc(acc);
+  process(()=>{ STATE.scan = (lm && Object.keys(R).length>=8)? analyzeReal(lm,R) : synthScan(); buildPlan(); });
+}
+window.demoScan=function(){ if(stream)stream.getTracks().forEach(t=>t.stop()); scanning=false; STATE.photo=null; STATE.lm=null;
+  process(()=>{ STATE.scan=synthScan(); buildPlan(); }); };
+
+/* processing animation then callback */
+function process(done){
+  go('processing');
+  const items=document.querySelectorAll('#loadlist div'); items.forEach(d=>d.className='');
+  let i=0;
+  const iv=setInterval(()=>{
+    if(i>0) {items[i-1].className='done'; items[i-1].querySelector('.chk').classList.add('f');}
+    if(i<items.length){ items[i].className='on'; i++; }
+    else { clearInterval(iv); done(); renderReport(); renderProjection(); renderReveal(); go('reveal'); }
+  },520);
+}
+/* ---- MOMENTO WOW: revelación animada de la edad visible ---- */
+function countUp(el,to,dur,dec,cb){
+  const start=performance.now(), from=Math.max(0,to-(to>26?11:6));
+  function tick(t){ const p=Math.min(1,(t-start)/dur), e=1-Math.pow(1-p,3), v=from+(to-from)*e;
+    el.textContent=v.toFixed(dec||0); if(p<1) requestAnimationFrame(tick); else if(cb) cb(); }
+  requestAnimationFrame(tick);
+}
+function renderReveal(){
+  const s=STATE.scan, p=STATE.profile, d=Math.round(s.ageDelta*10)/10;
+  let emoji,head;
+  if(d<=-0.5){ emoji='🎉'; head=`Aparentas <b>${Math.abs(d)} años menos</b> que tu edad`; }
+  else if(d>=0.5){ emoji='💪'; head=`Aparentas <b>${d} años más</b> — tu plan lo revierte`; }
+  else { emoji='✨'; head='Aparentas justo tu edad — vamos a ganarte años'; }
+  $('reveal-body').innerHTML=`<div class="reveal-wrap">
+    <div class="reveal-eyebrow">Tu edad visible</div>
+    <div class="reveal-num pop" id="rv-num">--</div>
+    <div class="reveal-unit">años ${s.ageRange?('± '+s.ageRange):''}</div>
+    <div class="reveal-head reveal-fade" id="rv-head">${emoji} ${head}</div>
+    <div class="reveal-sub reveal-fade" id="rv-sub">Tu edad real: <b>${p.age}</b> · Score facial: <b>${s.overall}/100</b> · Percentil <b>${s.percentile}</b></div>
+    <button class="btn rose reveal-fade" id="rv-btn" style="margin-top:26px" onclick="go('report')">Ver mi análisis completo →</button>
+    <button class="reveal-fade" id="rv-share" style="margin-top:10px;width:100%;background:rgba(255,255,255,.14);color:#fff;border:none;padding:15px;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer" onclick="shareResult()">Compartir mi resultado 📲</button>
+    <p class="reveal-sub reveal-fade" id="rv-note" style="opacity:.7;font-size:12px;margin-top:14px">Estimación basada en tu piel y estructura, no diagnóstico médico.</p>
+  </div>`;
+  setTimeout(()=>{ const num=$('rv-num'); if(!num)return;
+    countUp(num, s.visibleAge, 1600, 1, ()=>{
+      ['rv-head','rv-sub','rv-btn','rv-share','rv-note'].forEach((id,i)=>setTimeout(()=>{ const el=$(id); if(el)el.classList.add('in'); }, i*240));
+    });
+  },250);
+}
+/* ---- COMPARTIR: tarjeta visual + share nativo ---- */
+function wrapTextC(ctx,text,cx,y,maxW,lh){ const words=(text||'').split(' '); let line='',yy=y;
+  for(const w of words){ const t=line?line+' '+w:w; if(ctx.measureText(t).width>maxW && line){ ctx.fillText(line,cx,yy); line=w; yy+=lh; } else line=t; }
+  ctx.fillText(line,cx,yy); return yy; }
+function makeShareCanvas(){
+  const s=STATE.scan, p=STATE.profile; if(!s) return null;
+  const W=1080,H=1350, c=document.createElement('canvas'); c.width=W;c.height=H; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,'#201c27'); g.addColorStop(.55,'#48333e'); g.addColorStop(1,'#a65f6d');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  const rg=x.createRadialGradient(W/2,300,20,W/2,300,560); rg.addColorStop(0,'rgba(201,162,75,.35)'); rg.addColorStop(1,'rgba(201,162,75,0)');
+  x.fillStyle=rg; x.fillRect(0,0,W,H);
+  x.textAlign='center';
+  x.fillStyle='rgba(255,255,255,.92)'; x.font='600 42px Georgia, serif'; x.fillText('InsideOutMed', W/2, 135);
+  x.fillStyle='rgba(255,255,255,.72)'; x.font='700 30px Arial'; x.fillText('MI EDAD VISIBLE', W/2, 380);
+  x.fillStyle='#fff'; x.font='700 290px Georgia, serif'; x.fillText(String(s.visibleAge), W/2, 660);
+  x.fillStyle='rgba(255,255,255,.85)'; x.font='400 46px Arial'; x.fillText('años', W/2, 730);
+  const d=Math.round(s.ageDelta*10)/10; let head;
+  if(d<=-0.5) head=Math.abs(d)+' años menos que mi edad real'; else if(d>=0.5) head=d+' años más — con plan para revertirlo'; else head='Justo mi edad — a ganar años';
+  x.fillStyle='#ffdcb8'; x.font='600 50px Georgia, serif'; wrapTextC(x,head,W/2,850,900,62);
+  x.fillStyle='rgba(255,255,255,.9)'; x.font='400 38px Arial';
+  x.fillText('Edad real '+p.age+'   ·   Score '+s.overall+'/100   ·   P'+s.percentile, W/2, 1050);
+  x.fillStyle='#fff'; x.font='700 48px Arial'; x.fillText('Descubre TU edad visible', W/2, 1200);
+  x.fillStyle='rgba(255,255,255,.85)'; x.font='400 36px Arial'; x.fillText('Gratis · Privado · 90 segundos', W/2, 1258);
+  if(CONFIG.shareUrl){ x.fillStyle='#ffdcb8'; x.font='600 34px Arial'; x.fillText(CONFIG.shareUrl.replace(/^https?:\/\//,''), W/2, 1315); }
+  return c;
+}
+function canvasToBlob(c){ return new Promise(res=>{ try{ c.toBlob(res,'image/png'); }catch(e){ res(null); } }); }
+function shareTextMsg(){ const s=STATE.scan,p=STATE.profile;
+  return `Mi edad visible es ${s.visibleAge} años (mi edad real: ${p.age}) 👀 Descubre la tuya gratis en ${CONFIG.clinic}${CONFIG.shareUrl?(' 👉 '+CONFIG.shareUrl):''}`; }
+window.shareResult=async function(){
+  const s=STATE.scan; if(!s){ toast('Primero haz tu análisis'); return; }
+  const c=makeShareCanvas(); const blob=c? await canvasToBlob(c) : null; const text=shareTextMsg();
+  const files= blob? [new File([blob],'mi-edad-visible.png',{type:'image/png'})] : [];
+  try{
+    if(navigator.canShare && files.length && navigator.canShare({files})){ await navigator.share({title:CONFIG.clinic,text,files}); return; }
+    if(navigator.share){ await navigator.share({title:CONFIG.clinic,text,url:CONFIG.shareUrl||undefined}); return; }
+    if(blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mi-edad-visible.png'; a.click(); }
+    try{ await navigator.clipboard.writeText(text); }catch(e){}
+    toast('Imagen descargada y texto copiado ✓');
+  }catch(e){ /* usuario canceló */ }
+};
+
+/* ============================================================
+   MEASUREMENT ENGINE
+============================================================ */
+const D=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+function sampleRegion(pix,W,H,cx,cy,rad){
+  rad=Math.max(3,rad|0); let r=0,g=0,b=0,n=0; const lums=[];
+  const step=Math.max(1,Math.floor(rad/5));
+  for(let dx=-rad;dx<=rad;dx+=step)for(let dy=-rad;dy<=rad;dy+=step){
+    if(dx*dx+dy*dy>rad*rad)continue;
+    const x=Math.round(cx+dx),y=Math.round(cy+dy);
+    if(x<0||y<0||x>=W||y>=H)continue;
+    const idx=(y*W+x)*4,R=pix.data[idx],G=pix.data[idx+1],B=pix.data[idx+2];
+    r+=R;g+=G;b+=B;lums.push(R*.299+G*.587+B*.114);n++;
+  }
+  if(!n)return null;
+  const ml=lums.reduce((a,c)=>a+c,0)/n;
+  const std=Math.sqrt(lums.reduce((a,c)=>a+(c-ml)**2,0)/n);
+  return {r:r/n,g:g/n,b:b/n,lum:ml,std,red:r/n-(g/n+b/n)/2,yellow:(r/n+g/n)/2-b/n,n};
+}
+function avgReg(arr){ arr=arr.filter(Boolean); if(!arr.length)return{lum:120,std:10,red:8,yellow:14,r:120,g:112,b:104};
+  const n=arr.length,k=f=>arr.reduce((a,c)=>a+(c[f]||0),0)/n;
+  return {lum:k('lum'),std:k('std'),red:k('red'),yellow:k('yellow'),r:k('r'),g:k('g'),b:k('b')}; }
+function angle3(a,b,c){ const v1={x:a.x-b.x,y:a.y-b.y},v2={x:c.x-b.x,y:c.y-b.y};
+  const d=(v1.x*v2.x+v1.y*v2.y)/((Math.hypot(v1.x,v1.y)*Math.hypot(v2.x,v2.y))||1e-6);
+  return Math.acos(Math.max(-1,Math.min(1,d)))*180/Math.PI; }
+
+const PTS=[['p151',151],['p67',67],['p297',297],['p8',8],['p168',168],
+  ['cfL',33,0.32],['cfR',263,0.32],['p119',119],['p348',348],
+  ['p50',50],['p280',280],['p205',205],['p425',425],
+  ['p164',164],['p57',57],['p287',287],['p172',172],['p397',397],
+  ['p13',13],['p14',14],['p152',152],['p159',159],['p386',386]];
+// contorno facial de MediaPipe (FACE_OVAL) — para dibujar un óvalo que sigue la cara
+const FACE_OVAL=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+function accumulate(lm,pix,W,H,acc){
+  const faceW=D(lm[234],lm[454])||1e-4, radPx=Math.max(4,faceW*W*0.045), axis=lm[168].x;
+  // referencia de brillo y color desde parches estables (frente + mejillas)
+  let rr0=0,gg0=0,bb0=0,nn=0;
+  [151,50,280].forEach(i=>{ const s=sampleRegion(pix,W,H,lm[i].x*W,lm[i].y*H,radPx); if(s){rr0+=s.r;gg0+=s.g;bb0+=s.b;nn++;} });
+  if(!nn) return;
+  rr0/=nn; gg0/=nn; bb0/=nn;
+  const frameLum=rr0*.299+gg0*.587+bb0*.114;
+  const expo = frameLum>1 ? clamp(150/frameLum,0.55,1.9) : 1;        // normaliza exposicion
+  const gray=(rr0+gg0+bb0)/3||1, wR=gray/(rr0||1), wG=gray/(gg0||1), wB=gray/(bb0||1); // balance de blancos gray-world
+  acc.__light=(acc.__light||0)+frameLum; acc.__ln=(acc.__ln||0)+1;
+  for(const p of PTS){ const idx=p[1], offv=p[2];
+    let x=lm[idx].x; const y=lm[idx].y; if(offv) x=lm[idx].x+(lm[idx].x-axis)*offv;
+    const s=sampleRegion(pix,W,H,x*W,y*H,radPx); if(!s)continue;
+    const cr=s.r*wR, cg=s.g*wG, cb=s.b*wB;            // color corregido
+    const lum=(cr*.299+cg*.587+cb*.114)*expo;          // brillo normalizado
+    const red=cr-(cg+cb)/2, yellow=(cr+cg)/2-cb;
+    const a=acc[p[0]]||(acc[p[0]]={lum:0,std:0,red:0,yellow:0,r:0,g:0,b:0,n:0});
+    a.lum+=lum; a.std+=s.std*expo; a.red+=red; a.yellow+=yellow; a.r+=cr; a.g+=cg; a.b+=cb; a.n++;
+  }
+}
+function finalizeAcc(acc){ const R={}; for(const k in acc){ if(k[0]==='_')continue; const a=acc[k]; if(!a.n)continue;
+  R[k]={lum:a.lum/a.n,std:a.std/a.n,red:a.red/a.n,yellow:a.yellow/a.n,r:a.r/a.n,g:a.g/a.n,b:a.b/a.n}; } return R; }
+
+function analyzeReal(lm,R){
+  const g=i=>lm[i];
+  const faceH=D(g(10),g(152)), faceW=D(g(234),g(454))||1e-4;
+  const axis=g(168).x;
+  // ---------- GEOMETRY (real, from 478 points) ----------
+  const pairs=[[33,263],[133,362],[61,291],[50,280],[172,397],[58,288],[70,300],[105,334]];
+  let symErr=0; pairs.forEach(([l,r])=>{ symErr+=Math.abs(Math.abs(axis-g(l).x)-Math.abs(g(r).x-axis))/faceW; });
+  const symmetry=clamp(100-(symErr/pairs.length)*100*7);
+  const eyeOpenL=D(g(159),g(145))/(D(g(33),g(133))||1e-4);
+  const eyeOpenR=D(g(386),g(374))/(D(g(362),g(263))||1e-4);
+  const eyeSym=clamp(100-Math.abs(eyeOpenL-eyeOpenR)/((eyeOpenL+eyeOpenR)/2)*200);
+  const apertura=clamp(((eyeOpenL+eyeOpenR)/2)/0.33*100);
+  const browL=D(g(105),g(159))/faceH, browR=D(g(334),g(386))/faceH;
+  const browSym=clamp(100-Math.abs(browL-browR)/((browL+browR)/2)*180);
+  const browPos=clamp(((browL+browR)/2)/0.09*100,30,100);
+  const upper=D(g(0),g(13)),lower=D(g(14),g(17)),lipRatio=upper/(lower||1e-4);
+  const lipBalance=clamp(100-Math.abs(lipRatio-0.62)*120);
+  const lipFull=clamp((upper+lower)/faceH/0.10*100,20,100);
+  const cupid=clamp(100-Math.abs((g(37).y+g(267).y)/2-g(0).y)/faceH*900,30,98);
+  const noseW=D(g(98),g(327))/faceW; const noseHarmony=clamp(100-Math.abs(noseW-0.32)*220);
+  const nostrilSym=clamp(100-Math.abs(D(g(98),g(2))-D(g(327),g(2)))/faceW*350);
+  const nlAngle=angle3(g(1),g(2),g(164)); const nlScore=clamp(100-Math.abs(nlAngle-100)*1.0,30,98);
+  const cheekProj=clamp(70-(g(50).z+g(280).z)/2*900);
+  const jawW=D(g(172),g(397))/faceW; const jawDef=clamp(100-Math.abs(jawW-0.74)*150);
+  const gonialSym=clamp(100-Math.abs(D(g(172),g(152))-D(g(397),g(152)))/faceW*330);
+  // ---------- REGIONS (promedio de cientos de muestras de píxeles) ----------
+  const DEF={lum:120,std:10,red:8,yellow:14,r:120,g:112,b:104};
+  const RG=k=>R[k]||DEF;
+  const fhead=avgReg([RG('p151'),RG('p67'),RG('p297')]);   // frente
+  const glab=avgReg([RG('p8'),RG('p168')]);                // glabela / entrecejo
+  const cfL=RG('cfL'), cfR=RG('cfR');                      // patas de gallo
+  const ueL=RG('p119'), ueR=RG('p348');                    // bajo ojos
+  const cheekL=RG('p50'), cheekR=RG('p280');               // mejillas
+  const nasoL=RG('p205'), nasoR=RG('p425');                // surco nasogeniano
+  const periO=avgReg([RG('p164'),RG('p57'),RG('p287')]);   // peribucal
+  const jowlL=RG('p172'), jowlR=RG('p397');                // mandíbula / jowl
+  const lipC=avgReg([RG('p13'),RG('p14')]);                // color labio
+  const chinR=RG('p152');
+  const lashRegL=RG('p159'), lashRegR=RG('p386');
+  // mappers
+  const tex=s=>clamp(100-s.std*2.4,10,99);            // menos textura/líneas = mejor
+  const dark=(reg,ref)=>clamp(100-(ref.lum-reg.lum)*2.6,10,99); // oscurecimiento vs referencia
+  const redS=s=>clamp(100-s.red*2.2,10,98);
+  const allSkin=[fhead,glab,cheekL,cheekR,nasoL,nasoR,chinR];
+  const meanLum=allSkin.reduce((a,c)=>a+c.lum,0)/allSkin.length;
+  const lumStd=Math.sqrt(allSkin.reduce((a,c)=>a+(c.lum-meanLum)**2,0)/allSkin.length);
+  const meanRed=allSkin.reduce((a,c)=>a+c.red,0)/allSkin.length;
+  const meanYel=allSkin.reduce((a,c)=>a+c.yellow,0)/allSkin.length;
+  const meanTex=allSkin.reduce((a,c)=>a+c.std,0)/allSkin.length;
+  const bio={
+    luminosidad:clamp(meanLum/210*100,20,99),
+    uniformidad:clamp(100-lumStd*3.0,15,99),
+    vascularidad:clamp(meanRed*2.0,5,95),
+    inflamacion:clamp(meanRed*1.7+8,5,90),
+    glicacion:clamp((meanYel-18)*2.4+30,8,92),
+    hidratacion:clamp(meanLum/210*55+(100-meanTex*2.2)*0.45,20,95),
+    danoSolar:clamp(meanTex*1.4+lumStd*1.4+Math.max(0,meanYel-25)*1.2,8,92),
+    real:true
+  };
+  const lashL=dark(lashRegL,cheekL), lashR=dark(lashRegR,cheekR);
+  // ---------- ZONES (each sub = real measurement) ----------
+  const zones={
+    frente:{subs:[['Líneas horizontales',tex(fhead)],['Glabela / entrecejo',tex(glab)],
+      ['Simetría de cejas',browSym],['Posición de cejas',browPos]]},
+    periocular:{subs:[['Apertura ocular',apertura],['Simetría L/R',eyeSym],
+      ['Ojeras / pigmento',(dark(ueL,cheekL)+dark(ueR,cheekR))/2],
+      ['Bolsas / hinchazón',(tex(ueL)+tex(ueR))/2],
+      ['Patas de gallo',(tex(cfL)+tex(cfR))/2],['Densidad de pestañas',(lashL+lashR)/2]]},
+    nariz:{subs:[['Proporción',noseHarmony],['Simetría de narinas',nostrilSym]]},
+    labios:{subs:[['Volumen',lipFull],['Ratio superior/inferior',lipBalance],['Arco de Cupido',cupid],
+      ['Hidratación',clamp(lipC.lum/210*100+10,20,98)],['Líneas peribucales',tex(periO)],
+      ['Color / saturación',clamp(lipC.red*2.4+30,20,98)]]},
+    mejillas:{subs:[['Proyección de pómulos',cheekProj],['Volumen',clamp(cheekProj*.9+8)],
+      ['Textura',(tex(cheekL)+tex(cheekR))/2],['Surco nasogeniano',(tex(nasoL)+tex(nasoR))/2],
+      ['Drenaje / rojez',(redS(cheekL)+redS(cheekR))/2]]},
+    mandibula:{subs:[['Definición mandibular',jawDef],['Ángulo gonial',clamp(jawDef*.9+6)],
+      ['Flacidez (jowl)',(tex(jowlL)+tex(jowlR))/2*0.5+jawDef*0.5],['Simetría L/R',gonialSym]]},
+    cuello:{est:true,subs:[['Definición submentoniana',clamp(jawDef*.85)],['Líneas horizontales',clamp(tex(chinR)-6)],['Postura',70]]},
+    piel:{subs:[['Suavidad',clamp(100-meanTex*2.4,10,99)],['Poros / textura',(tex(cheekL)+tex(fhead))/2],
+      ['Glicación',clamp(100-bio.glicacion)],['Manchas / uniformidad',bio.uniformidad],
+      ['Luminosidad',bio.luminosidad],['Daño solar',clamp(100-bio.danoSolar)]]},
+    cabello:{est:true,subs:[['Densidad aparente',clamp(74-(STATE.profile.age-30)*0.6)],
+      ['Línea capilar',clamp(78-(STATE.profile.age-30)*0.5)],['Retroceso',clamp(80-(STATE.profile.age-30)*0.5)],['Calidad',70]]}
+  };
+  Object.values(zones).forEach(z=>{ z.score=Math.round(z.subs.reduce((a,s)=>a+s[1],0)/z.subs.length);
+    z.subs=z.subs.map(s=>[s[0],Math.round(s[1])]); });
+  // ---------- EDAD FACIAL: solo de la cara, NO de la edad escrita ----------
+  // Promedio de los marcadores que de verdad envejecen (textura, arrugas, flacidez, tono)
+  const ageF=[
+    zones.piel.subs[0][1], zones.piel.subs[1][1], zones.piel.subs[3][1], zones.piel.subs[5][1],
+    zones.periocular.subs[2][1], zones.periocular.subs[3][1], zones.periocular.subs[4][1],
+    zones.mejillas.subs[2][1], zones.mejillas.subs[3][1],
+    zones.mandibula.subs[2][1], zones.labios.subs[4][1]
+  ];
+  const agingScore=ageF.reduce((a,b)=>a+b,0)/ageF.length;
+  const agingStd=Math.sqrt(ageF.reduce((a,v)=>a+(v-agingScore)**2,0)/ageF.length);
+  const q=STATE._quality||70;
+  const out=assemble(zones,bio,symmetry,true,agingScore);
+  out.regions=Object.keys(R).length; out.frames=STATE._frames||1; out.samples=STATE._samples||0;
+  out.quality=q; out.light=STATE._light||0;
+  out.ageRange=Math.round(clamp(2+agingStd/12+(100-q)/35,2,9));
+  return out;
+}
+function synthBio(){ const r=(a,b)=>a+Math.random()*(b-a);
+  return {luminosidad:r(45,80),uniformidad:r(50,82),vascularidad:r(20,55),inflamacion:r(15,50),
+    glicacion:r(25,60),hidratacion:r(45,80),danoSolar:r(25,60),real:false}; }
+function mkZones(m,bio){
+  const skinSoft=clamp((bio.uniformidad+bio.hidratacion)/2);
+  return {
+    frente:{score:Math.round((m.symmetry*.3+m.browSym*.35+m.browPos*.35)),
+      subs:[['Líneas horizontales',clamp(100-(60-m.browPos)*0.4+10,30,95)],['Glabela / entrecejo',clamp(m.symmetry*.9+5)],
+        ['Simetría de cejas',m.browSym],['Posición de cejas',m.browPos]]},
+    periocular:{score:Math.round((m.apertura*.3+m.eyeSym*.4+(100-bio.inflamacion)*.3)),
+      subs:[['Apertura ocular',m.apertura],['Simetría L/R',m.eyeSym],['Ojeras / pigmento',clamp(100-bio.vascularidad*.8)],
+        ['Bolsas / hinchazón',clamp(100-bio.inflamacion)],['Patas de gallo',clamp(skinSoft)]]},
+    nariz:{score:Math.round((m.noseHarmony*.5+m.nostrilSym*.5)),
+      subs:[['Proporción',m.noseHarmony],['Simetría de narinas',m.nostrilSym],['Ángulo nasolabial',clamp(m.noseHarmony*.85+10)]]},
+    labios:{score:Math.round((m.lipBalance*.5+m.lipFull*.3+bio.hidratacion*.2)),
+      subs:[['Volumen',m.lipFull],['Ratio superior/inferior',m.lipBalance],['Arco de Cupido',clamp(m.lipBalance*.9+8)],
+        ['Hidratación',bio.hidratacion],['Líneas peribucales',clamp(skinSoft)]]},
+    mejillas:{score:Math.round((m.cheekProj*.5+bio.uniformidad*.3+m.symmetry*.2)),
+      subs:[['Proyección de pómulos',m.cheekProj],['Volumen',clamp(m.cheekProj*.9+8)],['Textura',bio.uniformidad],['Drenaje aparente',clamp(100-bio.inflamacion*.8)]]},
+    mandibula:{score:Math.round((m.jawDef*.55+m.gonialSym*.45)),
+      subs:[['Definición mandibular',m.jawDef],['Ángulo gonial',clamp(m.jawDef*.9+6)],['Flacidez',clamp(m.jawDef*.85+10)],['Simetría L/R',m.gonialSym]]},
+    cuello:{score:Math.round(clamp((m.jawDef*.5+skinSoft*.5)-5)),est:true,
+      subs:[['Líneas horizontales',clamp(skinSoft-5)],['Definición submentoniana',clamp(m.jawDef*.85)],['Postura',clamp(70)]]},
+    piel:{score:Math.round((bio.luminosidad*.25+bio.uniformidad*.25+bio.hidratacion*.2+(100-bio.danoSolar)*.3)),
+      subs:[['Suavidad',skinSoft],['Poros / textura',bio.uniformidad],['Glicación',clamp(100-bio.glicacion)],
+        ['Manchas / uniformidad',bio.uniformidad],['Luminosidad',bio.luminosidad],['Daño solar',clamp(100-bio.danoSolar)]]},
+    cabello:{score:Math.round(clamp(72-(STATE.profile.age-30)*0.6)),est:true,
+      subs:[['Densidad aparente',clamp(74-(STATE.profile.age-30)*0.6)],['Línea capilar',clamp(78-(STATE.profile.age-30)*0.5)],['Retroceso',clamp(80-(STATE.profile.age-30)*0.5)],['Calidad',clamp(70)]]}
+  };
+}
+function synthScan(){ const bio=synthBio();
+  const r=(a,b)=>a+Math.random()*(b-a);
+  const m={symmetry:r(70,90),apertura:r(60,88),eyeSym:r(72,92),browSym:r(70,90),browPos:r(55,85),
+    lipBalance:r(60,88),lipFull:r(45,80),noseHarmony:r(65,90),nostrilSym:r(70,92),cheekProj:r(50,82),jawDef:r(48,82),gonialSym:r(70,92)};
+  const as=clamp((bio.uniformidad+bio.hidratacion+(100-bio.danoSolar)+(100-bio.glicacion))/4 + r(-6,6),35,94);
+  const out=assemble(mkZones(m,bio),bio,m.symmetry,false,as);
+  out.samples=0; out.regions=14; out.frames=1; out.quality=0; out.light=0; out.ageRange=3; return out;
+}
+function assemble(zones,bio,symmetry,real,agingScore){
+  const zArr=Object.values(zones).map(z=>z.score);
+  const overall=Math.round(zArr.reduce((a,b)=>a+b,0)/zArr.length);
+  const chrono=STATE.profile.age;
+  // EDAD VISIBLE estimada SOLO de la cara (no depende de la edad escrita):
+  // agingScore alto (piel lisa, firme, tono parejo) -> más joven ; bajo -> mayor
+  const as=clamp(agingScore==null?overall:agingScore,30,98);
+  const visibleAge=Math.round(clamp(22+(95-as)/(95-35)*(64-22),19,72)*10)/10;
+  const ageDelta=Math.round((visibleAge-chrono)*10)/10; // + = se ve mayor que su edad
+  // percentil: qué tan joven se ve respecto a su edad cronológica
+  const percentile=clamp(Math.round(55+(chrono-visibleAge)*4.5),3,98);
+  return {date:new Date().toISOString(), overall, visibleAge, ageDelta, percentile, symmetry:Math.round(symmetry),
+    harmony:Math.round((symmetry+zones.nariz.score+zones.labios.score)/3), zones, bio, real };
+}
+
+/* ============================================================
+   REPORT RENDER
+============================================================ */
+const ZMETA={frente:['Frente','🟤'],periocular:['Periocular','👁️'],nariz:['Nariz','👃'],labios:['Labios','💋'],
+  mejillas:['Mejillas','😊'],mandibula:['Mandíbula','🦴'],cuello:['Cuello','🧣'],piel:['Piel global','✨'],cabello:['Cabello','💇‍♀️']};
+function col(v){ return v>=75?'var(--green)':v>=55?'var(--amber)':'var(--red)'; }
+function bar(label,v,sub){ v=Math.round(v); return `<div class="metric"><div class="mh"><span>${label}</span><b style="color:${col(v)}">${v}</b></div>
+  <div class="bar"><i style="width:${v}%;background:${col(v)}"></i></div>${sub?`<div class="sub">${sub}</div>`:''}</div>`; }
+function biomark(label,v,inv){ const disp=inv?100-Math.round(v):Math.round(v); // for "lower is better" markers show as score
+  return `<div class="metric"><div class="mh"><span>${label}</span><b style="color:${col(disp)}">${disp}</b></div><div class="bar"><i style="width:${disp}%;background:${col(disp)}"></i></div></div>`; }
+function renderReport(){
+  const s=STATE.scan, p=STATE.profile;
+  $('rep-date').textContent=new Date(s.date).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
+  const deltaTxt = s.ageDelta<=0? `${Math.abs(s.ageDelta)} años más joven` : `${s.ageDelta} años mayor`;
+  let h=`
+  <div class="card center">
+    <span class="pill">${s.real?('Medición real · 478 puntos · '+(s.samples||0)+' muestras · '+(s.regions||14)+' regiones'):'Modo demo'}</span>
+    <h2 style="margin-top:14px">${p.name?p.name+', ':''}esto dice tu rostro hoy</h2>
+    <div class="scorewrap" style="margin-top:10px">
+      ${ringSVG(s.overall,'Score global')}
+      <div style="text-align:left">
+        <div style="font-size:13px" class="muted">Edad cronológica</div><div style="font-family:Fraunces;font-size:22px">${p.age} años</div>
+        <div style="font-size:13px;margin-top:8px" class="muted">Edad visible estimada</div>
+        <div style="font-family:Fraunces;font-size:26px;color:${s.ageDelta<=0?'var(--green)':'var(--amber)'}">${s.visibleAge} <span style="font-size:16px">± ${s.ageRange||3}</span> años</div>
+        <div class="sub">${deltaTxt} de lo cronológico</div>
+      </div>
+    </div>
+    ${s.real?`<p class="sub" style="margin-top:8px">Calidad de captura: <b>${s.quality||'—'}/100</b> · a mayor calidad, menor margen de error.</p>`:''}
+    <div class="hr"></div>
+    <div class="grid2" style="text-align:center">
+      <div><div style="font-family:Fraunces;font-size:24px;color:var(--rose-d)">P${s.percentile}</div><div class="sub">percentil vs tu edad</div></div>
+      <div><div style="font-family:Fraunces;font-size:24px;color:var(--rose-d)">${s.symmetry}</div><div class="sub">simetría facial</div></div>
+    </div>
+    <p class="sub" style="margin-top:10px">Estás en el percentil ${s.percentile} de mujeres de tu rango: ${s.percentile>=50?'vas adelante de '+s.percentile+'%':'hay margen claro de mejora'}.</p>
+    <button class="btn ghost sm" style="margin-top:12px" onclick="shareResult()">Compartir mi resultado 📲</button>
+  </div>`;
+  // weakest zones highlight
+  const sorted=Object.entries(s.zones).sort((a,b)=>a[1].score-b[1].score);
+  h+=`<h3 style="margin:18px 0 8px">Tus prioridades</h3>
+    <div class="card"><p class="muted" style="font-size:13.5px;margin-top:0">Tus 3 zonas con más oportunidad. Tu plan empieza por aquí.</p>
+    ${sorted.slice(0,3).map(([k,z])=>`<div class="row between" style="margin:9px 0"><span>${ZMETA[k][1]} <b>${ZMETA[k][0]}</b></span><span class="dot" style="background:${col(z.score)};margin-left:auto"></span><b style="color:${col(z.score)}">${z.score}</b></div>`).join('')}</div>`;
+  // biomarkers
+  const b=s.bio;
+  h+=`<h3 style="margin:18px 0 8px">Biomarcadores cutáneos</h3>
+   <div class="card"><p class="sub" style="margin-top:0">Derivados del muestreo de píxeles de tu piel ${b.real?'':'(estimados en demo)'}.</p>
+    ${bar('Luminosidad',b.luminosidad)}${bar('Uniformidad de tono',b.uniformidad)}${bar('Hidratación aparente',b.hidratacion)}
+    ${biomark('Glicación (azúcar/colágeno)',b.glicacion,true)}${biomark('Inflamación visible',b.inflamacion,true)}
+    ${biomark('Daño solar estimado',b.danoSolar,true)}${biomark('Vascularidad / rojez',b.vascularidad,true)}
+   </div>`;
+  // zones accordion
+  h+=`<h3 style="margin:18px 0 8px">Análisis por zona</h3>`;
+  Object.entries(s.zones).forEach(([k,z])=>{
+    h+=`<div class="zone" onclick="this.classList.toggle('open')">
+      <div class="zh"><span class="zi">${ZMETA[k][1]}</span><b>${ZMETA[k][0]}</b>${z.est?'<span class="sub" style="margin-left:6px">estimado</span>':''}<span class="zscore" style="color:${col(z.score)}">${z.score}</span></div>
+      <div class="zb">${z.subs.map(su=>bar(su[0],su[1])).join('')}
+      ${z.est?'<div class="note">Esta zona requiere un acercamiento dedicado (tricoscopía / escaneo de cuello) para medición precisa. Mostramos una estimación basada en tu edad y biomarcadores.</div>':''}</div></div>`;
+  });
+  h+=consultCard();
+  h+=`<div class="note">⚕️ Esto es una estimación basada en geometría facial y color de piel, no un diagnóstico médico. No sustituye una consulta profesional.</div>`;
+  $('rep-body').innerHTML=h;
+}
+function ringSVG(v,label){ const r=64,c=2*Math.PI*r,off=c*(1-v/100);
+  return `<div class="ringbox"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="${r}" fill="none" stroke="#efe9e7" stroke-width="11"/>
+   <circle cx="75" cy="75" r="${r}" fill="none" stroke="${col(v)}" stroke-width="11" stroke-linecap="round"
+   stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 75 75)"/></svg>
+   <div class="lbl"><b>${v}</b><span>${label}</span></div></div>`; }
+
+/* ============================================================
+   RECOMMENDATION CATALOG + ENGINE
+============================================================ */
+// inv: 0 casa,1 no-aguja consultorio,2 aguja leve,3 inyectable/quirúrgico-adyacente
+// tier: gratis/medio/premium ; phase: 1..5
+const CAT=[
+// SKINCARE
+{c:'skincare',n:'Protector solar SPF 50',inv:0,tier:'gratis',age:18,ph:1,rt:'AM',z:['piel','frente','mejillas'],g:['piel','longevidad'],
+ what:'FPS 50+ de amplio espectro, cada mañana, reaplicar cada 3-4h con exposición.',cost:'$8–20 / mes',time:'15 seg',freq:'Diario AM',
+ res:'Prevención desde día 1; menos manchas en 3-6 meses',dur:'Permanente con uso',risk:'Elegir libre de fragancia si piel sensible',
+ evi:'Hughes et al., Ann Intern Med 2013: el uso diario de FPS redujo el fotoenvejecimiento un 24%.'},
+{c:'skincare',n:'Limpiador suave + hidratante con ceramidas',inv:0,tier:'gratis',age:18,ph:1,z:['piel'],g:['piel'],
+ what:'Limpieza AM/PM sin sulfatos agresivos + hidratante con ceramidas y AH.',cost:'$15–30 / mes',time:'2 min',freq:'2x día',
+ res:'Barrera más fuerte en 2-4 semanas',dur:'Continuo',risk:'Bajo',evi:'Lynde, J Drugs Dermatol 2014: ceramidas restauran la barrera cutánea.'},
+{c:'skincare',n:'Vitamina C 15–20% (AM)',inv:0,tier:'medio',age:22,ph:2,rt:'AM',z:['piel','mejillas'],g:['piel','longevidad'],
+ what:'Antioxidante de mañana (ácido L-ascórbico 15-20%) bajo el protector solar.',cost:'$20–45 / mes',time:'30 seg',freq:'Diario AM',
+ res:'Más luminosidad en 4-8 semanas',dur:'Continuo',risk:'Puede irritar; empezar 3x/sem',evi:'Pinnell, Dermatol Surg 2001: vit C tópica aumenta síntesis de colágeno y protege del fotodaño.'},
+{c:'skincare',n:'Retinol 0.3% → 1% (PM)',inv:0,tier:'medio',age:25,ph:2,md:true,rt:'PM',z:['piel','frente','periocular','labios'],g:['piel','longevidad'],
+ what:'Retinoide nocturno, subir concentración gradualmente. El activo anti-edad mejor documentado.',cost:'$20–50 / mes',time:'30 seg',freq:'PM, 2-5x/sem',
+ res:'Textura y líneas finas en 8-12 semanas',dur:'Continuo',risk:'Irritación/descamación inicial; evitar en embarazo',
+ evi:'Mukherjee, Clin Interv Aging 2006: retinoides reducen arrugas y aumentan colágeno de forma comprobada.'},
+{c:'skincare',n:'Niacinamida 10%',inv:0,tier:'gratis',age:20,ph:2,z:['piel','mejillas'],g:['piel'],
+ what:'Reduce rojez, poros y mejora uniformidad de tono. Muy bien tolerada.',cost:'$10–25 / mes',time:'20 seg',freq:'Diario',
+ res:'Tono más parejo en 4-8 semanas',dur:'Continuo',risk:'Mínimo',evi:'Bissett, Dermatol Surg 2005: niacinamida mejora textura, poros y manchas.'},
+{c:'skincare',n:'Contorno de ojos con cafeína + péptidos',inv:0,tier:'medio',age:25,ph:1,z:['periocular'],g:['ojos'],
+ what:'Cafeína para hinchazón/ojeras vasculares + péptidos para firmeza.',cost:'$18–40 / mes',time:'20 seg',freq:'2x día',
+ res:'Menos hinchazón en 2-4 semanas',dur:'Continuo',risk:'Bajo',evi:'Cafeína vasoconstrictora reduce edema periorbital (Herman, Skin Pharmacol 2013).'},
+{c:'skincare',n:'AHA/BHA exfoliación química',inv:0,tier:'medio',age:22,ph:3,rt:'PM',z:['piel','mejillas'],g:['piel'],
+ what:'Glicólico o salicílico 1-2x/semana para renovar textura y desobstruir poros.',cost:'$15–35 / mes',time:'5 min',freq:'1-2x/sem',
+ res:'Suavidad en 3-6 semanas',dur:'Continuo',risk:'No combinar con retinol la misma noche; usar SPF',evi:'Kornhauser, Clin Cosmet Investig Dermatol 2010: AHAs mejoran textura y firmeza.'},
+{c:'skincare',n:'Sérum de péptidos para firmeza',inv:0,tier:'medio',age:30,ph:4,z:['mandibula','mejillas','cuello'],g:['mandibula','longevidad'],
+ what:'Péptidos señalizadores (Matrixyl) para estimular colágeno y firmeza del óvalo.',cost:'$25–55 / mes',time:'30 seg',freq:'Diario',
+ res:'Firmeza sutil en 8-12 semanas',dur:'Continuo',risk:'Bajo',evi:'Matrixyl estimula colágeno tipo I (Robinson, Int J Cosmet Sci 2005).'},
+{c:'skincare',n:'Sérum de polinucleótidos (PDRN) tópico',inv:0,tier:'medio',age:25,ph:3,nuevo:true,rt:'PM',z:['piel','periocular','mejillas'],g:['piel','longevidad'],
+ what:'Sérum con PDRN/polinucleótidos que estimula fibroblastos y reparación de ADN cutáneo: mejora líneas finas, elasticidad e hidratación. La versión tópica de la terapia regenerativa más trending, sin agujas.',cost:'$30–70 / mes',time:'30 seg',freq:'PM (o AM/PM)',
+ res:'Líneas finas e hidratación en 8 semanas',dur:'Continuo',risk:'Bajo; evitar si hay alergia a derivados de pescado (origen del PDRN)',
+ evi:'Estudios split-face de PDRN tópico: ~47% menos líneas finas, ~39% más elasticidad y ~41% más hidratación a 8 semanas; revisión sistemática 2025 (J Cosmet Dermatol) confirma beneficios en calidad de piel.'},
+{c:'skincare',n:'Bakuchiol (alternativa al retinol)',inv:0,tier:'medio',age:22,ph:2,nuevo:true,rt:'PM',z:['piel','frente'],g:['piel','longevidad'],
+ what:'Retinoide vegetal mejor tolerado: efecto tipo retinol (líneas, textura) con menos irritación. Ideal para piel sensible, rosácea o embarazo/lactancia (consultar médico).',cost:'$20–45 / mes',time:'30 seg',freq:'PM',
+ res:'Textura y líneas en 8-12 semanas',dur:'Continuo',risk:'Bajo; muy bien tolerado',
+ evi:'Dhaliwal, Br J Dermatol 2019: bakuchiol comparable al retinol en arrugas y pigmentación, con menos descamación e irritación.'},
+// SUPLEMENTOS
+{c:'supplements',n:'Colágeno hidrolizado tipo I y III',inv:0,tier:'gratis',age:25,ph:1,z:['piel','mandibula','labios'],g:['piel','longevidad'],
+ what:'10 g/día de péptidos de colágeno. Mejora elasticidad e hidratación cutánea.',cost:'$15–35 / mes',time:'1 min',freq:'Diario',
+ res:'Elasticidad medible en 8-12 semanas',dur:'Continuo',risk:'Bajo',evi:'Proksch, Skin Pharmacol Physiol 2014: péptidos de colágeno mejoran elasticidad cutánea (estudio doble ciego).'},
+{c:'supplements',n:'Omega-3 EPA/DHA',inv:0,tier:'gratis',age:18,ph:1,z:['piel'],g:['piel','longevidad'],
+ what:'1-2 g/día. Antiinflamatorio, mejora barrera lipídica e hidratación.',cost:'$12–25 / mes',time:'30 seg',freq:'Diario',
+ res:'Menos inflamación en 6-10 semanas',dur:'Continuo',risk:'Cuidado si tomas anticoagulantes',evi:'Pilkington, Exp Dermatol 2011: omega-3 protege de fotodaño e inflamación.'},
+{c:'supplements',n:'Vitamina D3 + K2',inv:0,tier:'gratis',age:18,ph:1,z:['piel'],g:['longevidad'],
+ what:'2000-4000 UI D3 con K2. Soporta inmunidad y salud de la piel.',cost:'$8–18 / mes',time:'10 seg',freq:'Diario',
+ res:'Sistémico',dur:'Continuo',risk:'Idealmente con nivel sérico medido',evi:'Déficit de vitamina D asociado a peor cicatrización y barrera (Umar, Skin Pharmacol 2018).'},
+{c:'supplements',n:'Astaxantina 4–12 mg',inv:0,tier:'medio',age:25,ph:2,z:['piel','mejillas'],g:['piel','longevidad'],
+ what:'Antioxidante potente; mejora elasticidad y reduce líneas finas.',cost:'$15–30 / mes',time:'10 seg',freq:'Diario',
+ res:'Elasticidad en 8 semanas',dur:'Continuo',risk:'Bajo',evi:'Tominaga, Acta Biochim Pol 2012: astaxantina oral+tópica mejora arrugas y elasticidad.'},
+{c:'supplements',n:'Zinc bisglicinato + Vitamina C oral',inv:0,tier:'gratis',age:18,ph:2,z:['piel'],g:['piel'],
+ what:'Cofactores de síntesis de colágeno y control de inflamación/acné.',cost:'$10–20 / mes',time:'10 seg',freq:'Diario',
+ res:'Variable',dur:'Continuo',risk:'Zinc lejos de hierro; no exceder 30 mg',evi:'Vit C es cofactor esencial de la prolil-hidroxilasa (síntesis de colágeno).'},
+{c:'supplements',n:'NMN / NR (precursores de NAD+)',inv:0,tier:'premium',age:35,ph:4,md:true,z:['piel'],g:['longevidad'],
+ what:'250-500 mg/día. Apoyo a la longevidad celular (evidencia emergente).',cost:'$40–90 / mes',time:'10 seg',freq:'Diario',
+ res:'Largo plazo; marcador sistémico',dur:'Continuo',risk:'Evidencia en humanos aún limitada; consultar médico',evi:'Yoshino, Science 2021: NMN mejora sensibilidad a insulina; efectos en piel aún en estudio.'},
+{c:'supplements',n:'Magnesio glicinato',inv:0,tier:'gratis',age:18,ph:1,z:['piel'],g:['longevidad'],
+ what:'200-400 mg PM. Mejora sueño y reduce cortisol — clave para la piel.',cost:'$8–16 / mes',time:'10 seg',freq:'PM',
+ res:'Mejor sueño en 1-2 semanas',dur:'Continuo',risk:'Puede ablandar heces',evi:'Sueño profundo regula cortisol; cortisol alto degrada colágeno (Sapolsky).'},
+// HÁBITOS DE LONGEVIDAD (estilo de vida que hace ver mejor y envejecer más lento)
+{c:'habits',n:'Dormir 7–9 h (higiene de sueño)',inv:0,tier:'gratis',age:18,ph:1,z:['piel','periocular'],g:['longevidad','ojos','piel'],
+ what:'En sueño profundo el cuerpo libera hormona de crecimiento y repara la piel. Dormir poco sube el cortisol, que degrada colágeno y da ojeras.',cost:'$0',time:'—',freq:'Cada noche',
+ res:'Menos ojeras/hinchazón en 1-2 semanas',dur:'Permanente',risk:'Ninguno',evi:'Revisiones 2024–2026 de longevidad cutánea: el sueño regula cortisol y reparación de barrera; su déficit acelera el envejecimiento.'},
+{c:'habits',n:'Evitar sol pico + sombrero/lentes',inv:0,tier:'gratis',age:18,ph:1,z:['piel','frente','mejillas'],g:['piel','longevidad'],
+ what:'El sol explica ~80% del envejecimiento visible. Evita 10–16 h, usa sombrero y lentes además del SPF.',cost:'$0',time:'—',freq:'Diario',
+ res:'Prevención (menos manchas/arrugas a mediano plazo)',dur:'Permanente',risk:'Ninguno',evi:'El fotoenvejecimiento (exposoma UV) es el principal factor extrínseco del envejecimiento cutáneo (revisiones dermatológicas).'},
+{c:'habits',n:'Dieta anti-glicación (menos azúcar/ultraprocesados)',inv:0,tier:'gratis',age:18,ph:1,z:['piel'],g:['piel','longevidad'],
+ what:'El azúcar genera glicación, que endurece el colágeno y apaga la piel. Prioriza proteína, vegetales, antioxidantes y omega-3.',cost:'$0',time:'—',freq:'Diario',
+ res:'Piel más luminosa en 4-8 semanas',dur:'Continuo',risk:'Ninguno',evi:'Dieta rica en antioxidantes y baja en azúcares reduce glicación y estrés oxidativo cutáneo (PMC 2024–2025).'},
+{c:'habits',n:'Ejercicio 3–5x/semana',inv:0,tier:'gratis',age:18,ph:1,z:['piel','mejillas'],g:['longevidad','piel'],
+ what:'Mejora circulación, oxigenación y función mitocondrial de la piel: más glow y mejor reparación.',cost:'$0',time:'30–45 min',freq:'3-5x/sem',
+ res:'Mejor color/tono en semanas',dur:'Continuo',risk:'Ninguno',evi:'Ejercicio mejora perfusión, temperatura e hidratación cutánea y modula el envejecimiento (JMIR Dermatology 2024).'},
+{c:'habits',n:'No fumar y moderar alcohol',inv:0,tier:'gratis',age:18,ph:1,z:['piel','labios'],g:['longevidad','piel'],
+ what:'Fumar y el exceso de alcohol aceleran arrugas, deshidratan y opacan la piel. Dejarlo es de lo que más rejuvenece.',cost:'$0',time:'—',freq:'Siempre',
+ res:'Mejora progresiva de tono e hidratación',dur:'Permanente',risk:'Ninguno',evi:'Tabaco y alcohol son factores del exposoma asociados a envejecimiento cutáneo acelerado.'},
+{c:'habits',n:'Manejo del estrés (respiración/meditación)',inv:0,tier:'gratis',age:18,ph:2,z:['piel'],g:['longevidad','piel'],
+ what:'El estrés crónico inflama la piel vía cortisol. 10 min/día de respiración o meditación bajan la carga.',cost:'$0',time:'10 min',freq:'Diario',
+ res:'Menos brotes/rojez con el tiempo',dur:'Continuo',risk:'Ninguno',evi:'El estrés psicosocial forma parte del exposoma y amplifica vías inflamatorias del envejecimiento.'},
+// TRATAMIENTOS no quirúrgicos
+{c:'treatments',n:'Hydrafacial',inv:1,tier:'medio',age:22,ph:3,z:['piel','mejillas'],g:['piel'],
+ what:'Limpieza profunda, exfoliación e hidratación en consultorio.',cost:'$80–200 / sesión',time:'45 min',freq:'Mensual',
+ res:'Luminosidad inmediata',dur:'2-4 semanas',risk:'Mínimo',evi:'Protocolo de hidradermoabrasión; mejora hidratación y textura inmediata.'},
+{c:'treatments',n:'Peel químico (mandélico/glicólico)',inv:1,tier:'medio',age:25,ph:3,z:['piel','mejillas'],g:['piel'],fitzCaution:true,
+ what:'Exfoliación profesional. Mandélico es más seguro en fototipos altos.',cost:'$60–150 / sesión',time:'30 min',freq:'Cada 3-4 sem (serie de 4-6)',
+ res:'Tono más parejo en 2-3 sesiones',dur:'Meses',risk:'Riesgo de hiperpigmentación en Fitz IV-VI: usar ácidos suaves + SPF estricto',
+ evi:'Sharad, J Cutan Aesthet Surg 2013: peels de glicólico mejoran textura y pigmento.'},
+{c:'treatments',n:'Microneedling con radiofrecuencia',inv:2,tier:'premium',age:28,ph:4,z:['piel','mejillas','mandibula'],g:['piel','mandibula'],
+ what:'Estimula colágeno en profundidad; mejora poros, cicatrices y firmeza.',cost:'$250–500 / sesión',time:'60 min',freq:'Serie de 3, c/4-6 sem',
+ res:'Firmeza/textura en 2-3 meses',dur:'12-18 meses',risk:'Rojez 1-2 días; cuidado con pigmento en fototipos altos',
+ evi:'Hou, Dermatol Surg 2017: microneedling+RF mejora firmeza y cicatrices con alta satisfacción.'},
+{c:'treatments',n:'HIFU / Ultherapy (lifting sin cirugía)',inv:2,tier:'premium',age:38,ph:5,z:['mandibula','cuello','mejillas'],g:['mandibula','longevidad'],
+ what:'Ultrasonido focalizado que tensa el SMAS; define óvalo y cuello.',cost:'$600–1500 / sesión',time:'60-90 min',freq:'1x, repetir 12-18m',
+ res:'Lifting gradual en 2-3 meses',dur:'12-18 meses',risk:'Molestia durante; resultados variables',
+ evi:'Suh, Dermatol Surg 2011: HIFU produce tensado medible del tercio inferior facial.'},
+{c:'treatments',n:'IPL / luz pulsada para pigmento',inv:1,tier:'premium',age:28,ph:4,z:['piel','mejillas'],g:['piel'],fitzCaution:true,
+ what:'Trata manchas solares, rojez y vascularidad.',cost:'$150–400 / sesión',time:'30 min',freq:'Serie de 3-5',
+ res:'Manchas más claras en 2-4 sesiones',dur:'Meses-años con SPF',risk:'⚠️ Contraindicado/riesgoso en Fitz V-VI (quemaduras, PIH)',
+ evi:'Goldberg, J Cosmet Laser Ther: IPL eficaz para léntigos y telangiectasias en fototipos bajos.'},
+{c:'treatments',n:'LED rojo terapéutico',inv:0,tier:'medio',age:20,ph:2,z:['piel'],g:['piel','longevidad'],
+ what:'Fotobiomodulación; estimula colágeno y calma inflamación. En casa o consultorio.',cost:'$0 (clínica $40) o mascarilla $150–400',time:'10-20 min',freq:'3-5x/sem',
+ res:'Sutil en 8-12 semanas',dur:'Continuo',risk:'Muy bajo',evi:'Wunsch, Photomed Laser Surg 2014: luz roja mejora densidad de colágeno y arrugas.'},
+{c:'treatments',n:'Mesoterapia hidratante / skinboosters',inv:2,tier:'premium',age:30,ph:4,z:['piel','mejillas','periocular'],g:['piel'],
+ what:'Microinyecciones de AH no reticulado para hidratación profunda y glow.',cost:'$200–450 / sesión',time:'30 min',freq:'Serie de 3, c/mes',
+ res:'Glow y firmeza en 3-4 semanas',dur:'4-6 meses',risk:'Hematomas leves',evi:'Profhilo/skinboosters mejoran hidratación dérmica y elasticidad (Sparavigna 2019).'},
+// INYECTABLES
+{c:'injectables',n:'Toxina botulínica (frente/glabela/patas de gallo)',inv:3,tier:'premium',age:28,ph:4,always30:true,also:'treatments',z:['frente','periocular'],g:['piel','longevidad'],
+ why:'Relaja los músculos que marcan las líneas de expresión. Después de los 30 es clave porque actúa como preventivo: frena que esas líneas se vuelvan arrugas permanentes — por eso se recomienda a casi todas a esta edad.',
+ what:'Relaja músculos que crean líneas dinámicas; correctivo y, sobre todo a partir de los 30, preventivo.',cost:'$200–500 / zona',time:'15 min',freq:'Cada 3-4 meses',
+ res:'Líneas suavizadas en 5-10 días',dur:'3-4 meses',risk:'Ptosis temporal si mal aplicado; elegir médico certificado',
+ evi:'Carruthers, Dermatol Surg: toxina botulínica reduce líneas dinámicas de forma reproducible.'},
+{c:'injectables',n:'Bioestimulador de colágeno (Sculptra/Radiesse)',inv:3,tier:'premium',age:35,ph:5,z:['mejillas','mandibula'],g:['mandibula','longevidad'],
+ what:'Estimula tu propio colágeno por 18-24 meses; restaura volumen gradual y natural.',cost:'$700–1200 / sesión',time:'30 min',freq:'2-3 sesiones, c/mes',
+ res:'Volumen gradual en 1-3 meses',dur:'18-24 meses',risk:'Nódulos si mal técnica; requiere experto',
+ evi:'Lacombe, Semin Cutan Med Surg 2009: PLLA (Sculptra) induce neocolagénesis sostenida.'},
+{c:'injectables',n:'Ácido hialurónico para contorno mandibular',inv:3,tier:'premium',age:30,ph:5,z:['mandibula'],g:['mandibula'],
+ what:'Relleno de contorno para definir línea mandibular y mentón.',cost:'$400–900 / jeringa',time:'30 min',freq:'Cada 12-18 meses',
+ res:'Inmediato',dur:'12-18 meses',risk:'Hematoma; riesgo vascular raro — solo médico experto',
+ evi:'AH para contorno mandibular mejora ángulo y definición (Sykes, JAMA Facial Plast Surg).'},
+{c:'injectables',n:'AH para surco lagrimal (ojeras de hundimiento)',inv:3,tier:'premium',age:30,ph:5,z:['periocular'],g:['ojos'],
+ what:'Rellena el hueco bajo el ojo que crea sombra; solo para ojeras estructurales.',cost:'$400–800',time:'20 min',freq:'12-18 meses',
+ res:'Inmediato',dur:'12-18 meses',risk:'Zona delicada; edema/Tyndall si mal hecho — experto obligatorio',
+ evi:'Relleno de tear trough corrige ojera por pérdida de volumen (Viana, Aesthet Surg J).'},
+{c:'injectables',n:'PRP / Profhilo periocular',inv:2,tier:'premium',age:30,ph:4,z:['periocular','piel'],g:['ojos','piel'],
+ what:'Plasma rico en plaquetas o Profhilo para calidad de piel y microcirculación.',cost:'$250–500 / sesión',time:'40 min',freq:'Serie de 3',
+ res:'Textura/tono en 4-8 semanas',dur:'6-12 meses',risk:'Hematomas leves',evi:'PRP mejora textura periorbital y color de ojeras (Mehryan, J Cosmet Dermatol 2014).'},
+// CAPILAR
+{c:'hair',n:'Aceite de romero (masaje en cuero cabelludo)',inv:0,tier:'gratis',age:18,ph:1,nuevo:true,z:['cabello'],g:['cabello'],
+ what:'Diluido en aceite portador, masajeado 2-3x/semana. Mejora circulación del folículo. Alternativa natural con evidencia creciente.',cost:'$8–15 / mes',time:'5-10 min',freq:'2-3x/sem',
+ res:'Densidad en 3-6 meses (constancia)',dur:'Continuo',risk:'Prueba de parche; puede irritar si no se diluye',
+ evi:'Panahi, Skinmed 2015 (RCT): aceite de romero comparable a minoxidil 2% a 6 meses en alopecia androgenética, con menos picor.'},
+{c:'hair',n:'Champú con cafeína (+ adenosina)',inv:0,tier:'gratis',age:18,ph:1,nuevo:true,z:['cabello'],g:['cabello'],
+ what:'Cafeína tópica que estimula el metabolismo del folículo (vía adenosina/cAMP). Se deja actuar 2 min antes de enjuagar.',cost:'$10–20 / mes',time:'2 min',freq:'Diario/frecuente',
+ res:'Menos caída y más grosor en ~6 meses',dur:'Continuo',risk:'Bajo',evi:'Revisión sistemática 2025 (MDPI Healthcare) y ensayos: cafeína tópica reduce la caída y mejora densidad; sinergia con adenosina.'},
+{c:'hair',n:'Cuidado anti-daño (calor y quiebre)',inv:0,tier:'gratis',age:18,ph:1,z:['cabello'],g:['cabello'],
+ what:'Protector térmico antes de plancha/secador, bajar temperatura, tratamientos de reconstrucción (bond-builder/keratina) y evitar peinados muy tirantes.',cost:'$12–30 / mes',time:'2-5 min',freq:'Con cada calor',
+ res:'Menos quiebre y más brillo en semanas',dur:'Continuo',risk:'Ninguno',evi:'El daño por calor y tracción degrada la cutícula y la queratina; protección térmica y reconstructores reducen la rotura.'},
+{c:'hair',n:'Masaje de cuero cabelludo diario',inv:0,tier:'gratis',age:18,ph:1,z:['cabello'],g:['cabello'],
+ what:'4 minutos al día de masaje estimulan mecánicamente el folículo y mejoran el grosor con el tiempo.',cost:'$0',time:'4 min',freq:'Diario',
+ res:'Grosor aparente en 4-6 meses',dur:'Continuo',risk:'Ninguno',evi:'Koyama, Eplasty 2016: el masaje estandarizado del cuero cabelludo aumentó el grosor del cabello.'},
+{c:'hair',n:'Minoxidil tópico 5%',inv:0,tier:'gratis',age:22,ph:2,md:true,z:['cabello'],g:['cabello'],
+ what:'Prolonga la fase de crecimiento; primera línea para densidad.',cost:'$15–30 / mes',time:'1 min',freq:'1-2x día',
+ res:'Densidad en 3-6 meses (constancia clave)',dur:'Mientras se use',risk:'Caída inicial transitoria; irritación',
+ evi:'Minoxidil mejora densidad capilar en mujeres (Lucky, J Am Acad Dermatol 2004).'},
+{c:'hair',n:'Saw palmetto (antagonista DHT natural)',inv:0,tier:'gratis',age:25,ph:2,z:['cabello'],g:['cabello'],
+ what:'Inhibidor suave de DHT, alternativa natural para quien evita finasterida.',cost:'$10–20 / mes',time:'10 seg',freq:'Diario',
+ res:'Lento, 4-6 meses',dur:'Continuo',risk:'Evidencia moderada; menos potente que finasterida',
+ evi:'Saw palmetto mostró mejora capilar leve-moderada (Wessagowit, J Cutan Med 2016).'},
+{c:'hair',n:'LED rojo para cuero cabelludo + biotina',inv:0,tier:'medio',age:25,ph:2,z:['cabello'],g:['cabello'],
+ what:'Fotobiomodulación del folículo + soporte nutricional con biotina.',cost:'$150–300 (gorra LED) + $10/mes',time:'10 min',freq:'3-5x/sem',
+ res:'Densidad en 4-6 meses',dur:'Continuo',risk:'Bajo',evi:'Láser de baja potencia aumenta densidad capilar (Jimenez, Am J Clin Dermatol 2014).'},
+{c:'hair',n:'PRP capilar / mesoterapia con factores de crecimiento',inv:2,tier:'premium',age:28,ph:4,z:['cabello'],g:['cabello'],
+ what:'Inyecciones de plasma propio para reactivar folículos en miniaturización.',cost:'$300–600 / sesión',time:'45 min',freq:'Serie de 3-4, c/mes',
+ res:'Densidad en 3-6 meses',dur:'Mantenimiento c/6-12m',risk:'Dolor leve; hematomas',evi:'PRP mejora densidad y grosor capilar (Gentile, Stem Cells Transl Med 2015).'},
+{c:'hair',n:'Evaluación para microinjerto FUE/DHI',inv:3,tier:'premium',age:30,ph:5,z:['cabello'],g:['cabello'],
+ what:'Si hay retroceso establecido de línea capilar, valorar trasplante.',cost:'$3000–8000 (única)',time:'6-8 h',freq:'1 vez',
+ res:'Definitivo en 9-12 meses',dur:'Permanente',risk:'Quirúrgico menor; elegir clínica con casos verificables',
+ evi:'FUE/DHI: técnicas estándar con alta supervivencia de injerto y resultado permanente.'},
+// --- TERAPIAS REGENERATIVAS / TENDENCIA 2026 ---
+{c:'injectables',n:'Polinucleótidos (Rejuran / Plinest)',inv:2,tier:'premium',age:30,ph:4,nuevo:true,z:['piel','periocular','mejillas'],g:['piel','ojos','longevidad'],
+ what:'Fragmentos de ADN (PDRN) que estimulan fibroblastos y reparan la matriz de la piel: mejora elasticidad, hidratación profunda y calidad cutánea. De lo más trending en bio-regeneración.',cost:'$250–500 / sesión',time:'30 min',freq:'Serie de 3, c/2-4 sem',
+ res:'Calidad y firmeza en 4-8 semanas',dur:'6-12 meses',risk:'Hematomas/inflamación leve; evitar en alergia a pescado (origen del PDRN)',
+ evi:'Revisiones revisadas por pares: el PDRN aumenta síntesis de colágeno, mejora elasticidad y reduce inflamación.'},
+{c:'treatments',n:'Exosomas (con microneedling o tópicos)',inv:2,tier:'premium',age:30,ph:4,nuevo:true,z:['piel','mejillas','cabello'],g:['piel','cabello','longevidad'],
+ what:'Vesículas con factores de crecimiento que envían señales de reparación a las células: potencian regeneración de piel y folículo, sobre todo combinados con microneedling. Tecnología regenerativa emergente.',cost:'$300–700 / sesión',time:'45 min',freq:'Serie de 3',
+ res:'Textura y luminosidad en 4-8 semanas',dur:'Variable (evidencia aún en desarrollo)',risk:'Producto no estandarizado entre marcas; elegir clínica seria. Evidencia clínica todavía emergente',
+ evi:'Hallazgos preliminares: exosomas + microneedling potencian estimulación folicular y reparación cutánea.'},
+{c:'injectables',n:'Hilos tensores PDO (lifting sin cirugía)',inv:3,tier:'premium',age:35,ph:5,nuevo:true,z:['mandibula','mejillas','cuello'],g:['mandibula','longevidad'],
+ what:'Hilos reabsorbibles que reposicionan y tensan tejido y estimulan colágeno: redefinen óvalo y cuello sin cirugía. Tendencia en "non-surgical facelift".',cost:'$600–1500 / sesión',time:'45-60 min',freq:'Cada 12-18 meses',
+ res:'Efecto lifting inmediato + colágeno progresivo',dur:'12-18 meses',risk:'Hematomas, asimetría o extrusión si mala técnica — solo médico experto',
+ evi:'Los hilos PDO producen tensado mecánico inmediato y neocolagénesis (revisiones de medicina estética).'},
+];
+const CATNAMES={skincare:['Skincare','🧴'],habits:['Hábitos','🌿'],supplements:['Suplementos','💊'],treatments:['Tratamientos','💉'],hair:['Capilar','💇‍♀️']};
+const catOf=r=> (r.c==='injectables'?'treatments':r.c); // inyectables se muestran dentro de Tratamientos
+const PHASES=[['Fundación','0–1 mes','Lo no-negociable: base que sostiene todo lo demás.'],
+  ['Activación','1–3 meses','Activos potentes entran gradualmente.'],
+  ['Optimización','3–6 meses','Primeros tratamientos profesionales no invasivos.'],
+  ['Aceleración','6–9 meses','Combinación de protocolos e inyectables preventivos.'],
+  ['Sostenimiento','9–12+ meses','Mantenimiento y ajuste según tu re-escaneo.']];
+
+const tierRank={gratis:0,medio:1,premium:2};
+const invRank={casa:0,'no-aguja':1,'todo':3};
+function buildPlan(){
+  const p=STATE.profile, s=STATE.scan;
+  const weak=Object.entries(s.zones).sort((a,b)=>a[1].score-b[1].score).slice(0,4).map(x=>x[0]);
+  const recs=CAT.filter(r=>{
+    // recomendación universal por edad (ej. bótox preventivo 30+) — se muestra siempre
+    if(r.always30 && p.age>=30) return true;
+    if(p.age < r.age-2) return false;
+    if(invRank[p.invasive] < r.inv) return false;
+    // budget: allow up to selected tier (premium sees all)
+    if(p.budget==='gratis' && tierRank[r.tier]>0) return false;
+    if(p.budget==='medio' && tierRank[r.tier]>1) return false;
+    return true;
+  }).map(r=>{
+    let score=0;
+    r.z.forEach(z=>{ const idx=weak.indexOf(z); if(idx>=0) score+=(4-idx)*3; });
+    r.g.forEach(gg=>{ if(p.goals.includes(gg)) score+=4; });
+    if(r.tier==='gratis') score+=1;
+    if(r.always30 && p.age>=30) score+=6;          // prioriza el preventivo
+    const caution = r.fitzCaution && p.fitz>=4;
+    // fuera de su tolerancia/presupuesto pero recomendado igual (preventivo)
+    const outside = (invRank[p.invasive] < r.inv) ||
+      (p.budget==='gratis' && tierRank[r.tier]>0) || (p.budget==='medio' && tierRank[r.tier]>1);
+    return {...r, prio:score, caution, outside};
+  }).sort((a,b)=>b.prio-a.prio);
+  STATE.plan={recs, weak};
+}
+
+function renderPlan(){
+  const cats=Object.keys(CATNAMES);
+  $('plan-tabs').innerHTML=`<div class="tab ${STATE.activeCat==='all'?'on':''}" data-c="all">Todo</div>`+
+    cats.map(c=>`<div class="tab ${STATE.activeCat===c?'on':''}" data-c="${c}">${CATNAMES[c][1]} ${CATNAMES[c][0]}</div>`).join('');
+  $('plan-tabs').querySelectorAll('.tab').forEach(t=>t.onclick=()=>{STATE.activeCat=t.dataset.c;renderPlan();});
+  const p=STATE.profile;
+  const eng=STATE.engagement||{}; const nSel=Object.values(eng).filter(v=>['hago','probar','hecho'].includes(v)).length;
+  let h=`<div class="card" style="margin-top:6px"><div class="row between"><b>Tu plan filtrado para ti</b>
+    <span class="pill">${p.budget==='gratis'?'Gratis/bajo':p.budget==='medio'?'Medio':'Premium'}</span></div>
+    <p class="sub" style="margin-top:6px">Priorizado por tus zonas débiles (${STATE.plan.weak.map(z=>ZMETA[z][0]).join(', ')}), tus objetivos y tu presupuesto.</p>
+    <div class="note" style="background:var(--rose-l);color:var(--rose-d);margin:8px 0">👉 Toca <b>«Voy a probar»</b> en lo que harás. Tu proyección y tus años de edad visible se calculan según lo que elijas. Usa <b>«Ver detalles»</b> para costo, evidencia y riesgos. Toca de nuevo un botón para quitarlo.</div>
+    <div class="row between" style="margin-top:8px">
+      <span class="sub">${nSel?('✓ '+nSel+' seleccionados'):'Aún no seleccionas ninguno'}</span>
+      ${nSel?`<button class="btn ghost sm" style="width:auto;padding:8px 12px" onclick="resetEngagement()">Reiniciar selección</button>`:''}
+    </div>
+    <div style="margin-top:8px">
+      <button class="btn ghost sm" onclick="toggleBudgetView()" id="bv-btn">${p.budget==='premium'?'Ver solo opciones gratis':'Ver todo el espectro (incluye premium)'}</button>
+    </div></div>`;
+  const conds=(p.conditions||[]).filter(c=>c&&c!=='Ninguna');
+  if(conds.length){
+    const gen=conds.map(c=>COND_WARN[c]).filter(cfg=>cfg&&!cfg.kw.length).map(cfg=>cfg.txt);
+    h+=`<div class="card" style="border-color:var(--red)"><b style="color:var(--red)">⚠️ Precauciones por tu piel</b>
+      <p class="sub" style="margin-top:4px">Declaraste: <b>${conds.join(', ')}</b>. Verás avisos en los tratamientos que requieren cuidado, y te recomendamos validarlo con tu dermatólogo.</p>
+      ${gen.map(t=>`<p class="sub" style="margin-top:4px">• ${t}</p>`).join('')}</div>`;
+  }
+
+  if(STATE.activeCat==='all'){
+    h+=`<div class="note" style="margin-bottom:10px">🗓️ <b>Tu plan va por fases</b> para no abrumarte. Es el orden dermatológico recomendado: primero <b>proteger y prevenir</b> (Fundación), luego activos, y más adelante tratamientos. Cada fase muestra qué hacer en ese momento — no todo a la vez.</div>`;
+    // agrupar por fase — el CABELLO se maneja aparte (se estima, no se escanea)
+    PHASES.forEach((ph,i)=>{
+      const inPh=STATE.plan.recs.filter(r=>r.ph===i+1 && r.c!=='hair');
+      if(!inPh.length)return;
+      h+=`<div class="phase"><div class="tl"><div class="pn">${i+1}</div><div class="ln"></div></div>
+        <div class="pc"><b style="font-family:Fraunces;font-size:18px">${ph[0]}</b> <span class="sub">${ph[1]}</span>
+        <p class="sub" style="margin:2px 0 10px">${ph[2]}</p>
+        ${inPh.slice(0,5).map(recCard).join('')}</div></div>`;
+    });
+    if(STATE.plan.recs.some(r=>r.c==='hair')){
+      h+=`<div class="card"><div class="row between"><b>💇‍♀️ Rutina capilar (aparte)</b><span class="vb">estimado</span></div>
+        <p class="sub" style="margin-top:4px">El cabello <b>no se escanea aún</b>, así que no va en las fases del rostro: lo estimamos por tu edad y lo declarado. Tiene su propia rutina en la pestaña Capilar.</p>
+        <button class="btn ghost sm" style="margin-top:8px" onclick="goCat('hair')">Ver mi rutina capilar →</button></div>`;
+    }
+  } else {
+    const list=STATE.plan.recs.filter(r=>catOf(r)===STATE.activeCat);
+    if(STATE.activeCat==='skincare'){
+      const am=list.filter(r=>(r.rt||'AM/PM').includes('AM')), pm=list.filter(r=>(r.rt||'AM/PM').includes('PM'));
+      h+=`<div class="note" style="background:var(--rose-l);color:var(--rose-d)">Tu rutina está dividida en <b>☀️ Mañana (AM)</b> y <b>🌙 Noche (PM)</b>. El SPF va siempre en la mañana; los activos fuertes (retinol, ácidos, PDRN) por la noche.</div>`;
+      h+=`<h3 style="margin:10px 0 8px">☀️ Rutina de mañana (AM)</h3>`+(am.length?am.map(recCard).join(''):`<div class="note">Sin activos AM para tu nivel actual.</div>`);
+      h+=`<h3 style="margin:16px 0 8px">🌙 Rutina de noche (PM)</h3>`+(pm.length?pm.map(recCard).join(''):`<div class="note">Sin activos PM para tu nivel actual.</div>`);
+    } else if(STATE.activeCat==='hair'){
+      h+=`<div class="note">💡 <b>Cómo medimos el daño capilar:</b> el escaneo facial no evalúa bien el cabello. En una próxima versión sumamos un <b>escaneo de acercamiento al cuero cabelludo/línea capilar</b> (tricoscopía con la misma cámara) para medir densidad, grosor y quiebre. Por ahora estimamos según tu edad y lo declarado, y te damos una rutina de base con evidencia.</div>`;
+      h+= list.length? list.map(recCard).join('') : `<div class="note">No hay recomendaciones en esta categoría para tu nivel actual.</div>`;
+    } else {
+      h+= list.length? list.map(recCard).join('') : `<div class="note">No hay recomendaciones en esta categoría para tu nivel de presupuesto/tolerancia actual. Amplía tu presupuesto o tolerancia para verlas.</div>`;
+    }
+  }
+  $('plan-body').innerHTML=h;
+  bindEng();
+}
+const ZWHY={frente:'las líneas de la frente y el entrecejo',periocular:'la zona de los ojos (ojeras, bolsas y patas de gallo)',
+  nariz:'la armonía de la nariz',labios:'el volumen e hidratación de los labios',mejillas:'el volumen y la firmeza de las mejillas',
+  mandibula:'la definición del óvalo y la mandíbula',cuello:'la firmeza del cuello',piel:'la calidad de la piel (textura, manchas y luminosidad)',cabello:'la densidad y salud capilar'};
+// razones GENERALES cortas (cuando no es por tu score), varían según la zona que mejora
+const ZBEN={piel:'Cuida y previene el envejecimiento de tu piel día a día.',
+  frente:'Suaviza y previene las líneas de expresión.',
+  periocular:'Rejuvenece y previene el cansancio de tu mirada.',
+  labios:'Mejora volumen, color e hidratación de tus labios.',
+  mejillas:'Aporta firmeza y volumen a tus mejillas.',
+  mandibula:'Define y da firmeza a tu óvalo facial.',
+  cuello:'Firmeza y prevención en tu cuello.',
+  cabello:'Cuida la densidad y la salud de tu cabello.'};
+function listJoin(a){ a=a.filter(Boolean); if(a.length<=1)return a[0]||''; return a.slice(0,-1).join(', ')+' y '+a[a.length-1]; }
+function rtBadge(r){ if(r.c!=='skincare')return ''; const rt=r.rt||'AM/PM';
+  const m={'AM':'☀️ Mañana','PM':'🌙 Noche','AM/PM':'☀️🌙 AM y PM'}[rt]||rt;
+  return ` <span class="vb" style="color:#3a6ea5;background:#e8f0fa">${m}</span>`; }
+// precauciones que aplican a ESTA recomendación según las condiciones declaradas
+function condWarn(r){ const cs=STATE.profile.conditions||[], out=[];
+  cs.forEach(c=>{ const cfg=COND_WARN[c]; if(!cfg||!cfg.kw.length)return;
+    const hit=cfg.kw.some(k=>(r.n+' '+(r.what||'')).toLowerCase().includes(k.toLowerCase()));
+    if(hit) out.push('<b>'+c+':</b> '+cfg.txt); });
+  return out; }
+function whyText(r){
+  const s=STATE.scan, zs=s?s.zones:null;
+  const weak=(STATE.plan&&STATE.plan.weak)||[];
+  // 1) general + lógico (qué mejora y por qué) — usa la explicación propia si la tiene
+  // 1) si toca una de TUS prioridades (score bajo) → razón corta y personalizada
+  const hit=r.z.filter(z=>weak.includes(z) && zs);
+  if(hit.length){ const z0=hit.slice().sort((a,b)=>zs[a].score-zs[b].score)[0];
+    return `Tu ${ZMETA[z0]?ZMETA[z0][0]:z0} es prioridad (${zs[z0].score}/100); esto actúa justo ahí.`; }
+  // 2) si no es por score → razón general breve
+  if(r.always30 && STATE.profile.age>=30) return 'Preventivo desde los 30: frena que las líneas de expresión se vuelvan permanentes.';
+  return ZBEN[r.z[0]] || 'Suma a tu longevidad facial y a verte mejor.';
+}
+function recCard(r){
+  const e=STATE.engagement[r.n]||'';
+  const selected = e==='hago'||e==='probar'||e==='hecho';
+  const where=r.inv===0?'🏠 En casa':r.inv===1?'🏥 Consultorio':r.inv>=3?'💉 Medicina estética':'🏥 Consultorio';
+  const badges=`${r.nuevo?'<span class="vb" style="color:var(--rose-d);background:var(--rose-l)">✦ Novedad</span>':''}${(r.always30&&STATE.profile.age>=30)?'<span class="vb" style="color:var(--rose-d);background:var(--rose-l)">Preventivo 30+</span>':''}${rtBadge(r)}`;
+  const alerts=`${r.caution?`<div class="note" style="background:#fbeee9;color:var(--red)">⚠️ Tu fototipo (Fitz ${STATE.profile.fitz}) requiere precaución por riesgo de hiperpigmentación. Pide a tu médico parámetros conservadores.</div>`:''}${(r.md||r.inv>=2)?`<div class="note" style="background:#fff6e8;color:#9a6a1f">🩺 <b>Doble-chequéalo con tu médico</b> antes de empezar (contraindicaciones según tu historia, embarazo/lactancia o medicamentos).</div>`:''}${condWarn(r).map(w=>`<div class="note" style="background:#fbeee9;color:var(--red)">⚠️ ${w}</div>`).join('')}`;
+  return `<div class="rec ${selected?'sel':''}">
+   <div class="row between" style="align-items:flex-start">
+     <div style="flex:1"><h4>${r.n}</h4>${badges?`<div class="rec-badges">${badges}</div>`:''}</div>
+     <span class="dot" title="nivel" style="background:${col(r.tier==='gratis'?85:r.tier==='medio'?65:50)};margin-top:5px"></span>
+   </div>
+   <p class="rec-what">${r.what}</p>
+   <div class="rec-chips"><span>💲 ${r.cost}</span><span>⏱️ ${r.freq}</span><span>${where}</span></div>
+   <div class="why">💡 <b>Por qué para ti:</b> ${whyText(r)}</div>
+   ${r.outside?`<div class="note" style="background:#f3efed">ℹ️ Recomendado por tu edad aunque queda fuera de tu presupuesto/tolerancia actual.</div>`:''}
+   ${alerts?`<div style="margin-top:2px">${alerts}</div>`:''}
+   ${buyBtn(r)}
+   <div class="eng-label">¿Lo vas a hacer? (esto arma tu plan y tu proyección)</div>
+   <div class="eng">
+     <button data-n="${r.n}" data-v="probar" class="${e==='probar'?'on':''}">Voy a probar</button>
+     <button data-n="${r.n}" data-v="hago" class="${e==='hago'?'on':''}">Ya lo hago</button>
+     <button data-n="${r.n}" data-v="hecho" class="${e==='hecho'?'on':''}">Hecho</button>
+     <button data-n="${r.n}" data-v="no" class="no ${e==='no'?'on':''}">No</button>
+   </div>
+   ${selected?`<p class="sub" style="margin-top:6px;color:var(--green)">✓ En tu plan. Toca de nuevo para quitarlo.</p>`:''}
+   <button class="rec-toggle" onclick="this.closest('.rec').classList.toggle('open')">Ver detalles y evidencia ▾</button>
+   <div class="rec-more">
+     <div class="recgrid">
+       <div><b>Tiempo por uso</b>${r.time}</div><div><b>Resultados</b>${r.res}</div>
+       <div><b>Duración</b>${r.dur}</div><div><b>Dónde</b>${where}</div>
+     </div>
+     <div style="font-size:12px;margin-top:4px"><b style="color:var(--muted)">Riesgos:</b> ${r.risk}</div>
+     <div class="evi">📚 ${r.evi}</div>
+   </div></div>`;
+}
+function bindEng(){ document.querySelectorAll('.eng button').forEach(b=>b.onclick=()=>{
+  const n=b.dataset.n,v=b.dataset.v;
+  STATE.engagement[n]= STATE.engagement[n]===v? '' : v;
+  saveUser(); renderPlan(); toast('Guardado');});}
+window.toggleBudgetView=function(){ STATE.profile.budget= STATE.profile.budget==='premium'?'gratis':'premium'; buildPlan(); renderPlan(); };
+window.resetEngagement=function(){ STATE.engagement={}; saveUser(); renderPlan(); toast('Selección reiniciada'); };
+window.goCat=function(c){ STATE.activeCat=c; renderPlan(); window.scrollTo(0,0); };
+
+/* ============================================================
+   PROJECTION
+============================================================ */
+function adoptionTier(){
+  const c=STATE.profile.commitment;
+  return c==='half'?0:c==='full-home'?1:c==='plus'?2:3;
+}
+const TIERS=[
+ {n:'~50% del plan (lo básico de casa)',yr:[2,4],desc:'SPF, sueño, limpieza, primeros suplementos.'},
+ {n:'Plan completo de casa',yr:[4,7],desc:'Skincare + suplementos + lifestyle consistentes.'},
+ {n:'+ 2-3 tratamientos en consultorio',yr:[6,9],desc:'Peels, microneedling, mesoterapia sumados a la casa.'},
+ {n:'Plan premium (inyectables + bioestimuladores)',yr:[8,12],desc:'Todo el espectro avanzado combinado.'}
+];
+// años de "edad visible" recuperables por intervención (según evidencia documentada)
+function effYears(r){
+  if(r.c==='hair') return 0.2;
+  const base={skincare:0.7,supplements:0.4,treatments:1.6,injectables:2.4}[r.c]||0.5;
+  const tmul=r.tier==='premium'?1.25:r.tier==='medio'?1.0:0.8;
+  return base*tmul;
+}
+// suma el efecto de las intervenciones que la usuaria marcó (ya las hace / va a probar / completadas)
+function computeProjection(){
+  const recs=(STATE.plan&&STATE.plan.recs)||[]; const eng=STATE.engagement||{};
+  const committed=recs.filter(r=>['hago','probar','hecho'].includes(eng[r.n]));
+  let raw=0; const zp={};
+  committed.forEach(r=>{ raw+=effYears(r); const pts=(r.inv>=2?10:r.inv===1?7:5);
+    r.z.forEach(z=>{ zp[z]=(zp[z]||0)+pts; }); });
+  const cap=12;
+  const years = committed.length ? +(cap*(1-Math.exp(-raw/cap))).toFixed(1) : 0;
+  const zoneProj={}; for(const z in zp){ zoneProj[z]=Math.round(Math.min(32,30*(1-Math.exp(-zp[z]/22)))); }
+  return {committed:committed.length, years, zoneProj};
+}
+// fuerza de cada EFECTO VISUAL según los tratamientos que la usuaria eligió (0..1)
+function computeFx(){
+  const recs=(STATE.plan&&STATE.plan.recs)||[], eng=STATE.engagement||{};
+  const com=recs.filter(r=>['hago','probar','hecho'].includes(eng[r.n]));
+  const a={skin:0,eye:0,lip:0,jaw:0,cheek:0};
+  com.forEach(r=>{ const w=r.inv>=2?1:r.inv===1?0.6:0.35;
+    if(r.z.some(z=>['piel','frente'].includes(z))) a.skin+=w;
+    if(r.z.includes('mejillas')){ a.skin+=w*0.5; a.cheek+=w; }
+    if(r.z.includes('periocular')) a.eye+=w;
+    if(r.z.includes('labios')) a.lip+=w;
+    if(r.z.includes('mandibula')) a.jaw+=w;
+  });
+  const S=x=>1-Math.exp(-x/1.2);
+  return {skin:S(a.skin),eye:S(a.eye),lip:S(a.lip),jaw:S(a.jaw),cheek:S(a.cheek),any:com.length};
+}
+function renderProjection(){
+  const s=STATE.scan, p=STATE.profile, tier=adoptionTier();
+  const yr=TIERS[tier].yr;
+  const proj=computeProjection(); STATE.proj=proj;
+  const yearsDrop = proj.committed ? proj.years : (yr[0]+yr[1])/2;
+  const projOverall=Math.min(96,Math.round(s.overall+yearsDrop*1.8));
+  const pv=Math.max(18,(s.visibleAge-yearsDrop)).toFixed(1);
+  // serie de progreso proyectado (Hoy, 3m, 6m, 12m)
+  const months=[0,3,6,12], ease=[0,0.4,0.72,1];
+  const series=ease.map(e=>Math.round(s.overall+(projOverall-s.overall)*e));
+  const W2=320,Hc=130,nn=series.length, mn=Math.min(...series)-5,mx=Math.max(...series)+5,rng=(mx-mn)||1;
+  const X=i=>22+i*(W2-44)/(nn-1), Y=v=>Hc-26-((v-mn)/rng)*(Hc-48);
+  const pts=series.map((v,i)=>[X(i),Y(v)]);
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(0)+' '+p[1].toFixed(0)).join(' ');
+  const area=line+` L ${X(nn-1).toFixed(0)} ${Hc-26} L 22 ${Hc-26} Z`;
+  const trend=`<svg viewBox="0 0 ${W2} ${Hc}" style="width:100%;margin-top:12px">
+    <defs><linearGradient id="trg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b76e79" stop-opacity=".34"/><stop offset="1" stop-color="#b76e79" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#trg)"/><path d="${line}" fill="none" stroke="var(--rose)" stroke-width="2.6" stroke-linecap="round"/>
+    ${pts.map((p,i)=>`<circle cx="${p[0].toFixed(0)}" cy="${p[1].toFixed(0)}" r="4" fill="var(--rose)"/>
+      <text x="${p[0].toFixed(0)}" y="${(p[1]-9).toFixed(0)}" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="middle">${series[i]}</text>
+      <text x="${p[0].toFixed(0)}" y="${Hc-7}" font-size="9.5" fill="var(--muted)" text-anchor="middle">${months[i]===0?'Hoy':months[i]+' m'}</text>`).join('')}
+  </svg>`;
+  let h=`<div class="card">
+    <div class="center"><span class="pill">Tu transformación en números</span>
+    <h2 style="margin-top:12px">Tu progreso proyectado</h2>
+    <p class="sub">${proj.committed?('Con las '+proj.committed+' intervenciones que marcaste'):'Marca tratamientos en tu plan'} — así suben tus números en 12 meses.</p></div>
+    <div class="grid2" style="margin-top:14px;text-align:center">
+      <div><div class="sub">Score facial</div><div style="font-family:Fraunces;font-size:28px">${s.overall} <span style="font-size:17px;color:var(--green)">→ ${projOverall}</span></div></div>
+      <div><div class="sub">Edad visible</div><div style="font-family:Fraunces;font-size:28px">${s.visibleAge} <span style="font-size:17px;color:var(--green)">→ ${pv}</span></div></div>
+    </div>
+    ${trend}
+    ${proj.committed? '' : `<button class="btn ghost sm" style="margin-top:6px" onclick="go('plan')">Ir a marcar mi plan →</button>`}
+    <p class="note" style="margin-top:10px">Números calibrados con la respuesta documentada de cada intervención (con saturación realista — no se suman de forma lineal). Es una estimación, no una promesa exacta.</p>
+  </div>`;
+  // numeric promise
+  h+=`<h3 style="margin:18px 0 8px">Tu promesa cuantificada</h3>
+   <div class="card"><p class="sub" style="margin-top:0">Cuánto baja tu edad visible en 12 meses según cuánto del plan adoptes. Calibrado con la respuesta documentada de cada intervención.</p>`;
+  TIERS.forEach((t,i)=>{ h+=`<div class="tier ${i===tier?'on':''}">
+    <div class="row between"><b style="font-size:14px">${t.n}</b><span class="yr">-${t.yr[0]}–${t.yr[1]} <span style="font-size:12px">años</span></span></div>
+    <div class="sub">${t.desc}${i===tier?' · <b style="color:var(--rose-d)">tu nivel elegido</b>':''}</div></div>`; });
+  h+=`</div>`;
+  // big projected number
+  const projVisible=Math.max(18,(s.visibleAge-yearsDrop)).toFixed(1);
+  h+=`<div class="card center" style="background:linear-gradient(160deg,#2a2630,#8a5560);color:#fff">
+    <div class="sub" style="color:rgba(255,255,255,.8)">Edad visible hoy</div>
+    <div style="font-family:Fraunces;font-size:30px">${s.visibleAge} años</div>
+    <div style="font-size:24px;margin:6px 0">↓</div>
+    <div class="sub" style="color:rgba(255,255,255,.8)">Proyección a 12 meses ${proj.committed?'(según tus intervenciones)':'(tu nivel declarado)'}</div>
+    <div style="font-family:Fraunces;font-size:40px;color:#f3e3e5">${projVisible} años</div>
+    <p style="font-size:12px;opacity:.85;margin-top:8px">${proj.committed?('Suma de '+proj.committed+' intervenciones, con saturación realista (no se suman linealmente).'):'Marca intervenciones en tu plan para una proyección personalizada.'}</p>
+  </div>`;
+  // per zone projection (según intervenciones que tocan esa zona)
+  const weak=STATE.plan.weak;
+  h+=`<h3 style="margin:18px 0 8px">Por zona, a 12 meses</h3><div class="card">`;
+  weak.slice(0,3).forEach(z=>{ const cur=s.zones[z].score; const gain=proj.zoneProj[z]!=null?proj.zoneProj[z]:(proj.committed?4:(tier+2)*4);
+    const pj=Math.min(96,Math.round(cur+gain*0.66));
+    h+=`<div class="metric"><div class="mh"><span>${ZMETA[z][1]} ${ZMETA[z][0]}</span><b style="color:var(--green)">${cur} → ${pj}</b></div>
+     <div class="bar"><i style="width:${pj}%;background:linear-gradient(90deg,var(--amber),var(--green))"></i></div></div>`; });
+  h+=`</div>`;
+  // cost of inaction
+  h+=`<h3 style="margin:18px 0 8px">El costo de no hacer nada</h3>
+   <div class="card"><p class="sub" style="margin-top:0">No es para asustarte — es real y silencioso.</p>
+   <table class="cmp">
+    <tr><td>En 12 meses sin plan</td><td style="color:var(--amber)">+0.8 a 1.4 años</td></tr>
+    <tr><td>En 3 años sin plan</td><td style="color:var(--amber)">+3 a 5 años</td></tr>
+    <tr><td>En 5 años sin plan</td><td style="color:var(--red)">cambio difícil de revertir</td></tr>
+   </table></div>`;
+  // re-scan promise
+  h+=`<div class="note">🔁 Cada 90 días te invitamos a re-escanearte. Verás tu delta real medido vs lo proyectado, lado a lado, y ajustamos tu plan si vas adelante o atrás.</div>`;
+  h+=shareCard();
+  h+=consultCard();
+  $('proj-body').innerHTML=h;
+}
+function shot(title,sub,intensity){
+  return `<div class="shot" data-int="${intensity}"><canvas class="pshot" width="300" height="400"></canvas>
+    <div class="cap">${title}<small>${sub}</small></div></div>`;
+}
+function paintShots(){
+  document.querySelectorAll('#proj-body .shot').forEach(sh=>{
+    const cv=sh.querySelector('canvas'), ctx=cv.getContext('2d'); const I=+sh.dataset.int;
+    const W=cv.width,H=cv.height;
+    const cover=(c,img)=>{ const r=Math.max(W/img.width,H/img.height),w=img.width*r,h=img.height*r; c.drawImage(img,(W-w)/2,(H-h)/2,w,h); };
+    const render=(img)=>{
+      ctx.clearRect(0,0,W,H);
+      if(I<=0){ if(img) cover(ctx,img); else drawSilhouette(ctx,cv,0); return; }      // HOY: tal cual, sin tocar
+      if(img && STATE.lm){ applyAfter(ctx,img,W,H,STATE.fx||{skin:.5,eye:.4,lip:.3,jaw:.4,cheek:.4}); return; }
+      // fallback (demo sin foto/landmarks): filtro ilustrativo
+      ctx.save(); ctx.filter=`brightness(${1+0.2*I}) contrast(${1+0.1*I}) saturate(${1+0.3*I}) blur(${1.2*I}px)`;
+      if(img) cover(ctx,img); else drawSilhouette(ctx,cv,I); ctx.restore();
+    };
+    if(STATE.photo){ const img=new Image(); img.onload=()=>render(img); img.src=STATE.photo; }
+    else render(null);
+  });
+}
+// "Después" CREÍBLE: cada efecto se aplica por región y según el tratamiento elegido (fx)
+function applyAfter(ctx,img,W,H,fx){
+  const lm=STATE.lm; if(!lm){ ctx.drawImage(img,0,0,W,H); return; }
+  const r=Math.max(W/img.width,H/img.height), w=img.width*r, h=img.height*r, ox=(W-w)/2, oy=(H-h)/2;
+  const P=i=>({x:ox+lm[i].x*w, y:oy+lm[i].y*h});
+  const clipOval=()=>{ ctx.beginPath(); FACE_OVAL.forEach((idx,j)=>{const p=P(idx); j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}); ctx.closePath(); ctx.clip(); };
+  ctx.clearRect(0,0,W,H);
+  // base con frescura leve
+  ctx.save(); ctx.filter=`brightness(${1+0.04+0.05*fx.skin}) contrast(1.03) saturate(${1+0.05+0.08*fx.skin})`; ctx.drawImage(img,ox,oy,w,h); ctx.restore();
+  // PIEL: alisado + tono parejo SOLO dentro del rostro (no toca ojos/cejas/labios fuera del óvalo)
+  if(fx.skin>0.05){
+    const off=document.createElement('canvas'); off.width=W; off.height=H; const o=off.getContext('2d');
+    o.filter=`blur(${5+8*fx.skin}px)`; o.drawImage(img,ox,oy,w,h);
+    ctx.save(); clipOval(); ctx.globalCompositeOperation='soft-light'; ctx.globalAlpha=Math.min(0.8,0.7*fx.skin); ctx.drawImage(off,0,0);
+    ctx.globalCompositeOperation='screen'; ctx.globalAlpha=Math.min(0.4,0.34*fx.skin); ctx.drawImage(off,0,0); ctx.restore();
+    ctx.save(); clipOval(); ctx.globalCompositeOperation='soft-light'; ctx.globalAlpha=0.22*fx.skin; ctx.fillStyle='#f0cdb0'; ctx.fillRect(0,0,W,H); ctx.restore();
+  }
+  // OJERAS: aclarar bajo-ojo según tratamientos de periocular
+  if(fx.eye>0.05){ [P(119),P(348)].forEach(ue=>{ ctx.save(); ctx.globalCompositeOperation='soft-light';
+    const g=ctx.createRadialGradient(ue.x,ue.y,2,ue.x,ue.y,w*0.13); g.addColorStop(0,`rgba(255,238,224,${0.55*fx.eye})`); g.addColorStop(1,'rgba(255,238,224,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(ue.x,ue.y,w*0.13,0,7); ctx.fill(); ctx.restore(); }); }
+  // LABIOS: color/jugosidad según relleno
+  if(fx.lip>0.05){ const lc=P(13); ctx.save(); ctx.globalCompositeOperation='soft-light';
+    const g=ctx.createRadialGradient(lc.x,lc.y,2,lc.x,lc.y,w*0.11); g.addColorStop(0,`rgba(205,85,110,${0.45*fx.lip})`); g.addColorStop(1,'rgba(205,85,110,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.restore(); }
+  // DEFORMACIÓN GEOMÉTRICA real: mandíbula (definir), mejillas (levantar), labios (volumen)
+  const controls=[]; const fwpx=Math.hypot(P(234).x-P(454).x,P(234).y-P(454).y), fhpx=Math.hypot(P(10).x-P(152).x,P(10).y-P(152).y), midX=P(168).x;
+  if(fx.jaw>0.05){ [172,136,150,149,176,148,152,377,400,378,379,365,397].forEach(i=>{const p=P(i);
+    controls.push({x:p.x,y:p.y,dx:(midX-p.x)*0.12*fx.jaw,dy:-0.03*fhpx*fx.jaw,s:fwpx*0.17});}); }
+  if(fx.cheek>0.05){ [205,425,50,280].forEach(i=>{const p=P(i); controls.push({x:p.x,y:p.y,dx:0,dy:-0.035*fhpx*fx.cheek,s:fwpx*0.15});}); }
+  if(fx.lip>0.05){ const lx=(P(13).x+P(14).x)/2, ly=(P(13).y+P(14).y)/2;
+    [0,37,267,17,84,314,61,291].forEach(i=>{const p=P(i); const vx=p.x-lx,vy=p.y-ly,d=Math.hypot(vx,vy)||1;
+      controls.push({x:p.x,y:p.y,dx:vx/d*0.05*fwpx*fx.lip,dy:vy/d*0.05*fwpx*fx.lip,s:fwpx*0.07});}); }
+  if(controls.length) liquify(ctx,W,H,controls,P);
+}
+// remapeo por pixel (liquify) con caída gaussiana, limitado al recuadro del rostro
+function liquify(ctx,W,H,controls,P){
+  let minx=W,miny=H,maxx=0,maxy=0;
+  FACE_OVAL.forEach(i=>{const p=P(i); if(p.x<minx)minx=p.x; if(p.x>maxx)maxx=p.x; if(p.y<miny)miny=p.y; if(p.y>maxy)maxy=p.y;});
+  minx=Math.max(0,(minx-12)|0); miny=Math.max(0,(miny-12)|0); maxx=Math.min(W,(maxx+12)|0); maxy=Math.min(H,(maxy+18)|0);
+  const src=ctx.getImageData(0,0,W,H), out=ctx.getImageData(0,0,W,H), sd=src.data, od=out.data;
+  for(let y=miny;y<maxy;y++)for(let x=minx;x<maxx;x++){
+    let dx=0,dy=0;
+    for(let k=0;k<controls.length;k++){ const c=controls[k], ex=x-c.x, ey=y-c.y, f=Math.exp(-(ex*ex+ey*ey)/(2*c.s*c.s)); dx+=c.dx*f; dy+=c.dy*f; }
+    if(dx<0.4&&dx>-0.4&&dy<0.4&&dy>-0.4)continue;
+    let sx=(x-dx)|0, sy=(y-dy)|0; if(sx<0)sx=0; if(sy<0)sy=0; if(sx>=W)sx=W-1; if(sy>=H)sy=H-1;
+    const oi=(y*W+x)*4, si=(sy*W+sx)*4; od[oi]=sd[si]; od[oi+1]=sd[si+1]; od[oi+2]=sd[si+2]; od[oi+3]=255;
+  }
+  ctx.putImageData(out,0,0);
+}
+function drawSilhouette(ctx,cv,intensity){
+  ctx.fillStyle='#241f29'; ctx.fillRect(0,0,cv.width,cv.height);
+  const cx=cv.width/2, cy=cv.height*0.5;
+  const skin=`hsl(${20+intensity*4},${30+intensity*8}%,${58+intensity*8}%)`;
+  ctx.fillStyle=skin; ctx.beginPath(); ctx.ellipse(cx,cy,cv.width*0.27,cv.height*0.34,0,0,7); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.18)'; // eyes
+  ctx.beginPath(); ctx.ellipse(cx-32,cy-20,12,7,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+32,cy-20,12,7,0,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(cx,cy+34,18,0.1*Math.PI,0.9*Math.PI); ctx.stroke();
+}
+
+/* ============================================================
+   PERSISTENCE
+============================================================ */
+function db(){ try{return JSON.parse(localStorage.getItem('iom_users')||'{}');}catch(e){return{};} }
+function saveDB(d){ try{localStorage.setItem('iom_users',JSON.stringify(d));}catch(e){} }
+// --- SINCRONIZACIÓN CENTRAL (Google Sheet vía Apps Script) — opcional ---
+function saveRemote(u){
+  if(!CONFIG.endpoint) return;
+  try{ fetch(CONFIG.endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'save',email:(u.profile.email||'').toLowerCase(),
+      name:u.profile.name||'',age:u.profile.age||'',phone:u.profile.phone||'',
+      ts:new Date().toISOString(),user:u})}).catch(()=>{}); }catch(e){}
+}
+async function fetchRemote(email){
+  if(!CONFIG.endpoint) return null;
+  try{ const r=await fetch(CONFIG.endpoint+'?email='+encodeURIComponent(email)); const j=await r.json();
+    return (j&&j.user)?j.user:null; }catch(e){ return null; }
+}
+function saveUser(){
+  const d=db(); const k=STATE.profile.email.toLowerCase(); if(!k)return;
+  const u=d[k]||{profile:STATE.profile,scans:[],engagement:{}};
+  u.profile=STATE.profile; u.engagement=STATE.engagement;
+  d[k]=u; saveDB(d); saveRemote(u);
+}
+function pushScan(){
+  const d=db(); const k=STATE.profile.email.toLowerCase(); if(!k)return;
+  const u=d[k]||{profile:STATE.profile,scans:[],engagement:{}};
+  u.profile=STATE.profile; u.engagement=STATE.engagement;
+  // store scan without heavy photo (keep small thumb)
+  u.scans=u.scans||[]; u.scans.push({date:STATE.scan.date,overall:STATE.scan.overall,visibleAge:STATE.scan.visibleAge,
+    percentile:STATE.scan.percentile, quality:STATE.scan.quality||0, light:STATE.scan.light||0,
+    zones:Object.fromEntries(Object.entries(STATE.scan.zones).map(([k2,z])=>[k2,z.score]))});
+  d[k]=u; saveDB(d); saveRemote(u);
+}
+window.finishFlow=function(){ pushScan(); toast('Guardado en tu email'); go('dash'); renderDash(); };
+
+window.loadReturning=async function(){
+  const em=$('ret-email').value.trim().toLowerCase();
+  if(!em){ $('ret-msg').textContent='Ingresa tu email.'; return; }
+  let u=db()[em];
+  if(!u){ $('ret-msg').textContent='Buscando tus resultados…'; u=await fetchRemote(em);
+    if(u){ const d=db(); d[em]=u; saveDB(d); } }   // cachea local para la próxima
+  if(!u){ $('ret-msg').textContent='No encontramos escaneos con ese email. Haz tu primer análisis.'; return; }
+  STATE.profile=u.profile; STATE.engagement=u.engagement||{};
+  STATE.returningScans=u.scans||[];
+  $('ret-msg').textContent=''; renderDash(); go('dash');
+};
+window.logout=function(){ go('welcome'); };
+window.rescan=function(){ obStep=0; go('scan'); };
+
+/* ============================================================
+   PRODUCTOS (Amazon) + PANEL ADMIN
+============================================================ */
+function amazonize(url){ const tag=(STATE.products&&STATE.products._tag)||''; if(!url)return '';
+  if(tag && /amazon\./i.test(url) && !/[?&]tag=/i.test(url)){ return url+(url.includes('?')?'&':'?')+'tag='+encodeURIComponent(tag); }
+  return url; }
+function buyBtn(r){ const p=STATE.products&&STATE.products[r.n]; if(!p||!p.url)return '';
+  return `<a class="wa" style="background:#ff9900;color:#111;text-decoration:none" href="${amazonize(p.url)}" target="_blank" rel="noopener">Comprar en Amazon 🛒</a>`; }
+function fetchProducts(){ if(!CONFIG.endpoint) return Promise.resolve(null);
+  return fetch(CONFIG.endpoint+'?type=products').then(r=>r.json()).then(j=>(j&&j.products)?j.products:null).catch(()=>null); }
+function saveProductsRemote(map){ if(!CONFIG.endpoint)return;
+  try{ fetch(CONFIG.endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'products',products:map})}).catch(()=>{}); }catch(e){} }
+async function loadProducts(){
+  try{ STATE.products=JSON.parse(localStorage.getItem('iom_products')||'{}'); }catch(e){ STATE.products={}; }
+  const remote=await fetchProducts(); if(remote){ STATE.products=remote; try{localStorage.setItem('iom_products',JSON.stringify(remote));}catch(e){} if(STATE.scan) renderPlan&&renderPlan(); }
+}
+window.adminAuth=function(){ const v=$('adm-pass').value; if(v===CONFIG.adminPass){ STATE.adminOk=true; renderAdmin(); } else toast('Clave incorrecta'); };
+function renderAdmin(){
+  if(!STATE.adminOk){ $('admin-body').innerHTML=`<div class="card" style="margin-top:20px"><h2>Panel de administrador</h2>
+    <p class="sub">Ingresa la clave de administrador.</p>
+    <input id="adm-pass" type="password" placeholder="Clave" onkeydown="if(event.key==='Enter')adminAuth()"/>
+    <button class="btn rose" style="margin-top:12px" onclick="adminAuth()">Entrar</button></div>`; return; }
+  const prod=STATE.products||{};
+  let h=`<div class="card"><h2>Productos Amazon</h2>
+    <p class="sub">Asigna tu link de Amazon a cada recomendación. Donde pongas un link, la usuaria verá un botón <b>"Comprar en Amazon"</b>.</p>
+    <label class="fld">Tu tag de afiliado Amazon</label>
+    <input id="adm-tag" value="${prod._tag||''}" placeholder="mitienda-20"/>
+    <p class="sub" style="margin-top:4px">Se agrega automáticamente a los links de Amazon que no lo tengan (así ganas comisión).</p></div>`;
+  Object.keys(CATNAMES).forEach(cat=>{
+    const items=CAT.filter(r=>catOf(r)===cat);
+    h+=`<h3 style="margin:14px 0 8px">${CATNAMES[cat][1]} ${CATNAMES[cat][0]}</h3>`;
+    items.forEach(r=>{ h+=`<div class="card" style="padding:12px;margin-bottom:8px"><b style="font-size:13px">${r.n}</b>
+      <input class="adm-url" data-n="${r.n}" style="margin-top:6px;font-size:13px" value="${(prod[r.n]&&prod[r.n].url)||''}" placeholder="https://www.amazon.com/... o tu link corto"/></div>`; });
+  });
+  h+=`<button class="btn rose" style="margin:12px 0 30px" onclick="adminSave()">Guardar todo</button>`;
+  $('admin-body').innerHTML=h;
+}
+window.adminSave=function(){
+  const map=STATE.products||{}; map._tag=($('adm-tag').value||'').trim();
+  document.querySelectorAll('.adm-url').forEach(i=>{ const n=i.dataset.n, u=(i.value||'').trim(); if(u) map[n]={url:u}; else delete map[n]; });
+  STATE.products=map; try{localStorage.setItem('iom_products',JSON.stringify(map));}catch(e){}
+  saveProductsRemote(map); toast('Productos guardados');
+};
+
+function renderDash(){
+  const d=db(); const k=STATE.profile.email.toLowerCase(); const u=d[k]||{scans:[]};
+  const scans=u.scans||[]; const p=STATE.profile;
+  const last=scans[scans.length-1], first=scans[0];
+  let h=`<div style="padding-top:8px"><h2>Hola de nuevo${p.name?', '+p.name:''} 👋</h2>
+   <p class="muted" style="font-size:14px">${scans.length} escaneo${scans.length!==1?'s':''} · tu llave: ${p.email}</p></div>`;
+  if(last){
+    h+=`<div class="card center">${ringSVG(last.overall,'Score actual')}
+      <div class="grid2" style="margin-top:6px"><div><div style="font-family:Fraunces;font-size:22px">${last.visibleAge}</div><div class="sub">edad visible</div></div>
+      <div><div style="font-family:Fraunces;font-size:22px">P${last.percentile}</div><div class="sub">percentil</div></div></div></div>`;
+  }
+  if(scans.length>=2){
+    const delta=last.overall-first.overall;
+    h+=`<div class="card"><b>Tu progreso</b>
+      <div class="sub">Score global a lo largo del tiempo</div>${sparkline(scans.map(s=>s.overall))}
+      <div class="row between" style="margin-top:10px"><span class="sub">Desde tu primer escaneo</span>
+      <b style="color:${delta>=0?'var(--green)':'var(--red)'}">${delta>=0?'+':''}${delta} pts · ${(first.visibleAge-last.visibleAge).toFixed(1)} años visibles</b></div></div>`;
+    // delta real vs proyectado
+    h+=`<div class="card"><b>Real vs proyectado</b>
+      <table class="cmp"><tr><td>Cambio real medido</td><td style="color:var(--green)">${delta>=0?'+':''}${delta} pts</td></tr>
+      <tr><td>Cambio proyectado</td><td>+${(TIERS[adoptionTier()].yr[0])*2}–${(TIERS[adoptionTier()].yr[1])*2} pts est.</td></tr></table>
+      <p class="sub">${delta>= TIERS[adoptionTier()].yr[0]*2 ?'Vas en línea o adelante de tu objetivo 🎉':'Vas un poco atrás — ajustaremos tu plan para acelerar.'}</p></div>`;
+    // comparabilidad de captura entre escaneos
+    const comp=(first.light&&last.light)? (Math.abs(first.light-last.light)<28
+        ? '✓ Escaneos comparables (iluminación similar)'
+        : '⚠️ Iluminación distinta entre escaneos — el delta puede tener ruido. Repite con luz pareja para comparar mejor.')
+      : 'Sugerencia: re-escanéate con luz similar para que la comparación sea precisa.';
+    h+=`<div class="note">${comp}</div>`;
+  } else {
+    h+=`<div class="note">Re-escanéate en ~90 días para ver tu primera curva de progreso real vs proyectado.</div>`;
+  }
+  // engagement summary
+  const eng=STATE.engagement||{}; const counts={hago:0,probar:0,hecho:0};
+  Object.values(eng).forEach(v=>{if(counts[v]!==undefined)counts[v]++;});
+  h+=`<div class="card"><b>Tu plan</b><div class="grid2" style="margin-top:8px;text-align:center">
+    <div><div style="font-family:Fraunces;font-size:22px;color:var(--green)">${counts.hago+counts.hecho}</div><div class="sub">en marcha / hechos</div></div>
+    <div><div style="font-family:Fraunces;font-size:22px;color:var(--rose-d)">${counts.probar}</div><div class="sub">por probar</div></div></div>
+    <button class="btn ghost sm" style="margin-top:12px" onclick="go('plan')">Ver mi plan completo</button>
+    <button class="btn ghost sm" style="margin-top:8px" onclick="go('report')">Ver mi último análisis</button></div>`;
+  h+=shareCard();
+  h+=consultCard();
+  $('dash-body').innerHTML=h;
+}
+function sparkline(vals){
+  if(vals.length<2)return'';
+  const w=300,hh=70,max=Math.max(...vals,90),min=Math.min(...vals,40),rng=max-min||1;
+  const pts=vals.map((v,i)=>[20+i*(w-40)/(vals.length-1), hh-8-((v-min)/rng)*(hh-20)]);
+  const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(0)+' '+p[1].toFixed(0)).join(' ');
+  return `<svg viewBox="0 0 ${w} ${hh}" style="width:100%;margin-top:6px"><path d="${path}" fill="none" stroke="var(--rose)" stroke-width="2.5" stroke-linecap="round"/>
+   ${pts.map(p=>`<circle cx="${p[0].toFixed(0)}" cy="${p[1].toFixed(0)}" r="3.5" fill="var(--rose)"/>`).join('')}</svg>`;
+}
+
+/* ============================================================
+   wire window fns used in plan/projection
+============================================================ */
+window.renderPlanScreen=renderPlan; window.renderProjScreen=renderProjection;
+// hook screen entries
+const _go=go;
+window.go=function(id){ _go(id);
+  if(id==='plan'){ renderPlan(); }
+  if(id==='projection'){ renderProjection(); }
+  if(id==='onboarding'){ renderOb(); }
+  if(id==='dash'){ renderDash(); }
+  if(id==='experts'){ renderExperts(); }
+  if(id==='admin'){ renderAdmin(); }
+  if(id==='scan'){ const b=$('scanbtn'); if(b){b.style.display='block';b.disabled=false;b.textContent='Iniciar escaneo';}
+    const fb=$('finbtn'); if(fb)fb.style.display='none';
+    const cv=$('overlay'); if(cv){const c=cv.getContext('2d');c.clearRect(0,0,cv.width,cv.height);}
+    const rg=$('ring'); if(rg)rg.style.display='';
+    $('scanstat').textContent='Centra tu rostro en el óvalo'; $('count').textContent='Listo'; }
+};
+window.addEventListener('hashchange',()=>{ if(location.hash==='#admin') go('admin'); });
+
+// init
+renderOb();
+loadProducts();
+if(location.hash==='#admin') go('admin');
+</script>
+</body>
+</html>

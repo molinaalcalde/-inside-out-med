@@ -316,6 +316,225 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:9px}
 
+/* ===== DESKTOP LAYOUT ===== */
+@media (min-width: 768px) {
+  /* App container: full width on desktop */
+  .app {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+  }
+
+  /* Screens: centered content with max-width */
+  .screen {
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+    padding-bottom: 60px;
+  }
+
+  /* Top nav: full width, more padding */
+  .top {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 40px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: rgba(14,12,18,.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .brand { font-size: 22px; }
+
+  .pad { padding: 0 40px; }
+
+  /* Welcome screen: split layout */
+  #s-welcome .hero {
+    border-radius: 0;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 0;
+    position: relative;
+  }
+  #s-welcome .hero-left {
+    padding: 80px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  #s-welcome .hero-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 60px;
+    background: rgba(0,0,0,.2);
+    min-height: 100vh;
+  }
+  #s-welcome .hero h1 { font-size: 56px; line-height: 1.05; }
+  #s-welcome .hero p { font-size: 17px; max-width: 440px; }
+
+  /* Welcome: features grid below hero */
+  #s-welcome .welcome-features {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 60px 40px;
+  }
+  #s-welcome .feat {
+    flex-direction: column;
+    background: rgba(245,237,232,0.04);
+    border: 1px solid rgba(245,237,232,0.08);
+    border-radius: 20px;
+    padding: 24px;
+    margin: 0;
+  }
+  #s-welcome .feat .ic {
+    margin-bottom: 12px;
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+  }
+
+  /* Welcome CTA section */
+  #s-welcome .welcome-cta {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Onboarding: centered card */
+  #s-onboarding .ob-fullscreen {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    min-height: 70vh;
+  }
+  #s-onboarding .ob-headline { font-size: 42px; }
+  #s-onboarding .ob-chips-lg { max-width: 500px; }
+  #s-onboarding .ob-chips-grid { max-width: 500px; grid-template-columns: repeat(3, 1fr); }
+  #s-onboarding .bottombar { max-width: 600px; margin: 0 auto; }
+
+  /* Scan screen: centered */
+  #s-scan .pad { max-width: 600px; margin: 0 auto; }
+  #s-scan .cam { max-width: 480px; margin: 0 auto; }
+
+  /* Processing: centered */
+  #s-processing .pad { max-width: 500px; margin: 0 auto; }
+
+  /* Reveal: full bleed with two zones */
+  #s-reveal {
+    max-width: 100%;
+  }
+  #s-reveal .reveal-wrap {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  #s-reveal .reveal-num { font-size: 140px; }
+
+  /* Report: two columns */
+  #s-report .rep-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  #s-report .rep-left { position: sticky; top: 80px; }
+  #s-report .pad { padding: 0 40px; }
+  #s-report h3 { font-size: 22px; }
+
+  /* Plan: sidebar + main */
+  #s-plan .plan-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 28px;
+    padding: 0 40px;
+  }
+  #s-plan .plan-sidebar {
+    position: sticky;
+    top: 80px;
+    align-self: start;
+  }
+  #s-plan .plan-sidebar .tabs {
+    flex-direction: column;
+    overflow: visible;
+    padding: 0;
+  }
+  #s-plan .plan-sidebar .tab {
+    width: 100%;
+    text-align: left;
+    border-radius: 12px;
+    margin-bottom: 4px;
+  }
+  #s-plan .plan-content { min-width: 0; }
+
+  /* Projection */
+  #s-projection .pad { max-width: 800px; margin: 0 auto; padding: 0 40px; }
+
+  /* Dashboard */
+  #s-dash .pad { max-width: 900px; margin: 0 auto; padding: 0 40px; }
+
+  /* Bottom bar: desktop version */
+  .bottombar {
+    position: static;
+    max-width: 600px;
+    margin: 40px auto 0;
+    padding: 0 40px 60px;
+    background: none;
+  }
+
+  /* Cards grid on desktop */
+  .desktop-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* Zone cards in report: grid */
+  .zones-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Rec cards: wider */
+  .rec { padding: 20px; }
+
+  /* Bigger buttons on desktop */
+  .btn { font-size: 17px; padding: 18px; }
+
+  /* Hero badges horizontal */
+  .hero-badges { gap: 12px; }
+  .hero-badges span { font-size: 13px; padding: 9px 16px; }
+
+  /* Steps: horizontal on desktop */
+  #s-welcome .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 0;
+  }
+  #s-welcome .step { flex-direction: column; text-align: center; }
+
+  /* Returning / Verify: centered */
+  #s-returning .pad, #s-verify .pad { max-width: 500px; margin: 0 auto; }
+
+  /* Experts */
+  #s-experts .pad { max-width: 700px; margin: 0 auto; }
+}
+
+@media (min-width: 1200px) {
+  .screen { max-width: 1200px; }
+  #s-welcome .hero h1 { font-size: 68px; }
+  #s-report .rep-grid { grid-template-columns: 380px 1fr; }
+}
+
 /* REVEAL SCREEN — cinematic WOW */
 #s-reveal{background:linear-gradient(160deg,#0a0810 0%,#180e1c 35%,#2d1228 65%,#3e1a30 100%);
   min-height:100vh;padding-bottom:60px;overflow:hidden;position:relative}
@@ -483,6 +702,232 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
   font-size: 14px;
   color: var(--ink2);
 }
+
+/* ===== DESKTOP RESPONSIVE ===== */
+@media (min-width: 768px) {
+  body { background: var(--bg); }
+
+  .app {
+    max-width: 100%;
+  }
+
+  .screen {
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .top {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 48px 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .brand { font-size: 22px; }
+  .pad { padding: 0 48px; }
+
+  /* Welcome: split hero */
+  #s-welcome .hero {
+    border-radius: 0;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    padding: 0;
+  }
+  .hero-left {
+    padding: 80px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .hero-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 60px;
+    background: rgba(0,0,0,.18);
+    border-left: 1px solid rgba(245,237,232,0.08);
+  }
+  #s-welcome .hero h1 { font-size: 54px; line-height: 1.05; }
+  #s-welcome .hero p { font-size: 17px; max-width: 420px; }
+  .hero-left .hero-badges { margin-top: 24px; }
+
+  /* Welcome features: 4-column grid */
+  #s-welcome .pad .feat {
+    flex-direction: column;
+  }
+  #s-welcome .pad > .eyebrow:last-of-type,
+  #s-welcome .pad > h2 { display: none; }
+
+  /* Steps: 3-column on desktop */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .step { flex-direction: column; align-items: flex-start; }
+
+  /* Features: 2-column */
+  #s-welcome .pad .feat { display: flex; flex-direction: row; gap: 16px; }
+
+  /* Onboarding: centered narrow */
+  #s-onboarding .ob-fullscreen {
+    max-width: 580px;
+    margin: 0 auto;
+    padding: 60px 0;
+    min-height: 70vh;
+  }
+  .ob-headline { font-size: 40px; }
+  .ob-chips-lg { max-width: 500px; }
+  .ob-chips-grid { max-width: 500px; grid-template-columns: repeat(3, 1fr) !important; }
+  #s-onboarding .bottombar { max-width: 580px; margin: 0 auto; position: static; padding: 0 0 40px; background: none; }
+
+  /* Scan: centered */
+  #s-scan .pad { max-width: 560px; margin: 0 auto; }
+
+  /* Processing: centered */
+  #s-processing .pad { max-width: 480px; margin: 0 auto; }
+
+  /* Reveal: two-column */
+  #s-reveal {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+  #s-reveal > div { min-height: 100vh; }
+  .reveal-wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 60px;
+  }
+  .reveal-num { font-size: 130px !important; }
+  .reveal-head { font-size: 28px !important; }
+
+  /* Reveal right panel (actions) */
+  #s-reveal .reveal-actions-panel {
+    background: rgba(245,237,232,0.04);
+    border-left: 1px solid rgba(245,237,232,0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 60px;
+  }
+
+  /* Report: two-column */
+  .rep-grid {
+    display: grid !important;
+    grid-template-columns: 360px 1fr;
+    gap: 32px;
+    align-items: start;
+    padding: 0 48px;
+  }
+  .rep-left { position: sticky; top: 80px; }
+  .rep-right { min-width: 0; }
+  #s-report .pad { padding: 0 48px; }
+
+  /* Plan: sidebar layout */
+  .plan-layout {
+    display: grid !important;
+    grid-template-columns: 200px 1fr;
+    gap: 28px;
+    padding: 0 48px;
+    align-items: start;
+  }
+  .plan-sidebar {
+    position: sticky;
+    top: 80px;
+  }
+  .plan-sidebar .tabs {
+    flex-direction: column !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    gap: 4px !important;
+  }
+  .plan-sidebar .tab {
+    width: 100%;
+    text-align: left !important;
+    border-radius: 12px !important;
+    flex: none !important;
+  }
+  .plan-content { min-width: 0; }
+
+  /* Projection */
+  #s-projection .pad { max-width: 800px; margin: 0 auto; padding: 0 48px; }
+
+  /* Dashboard */
+  #s-dash .pad { max-width: 900px; margin: 0 auto; padding: 0 48px; }
+
+  /* Returning / verify: centered */
+  #s-returning .pad, #s-verify .pad { max-width: 480px; margin: 0 auto; }
+
+  /* Bottom bar: static on desktop */
+  .bottombar {
+    position: static !important;
+    max-width: 600px;
+    margin: 32px auto 0;
+    padding: 0 0 60px !important;
+    background: none !important;
+  }
+
+  /* Zone cards: 2-column grid in report */
+  .zones-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Rec cards: larger padding */
+  .rec { padding: 22px; }
+
+  /* Cards: more breathing room */
+  .card { padding: 24px; }
+
+  /* Bigger CTA */
+  .btn { font-size: 17px; }
+  .btn.rose { padding: 19px; }
+
+  /* Desktop: score wrap bigger */
+  .scorewrap { gap: 32px; }
+  .ringbox { width: 170px; height: 170px; }
+  .ringbox .lbl b { font-size: 46px; }
+
+  /* Face map: bigger on desktop */
+  #face-map { width: 260px !important; height: 338px !important; }
+
+  /* Bottom bar in plan screen */
+  #s-plan > .bottombar,
+  #s-projection > .bottombar,
+  #s-report > .bottombar {
+    max-width: 800px;
+  }
+
+  /* Experts */
+  #s-experts .pad { max-width: 700px; margin: 0 auto; padding: 0 48px; }
+
+  /* Hide desktop from admin */
+  #s-admin .pad { max-width: 700px; margin: 0 auto; }
+
+  /* Better hero glow on desktop */
+  .glow { width: 500px; height: 500px; top: -150px; right: -150px; }
+}
+
+@media (min-width: 1200px) {
+  .screen { max-width: 1200px; }
+  .top { max-width: 1200px; }
+  #s-welcome .hero h1 { font-size: 64px; }
+  .rep-grid { grid-template-columns: 400px 1fr; }
+  .pad { padding: 0 60px; }
+  .rep-grid { padding: 0 60px; }
+  .plan-layout { padding: 0 60px; }
+}
 </style>
 </head>
 <body>
@@ -492,39 +937,51 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
   <section class="screen active" id="s-welcome">
     <div class="hero">
       <div class="glow"></div>
-      <div class="brand" style="color:rgba(245,237,232,0.85);font-size:16px;letter-spacing:.05em">Inside<b>Out</b>Med</div>
-      <span class="pill" style="margin-top:18px;display:inline-block">Análisis facial · IA local · Gratis</span>
-      <h1>¿Qué edad<br>aparenta tu<br>rostro hoy?</h1>
-      <p style="opacity:.85;font-size:15.5px;line-height:1.6;margin-top:14px;color:rgba(245,237,232,0.9)">
-        Descúbrelo en 90 segundos con el análisis facial más preciso fuera de una clínica — y recibe tu <b style="color:var(--gold)">plan exacto</b> para verte años más joven.</p>
-      <div class="hero-badges">
-        <span>💎 Valor $300 → Gratis</span>
-        <span>🔒 100% privado</span>
-        <span>⏱️ 90 segundos</span>
+      <div class="hero-left">
+        <div class="brand" style="color:rgba(245,237,232,0.85);font-size:16px;letter-spacing:.05em">Inside<b>Out</b>Med</div>
+        <span class="pill" style="margin-top:18px;display:inline-block">✦ Sin registro · Resultados en 90 segundos</span>
+        <h1>Tu cara sabe cosas<br>que el espejo no te dice.</h1>
+        <p style="opacity:.85;font-size:15.5px;line-height:1.6;margin-top:14px;color:rgba(245,237,232,0.9)">
+          En 90 segundos vas a saber exactamente qué edad aparenta tu cara — y el plan exacto para cambiarla.</p>
+        <div class="hero-badges">
+          <span>✦ 100% gratis</span>
+          <span>🔒 100% privado</span>
+          <span>⏱️ 90 segundos</span>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="eyebrow" style="text-align:left;width:100%">Cómo funciona</div>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><div><b>Escanea tu rostro</b><div class="d">La IA analiza 478 puntos de tu rostro. Todo ocurre en tu teléfono — tu imagen nunca toca ningún servidor.</div></div></div>
+          <div class="step"><div class="n">2</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible real. Un diagnóstico zona por zona, sin filtros, con lo que realmente está pasando.</div></div></div>
+          <div class="step"><div class="n">3</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días medís el progreso real.</div></div></div>
+        </div>
+        <button class="btn rose" style="margin-top:28px;width:100%" onclick="go('onboarding')">Descubrir mi edad visible →</button>
+        <p class="center sub" style="margin-top:8px;color:rgba(245,237,232,0.5)">Tu foto nunca sale de tu teléfono.</p>
       </div>
     </div>
     <div class="pad" style="margin-top:28px">
       <div class="eyebrow">Cómo funciona</div>
       <div class="steps">
-        <div class="step"><div class="n">1</div><div><b>Escanea tu rostro</b><div class="d">La cámara analiza 478 puntos faciales. Tu foto <b>nunca sale de tu teléfono</b>.</div></div></div>
-        <div class="step"><div class="n">2</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible, tu score y un análisis honesto por zona — como el de una dermatóloga.</div></div></div>
-        <div class="step"><div class="n">3</div><div><b>Sigue tu plan y transfórmate</b><div class="d">Tu ruta personalizada de 12 meses; cada 90 días ves bajar tu edad visible en números reales.</div></div></div>
+        <div class="step"><div class="n">1</div><div><b>Escanea tu rostro</b><div class="d">La IA analiza 478 puntos de tu rostro. Todo ocurre en tu teléfono — tu imagen nunca toca ningún servidor.</div></div></div>
+        <div class="step"><div class="n">2</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible real. Un diagnóstico zona por zona, sin filtros, con lo que realmente está pasando.</div></div></div>
+        <div class="step"><div class="n">3</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días medís el progreso real.</div></div></div>
       </div>
       <div class="eyebrow" style="margin-top:28px">Lo que obtienes</div>
-      <div class="feat"><div class="ic">🔬</div><div><b style="color:var(--ink)">478 puntos faciales</b><br><span class="muted" style="font-size:13.5px">Mediciones reales por zona, no horóscopo de cremas.</span></div></div>
-      <div class="feat"><div class="ic">📈</div><div><b style="color:var(--ink)">Tu edad visible y tu percentil</b><br><span class="muted" style="font-size:13.5px">Qué tan adelantada o atrasada vas vs tu edad real.</span></div></div>
-      <div class="feat"><div class="ic">🗓️</div><div><b style="color:var(--ink)">Plan personalizado de 12 meses</b><br><span class="muted" style="font-size:13.5px">Skincare · hábitos · suplementos · tratamientos · capilar.</span></div></div>
-      <div class="feat"><div class="ic">✨</div><div><b style="color:var(--ink)">Tu progreso en números</b><br><span class="muted" style="font-size:13.5px">Mira caer tu edad visible escaneo tras escaneo.</span></div></div>
+      <div class="feat"><div class="ic">🔬</div><div><b style="color:var(--ink)">478 puntos faciales</b><br><span class="muted" style="font-size:13.5px">Geometría facial + análisis de piel. No un filtro — ciencia aplicada a tu cara.</span></div></div>
+      <div class="feat"><div class="ic">📈</div><div><b style="color:var(--ink)">Tu edad visible y tu percentil</b><br><span class="muted" style="font-size:13.5px">Cómo estás vs otras mujeres de tu edad. Honesto, sin suavizar.</span></div></div>
+      <div class="feat"><div class="ic">🗓️</div><div><b style="color:var(--ink)">Plan personalizado de 12 meses</b><br><span class="muted" style="font-size:13.5px">Skincare · hábitos · suplementos · tratamientos · capilar. Todo ordenado por impacto.</span></div></div>
+      <div class="feat"><div class="ic">✨</div><div><b style="color:var(--ink)">Tu progreso en números</b><br><span class="muted" style="font-size:13.5px">Cada re-escaneo muestra cuántos años ganaste. Accountability real.</span></div></div>
       <div class="card center" style="margin-top:20px;border-color:rgba(212,175,136,0.2)">
-        <div class="quote" style="color:var(--gold)">"Sabe más sobre mi cara que mi última consulta — y me dijo exactamente qué hacer."</div>
-        <p class="sub" style="margin-top:10px">Ciencia dermatológica. No marketing de cremas.</p>
+        <div class="quote" style="color:var(--gold)">"Me dijo lo que 5 años de cremas caras no lograron cambiar."</div>
+        <p class="sub" style="margin-top:10px">Lo que tu piel necesita, en orden, con evidencia.</p>
       </div>
       <div class="note" style="background:rgba(232,164,176,0.08);border-color:rgba(232,164,176,0.2)">🔒 <b style="color:var(--rose)">Privacidad real:</b> el análisis ocurre en tu dispositivo con IA local. Tu rostro nunca se envía a ningún servidor.</div>
     </div>
     <div class="bottombar">
-      <button class="btn rose" onclick="go('onboarding')" style="font-size:17px;padding:19px">Escanear mi rostro gratis →</button>
-      <p class="center sub" style="margin-top:8px">Sin registro · Resultados al instante · 90 segundos</p>
-      <button class="btn ghost sm" style="margin-top:10px" onclick="go('returning')">Ya tengo cuenta — ver mi progreso</button>
+      <button class="btn rose" onclick="go('onboarding')" style="font-size:17px;padding:19px">Descubrir mi edad visible →</button>
+      <p class="center sub" style="margin-top:8px">Tu foto nunca sale de tu teléfono.</p>
+      <button class="btn ghost sm" style="margin-top:10px" onclick="go('returning')">Ya lo hice — ver mi evolución</button>
       <p class="center" style="margin-top:8px"><a onclick="go('admin')" style="font-size:10px;color:var(--muted);cursor:pointer;opacity:.5">·</a></p>
     </div>
   </section>
@@ -556,8 +1013,8 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
       </div>
       <div class="prog" style="margin:12px 22px 4px"><i id="scanprog" style="width:0%"></i></div>
       <div class="note" id="scannote">Buena luz natural y uniforme, sin lentes ni maquillaje pesado, cabello fuera de la cara y rostro de frente. El escaneo se toma su tiempo (~20–30 s) y acumula cientos de muestras de píxeles por zona para precisión. Mantente quieta; puedes finalizar antes cuando aparezca el botón.</div>
-      <button class="btn rose" id="scanbtn" onclick="startScan()">Iniciar escaneo</button>
-      <button class="btn ghost sm" style="margin-top:8px" onclick="demoScan()">Sin cámara — usar modo demo</button>
+      <button class="btn rose" id="scanbtn" onclick="startScan()">Iniciar análisis</button>
+      <button class="btn ghost sm" style="margin-top:8px" onclick="demoScan()">Continuar sin cámara</button>
     </div>
   </section>
 
@@ -565,16 +1022,16 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
   <section class="screen" id="s-processing">
     <div class="pad center" style="padding-top:80px">
       <div class="spin"></div>
-      <h2 style="margin-top:22px">Analizando tu rostro</h2>
-      <p class="muted" style="font-size:13.5px">Procesando en tu dispositivo · 0 datos enviados</p>
+      <h2 style="margin-top:22px">Leyendo tu cara…</h2>
+      <p class="muted" style="font-size:13.5px">Todo ocurre en tu teléfono. Tu imagen nunca toca ningún servidor.</p>
       <div class="card" style="text-align:left;margin-top:24px">
         <div class="loadlist" id="loadlist">
-          <div data-i="0"><span class="chk"></span> Detectando 478 puntos faciales</div>
-          <div data-i="1"><span class="chk"></span> Midiendo 8 zonas faciales</div>
-          <div data-i="2"><span class="chk"></span> Muestreando biomarcadores cutáneos</div>
-          <div data-i="3"><span class="chk"></span> Calculando edad visible y percentil</div>
-          <div data-i="4"><span class="chk"></span> Generando tu plan de 12 meses</div>
-          <div data-i="5"><span class="chk"></span> Proyectando tu transformación</div>
+          <div data-i="0"><span class="chk"></span> Mapeando tu estructura facial</div>
+          <div data-i="1"><span class="chk"></span> Analizando cada zona de tu cara</div>
+          <div data-i="2"><span class="chk"></span> Leyendo el estado real de tu piel</div>
+          <div data-i="3"><span class="chk"></span> Calculando tu edad visible real</div>
+          <div data-i="4"><span class="chk"></span> Armando tu plan personalizado</div>
+          <div data-i="5"><span class="chk"></span> Proyectando tu transformación a 12 meses</div>
         </div>
       </div>
     </div>
@@ -596,8 +1053,10 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
   <!-- ============ PLAN ============ -->
   <section class="screen" id="s-plan">
     <div class="top"><button class="back" onclick="go('report')">‹</button><span class="brand">Tu plan · 12 meses</span><span></span></div>
-    <div class="tabs" id="plan-tabs"></div>
-    <div class="pad" id="plan-body"></div>
+    <div class="plan-layout">
+      <div class="plan-sidebar"><div class="tabs" id="plan-tabs"></div></div>
+      <div class="plan-content pad" id="plan-body"></div>
+    </div>
     <div class="bottombar"><button class="btn rose" onclick="go('projection')">Ver mi transformación ✨</button></div>
   </section>
 
@@ -612,11 +1071,11 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
   <section class="screen" id="s-returning">
     <div class="top"><button class="back" onclick="go('welcome')">‹</button><span class="brand">Bienvenida de vuelta</span><span></span></div>
     <div class="pad" style="padding-top:30px">
-      <h2>Ver mi progreso</h2>
-      <p class="muted" style="font-size:14px">Tu email es la llave. Ingrésalo para recuperar tus escaneos y tu plan.</p>
+      <h2>Ver mi evolución</h2>
+      <p class="muted" style="font-size:14px">Ingresá tu email y te mandamos un código para acceder a tu historial.</p>
       <label class="fld">Email</label>
       <input id="ret-email" type="email" placeholder="tu@email.com" />
-      <button class="btn rose" style="margin-top:16px" onclick="loadReturning()">Entrar</button>
+      <button class="btn rose" style="margin-top:16px" onclick="loadReturning()">Enviar código →</button>
       <p class="muted center" id="ret-msg" style="font-size:13px;margin-top:14px"></p>
     </div>
   </section>
@@ -711,14 +1170,14 @@ window.waConsult=function(pro){ window.open(waLink(pro),'_blank'); };
 window.openConsult=function(){ renderExperts(); go('experts'); };
 function consultCard(){ return `<div class="card" style="background:linear-gradient(135deg,rgba(14,12,18,0.95),rgba(45,21,40,0.95));border-color:rgba(232,164,176,0.3)">
   <div class="eyebrow" style="margin-top:0;text-align:left">Consulta personalizada</div>
-  <b style="font-family:Fraunces;font-size:20px;color:var(--ink)">¿Quieres un plan validado por un experto?</b>
-  <p style="font-size:13.5px;color:var(--ink2);margin:8px 0 14px;line-height:1.6">Agenda una consulta personalizada: te conectamos por WhatsApp con un profesional verificado que revisa tu escaneo contigo.</p>
-  <button class="wa" onclick="openConsult()">Agendar consulta personalizada 🩺</button></div>`; }
+  <b style="font-family:Fraunces;font-size:20px;color:var(--ink)">¿Querés que un experto revise tu análisis?</b>
+  <p style="font-size:13.5px;color:var(--ink2);margin:8px 0 14px;line-height:1.6">Te conectamos con un profesional verificado que ya llega con tu escaneo. La consulta arranca con contexto real, no desde cero.</p>
+  <button class="wa" onclick="openConsult()">Hablar con un experto →</button></div>`; }
 function shareCard(){ return `<div class="card center" style="border-color:rgba(212,175,136,0.25)">
   <div class="eyebrow" style="margin-top:0">Comparte tu resultado</div>
-  <b style="font-family:Fraunces;font-size:20px;color:var(--gold)">Presume tu resultado ✨</b>
-  <p class="sub" style="margin:8px 0 14px">Comparte tu edad visible con una amiga y rétala a descubrir la suya. No se comparte tu foto.</p>
-  <button class="btn rose" onclick="shareResult()">Compartir mi resultado 📲</button></div>`; }
+  <b style="font-family:Fraunces;font-size:20px;color:var(--gold)">Retá a alguien que conocés.</b>
+  <p class="sub" style="margin:8px 0 14px">Compartí tu edad visible y desafiá a alguien cercano a descubrir la suya. (Solo el número, no tu foto.)</p>
+  <button class="btn rose" onclick="shareResult()">Compartir mi resultado →</button></div>`; }
 function renderExperts(){
   let h=`<div class="card center" style="border-color:rgba(232,164,176,0.3)">
     <span class="pill">Consulta personalizada</span>
@@ -1684,10 +2143,10 @@ function renderReport(){
   const deltaColor = s.ageDelta<=0 ? 'var(--green)' : 'var(--amber)';
 
   // ---- HERO SCORE CARD ----
-  let h=`
+  let h=`<div class="rep-grid"><div class="rep-left">`+`
   <div class="card center">
     <span class="pill">${s.real?('Medición real · '+(s.samples||0)+' muestras · '+(s.regions||14)+' regiones'):'Modo demo'}</span>
-    <h2 style="margin-top:16px">${p.name?p.name+', ':''}esto dice tu rostro hoy</h2>
+    <h2 style="margin-top:16px">${p.name?p.name+', ':''}Esto encontramos en tu cara.</h2>
     <div class="scorewrap" style="margin-top:18px">
       <div class="score-arc-wrap">
         <div class="score-big">${s.overall}</div>
@@ -1742,8 +2201,8 @@ function renderReport(){
 
   // ---- BIOMARKERS (human-readable) ----
   const b=s.bio;
-  h+=`<h3 style="margin:22px 0 10px">Biomarcadores cutáneos</h3>
-   <div class="card"><p class="sub" style="margin-top:0">${b.real?'Derivados del análisis de píxeles de tu piel. Cada marcador te dice qué está pasando en lenguaje humano.':'Estimados en modo demo — haz un escaneo real para resultados precisos.'}</p>
+  h+=`<h3 style="margin:22px 0 10px">El estado de tu piel — sin tecnicismos</h3>
+   <div class="card"><p class="sub" style="margin-top:0">${b.real?'Qué está pasando realmente en tu piel.':'Estimados en modo demo — haz un escaneo real para resultados precisos.'}</p>
     ${bioHumanScore('luminosidad', b.luminosidad, false)}
     ${bioHumanScore('uniformidad', b.uniformidad, false)}
     ${bioHumanScore('hidratacion', b.hidratacion, false)}
@@ -1751,16 +2210,17 @@ function renderReport(){
     ${bioHumanScore('inflamacion', b.inflamacion, true)}
     ${bioHumanScore('danoSolar', b.danoSolar, true)}
     ${bioHumanScore('vascularidad', b.vascularidad, true)}
-   </div>`;
+   </div></div><div class="rep-right">`;
 
   // ---- ZONES (human-readable cards) ----
-  h+=`<h3 style="margin:22px 0 10px">Análisis por zona</h3>
+  h+=`<h3 style="margin:22px 0 10px">Tu cara, zona por zona</h3>
   <p class="sub" style="margin:-6px 0 14px">Cada zona te dice su estado en lenguaje claro. Toca para ver el detalle.</p>`;
   Object.entries(s.zones).forEach(([k,z])=>{
     h += zoneHumanCard(k, z);
   });
   h+=consultCard();
-  h+=`<div class="note">⚕️ Estimación basada en geometría facial y color de piel, no diagnóstico médico. No sustituye una consulta profesional.</div>`;
+  h+=`<div class="note">⚕️ Estimación educativa, no diagnóstico médico. Ante cualquier duda, consultá un profesional de la salud.</div>`;
+  h+=`</div></div>`;
   $('rep-body').innerHTML=h;
 
   // Wire face map clicks
@@ -2067,11 +2527,11 @@ window.trackAffiliateClick = function(name) {
 
 const CATNAMES={skincare:['Skincare','🧴'],habits:['Hábitos','🌿'],supplements:['Suplementos','💊'],treatments:['Tratamientos','💉'],hair:['Capilar','💇‍♀️']};
 const catOf=r=> (r.c==='injectables'?'treatments':r.c); // inyectables se muestran dentro de Tratamientos
-const PHASES=[['Fundación','0–1 mes','Lo no-negociable: base que sostiene todo lo demás.'],
-  ['Activación','1–3 meses','Activos potentes entran gradualmente.'],
-  ['Optimización','3–6 meses','Primeros tratamientos profesionales no invasivos.'],
-  ['Aceleración','6–9 meses','Combinación de protocolos e inyectables preventivos.'],
-  ['Sostenimiento','9–12+ meses','Mantenimiento y ajuste según tu re-escaneo.']];
+const PHASES=[['Fundación','0–1 mes','Lo que podés empezar mañana, sin gastar nada. La base de todo.'],
+  ['Activación','1–3 meses','Sumar activos que cambian la piel en semanas. Con evidencia, sin improvisar.'],
+  ['Optimización','3–6 meses','El momento de sumar profesionales. Sin agujas, sin cirugía — resultados visibles.'],
+  ['Aceleración','6–9 meses','Los tratamientos que más años bajan en menos tiempo.'],
+  ['Sostenimiento','9–12+ meses','Tu plan ajustado al progreso real. Acá es donde se separa quien mantiene de quien no.']];
 
 const tierRank={gratis:0,medio:1,premium:2};
 const invRank={casa:0,'no-aguja':1,'todo':3};
@@ -2110,7 +2570,7 @@ function renderPlan(){
   const p=STATE.profile;
   const eng=STATE.engagement||{}; const nSel=Object.values(eng).filter(v=>['hago','probar','hecho'].includes(v)).length;
   let h=`<div class="card" style="margin-top:6px">
-    <div class="row between"><b style="color:var(--ink)">Tu plan filtrado para ti</b>
+    <div class="row between"><b style="color:var(--ink)">Tu protocolo personalizado</b>
     <span class="pill">${p.budget==='gratis'?'Gratis/bajo':p.budget==='medio'?'Medio':'Premium'}</span></div>
     <p class="sub" style="margin-top:8px">Priorizado por tus zonas débiles (${STATE.plan.weak.map(z=>ZMETA[z][0]).join(', ')}), tus objetivos y tu presupuesto.</p>
     <div class="note" style="background:var(--rose-l);border-color:rgba(232,164,176,0.25);margin:10px 0">👉 Toca <b style="color:var(--rose)">«Voy a probar»</b> en lo que harás. Tu proyección se calcula en tiempo real según lo que elijas.</div>
@@ -2221,10 +2681,10 @@ function recCard(r){
    ${affiliateBtn(r)}
    <div class="eng-label">¿Lo vas a hacer?</div>
    <div class="eng">
-     <button data-n="${r.n}" data-v="probar" class="${e==='probar'?'on':''}">Voy a probar</button>
-     <button data-n="${r.n}" data-v="hago" class="${e==='hago'?'on':''}">Ya lo hago</button>
-     <button data-n="${r.n}" data-v="hecho" class="${e==='hecho'?'on':''}">Hecho</button>
-     <button data-n="${r.n}" data-v="no" class="no ${e==='no'?'on':''}">No</button>
+     <button data-n="${r.n}" data-v="probar" class="${e==='probar'?'on':''}">Lo voy a hacer</button>
+     <button data-n="${r.n}" data-v="hago" class="${e==='hago'?'on':''}">Ya lo hago ✓</button>
+     <button data-n="${r.n}" data-v="hecho" class="${e==='hecho'?'on':''}">Lo hice ✓</button>
+     <button data-n="${r.n}" data-v="no" class="no ${e==='no'?'on':''}">No por ahora</button>
    </div>
    ${selected?`<p class="sub" style="margin-top:8px;color:var(--green)">✓ En tu plan activo. Toca de nuevo para quitarlo.</p>`:''}
    <button class="rec-toggle" onclick="this.closest('.rec').classList.toggle('open')">Ver detalles y evidencia ▾</button>
@@ -2317,7 +2777,7 @@ function renderProjection(){
       <text x="${p[0].toFixed(0)}" y="${Hc-7}" font-size="9.5" fill="var(--muted)" text-anchor="middle">${months[i]===0?'Hoy':months[i]+' m'}</text>`).join('')}
   </svg>`;
   let h=`<div class="card">
-    <div class="center"><span class="pill">Tu transformación en números</span>
+    <div class="center"><span class="pill">Lo que cambia si lo hacés.</span>
     <h2 style="margin-top:12px">Tu progreso proyectado</h2>
     <p class="sub">${proj.committed?('Con las '+proj.committed+' intervenciones que marcaste'):'Marca tratamientos en tu plan'} — así suben tus números en 12 meses.</p></div>
     <div class="grid2" style="margin-top:14px;text-align:center">
@@ -2356,15 +2816,15 @@ function renderProjection(){
      <div class="bar"><i style="width:${pj}%;background:linear-gradient(90deg,var(--amber),var(--green))"></i></div></div>`; });
   h+=`</div>`;
   // cost of inaction
-  h+=`<h3 style="margin:18px 0 8px">El costo de no hacer nada</h3>
-   <div class="card"><p class="sub" style="margin-top:0">No es para asustarte — es real y silencioso.</p>
+  h+=`<h3 style="margin:18px 0 8px">Lo que pasa si no hacés nada.</h3>
+   <div class="card"><p class="sub" style="margin-top:0">El envejecimiento no avisa. Avanza igual si lo ignorás.</p>
    <table class="cmp">
-    <tr><td style="color:var(--ink2)">En 12 meses sin plan</td><td style="color:var(--amber)">+0.8 a 1.4 años</td></tr>
-    <tr><td style="color:var(--ink2)">En 3 años sin plan</td><td style="color:var(--amber)">+3 a 5 años</td></tr>
-    <tr><td style="color:var(--ink2)">En 5 años sin plan</td><td style="color:var(--red)">cambio difícil de revertir</td></tr>
+    <tr><td style="color:var(--ink2)">12 meses sin cambios</td><td style="color:var(--amber)">+0.8 a 1.4 años</td></tr>
+    <tr><td style="color:var(--ink2)">3 años acumulados</td><td style="color:var(--amber)">+3 a 5 años</td></tr>
+    <tr><td style="color:var(--ink2)">5 años — punto de inflexión</td><td style="color:var(--red)">cuesta el doble revertirlo</td></tr>
    </table></div>`;
   // re-scan promise
-  h+=`<div class="note">🔁 Cada 90 días te invitamos a re-escanearte. Verás tu delta real medido vs lo proyectado, lado a lado, y ajustamos tu plan si vas adelante o atrás.</div>`;
+  h+=`<div class="note">🔁 En 90 días tu cara ya muestra cambios. Re-escaneate y compará en números: cuánto bajó tu edad visible.</div>`;
   h+=shareCard();
   h+=consultCard();
   $('proj-body').innerHTML=h;

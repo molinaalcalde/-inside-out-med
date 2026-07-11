@@ -9,246 +9,348 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f7f3f1; --card:#ffffff; --ink:#2a2630; --muted:#8a8290;
-  --rose:#b76e79; --rose-d:#9a565f; --rose-l:#f3e3e5;
-  --gold:#c9a24b; --green:#5b8c6e; --amber:#d39a4f; --red:#c4685f;
-  --line:#ece5e3; --shadow:0 8px 30px rgba(60,40,45,.08);
-  --shadow-s:0 2px 10px rgba(60,40,45,.06);
-  --r:18px;
+  --bg:#0e0c12; --bg2:#1a1620; --bg3:#231e2b;
+  --card:#1a1620;
+  --ink:#f5ede8; --ink2:rgba(245,237,232,0.65); --muted:rgba(245,237,232,0.5);
+  --rose:#e8a4b0; --rose-d:#c97e8e; --rose-l:rgba(232,164,176,0.12);
+  --gold:#d4af88; --gold-l:rgba(212,175,136,0.15);
+  --green:#7ecba1; --amber:#e8b86d; --red:#e87e7e;
+  --line:rgba(245,237,232,0.10);
+  --shadow:0 20px 60px rgba(0,0,0,0.5);
+  --shadow-s:0 4px 20px rgba(0,0,0,0.35);
+  --r:20px;
+  --glass:rgba(245,237,232,0.06);
+  --glass-border:rgba(245,237,232,0.12);
 }
+/* ============================================================
+   DARK LUXURY DESIGN SYSTEM — InsideOutMed 2.0
+============================================================ */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
-  font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:500;letter-spacing:-.01em;margin:0 0 .3em}
+  font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility}
+html{scroll-behavior:smooth}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:500;margin:0 0 .35em;color:var(--ink)}
+h1{font-size:40px;letter-spacing:-.03em;line-height:1.06}
+h2{font-size:28px;letter-spacing:-.02em;line-height:1.15}
+h3{font-size:20px;letter-spacing:-.01em}
+p{line-height:1.6;margin:0 0 .8em}
 button{font-family:inherit;cursor:pointer;border:none}
 .app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;overflow-x:hidden}
-.screen{display:none;animation:fade .4s ease;padding:0 0 120px}
-.screen.active{display:block}
-@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.screen{display:none;padding:0 0 130px}
+.screen.active{display:block;animation:fadeUp .42s cubic-bezier(.22,.61,.36,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .pad{padding:0 22px}
 .muted{color:var(--muted)}
 .center{text-align:center}
-.pill{display:inline-block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--rose-d);background:var(--rose-l);padding:5px 12px;border-radius:99px;font-weight:600}
-.btn{display:block;width:100%;background:var(--ink);color:#fff;padding:17px;border-radius:14px;
-  font-size:16px;font-weight:600;text-align:center;transition:.15s;letter-spacing:.01em}
-.btn:active{transform:scale(.98)}
-.btn.rose{background:var(--rose)}
-.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
-.btn.sm{padding:12px;font-size:14px;border-radius:11px}
-.bottombar{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;padding:14px 22px calc(14px + env(safe-area-inset-bottom));
-  background:linear-gradient(180deg,rgba(247,243,241,0) 0%,var(--bg) 26%);z-index:40}
-.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow-s);padding:18px;margin-bottom:14px;border:1px solid var(--line)}
+
+/* PILL */
+.pill{display:inline-block;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--rose);background:var(--rose-l);padding:5px 14px;border-radius:99px;font-weight:700;
+  border:1px solid rgba(232,164,176,0.25)}
+.eyebrow{text-align:center;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--rose);font-weight:700;margin:26px 0 6px}
+
+/* BUTTONS */
+.btn{display:block;width:100%;background:var(--bg3);color:var(--ink);padding:17px;border-radius:16px;
+  font-size:16px;font-weight:600;text-align:center;transition:transform .12s ease, box-shadow .2s, opacity .2s;
+  letter-spacing:.02em;border:1px solid var(--glass-border)}
+.btn:active{transform:scale(.985)}
+.btn.rose{background:linear-gradient(135deg,var(--rose) 0%,var(--rose-d) 100%);color:#fff;border:none;
+  box-shadow:0 8px 30px rgba(232,164,176,0.35)}
+.btn.rose:hover{box-shadow:0 12px 40px rgba(232,164,176,0.5)}
+.btn.ghost{background:var(--glass);color:var(--ink);border:1px solid var(--glass-border);backdrop-filter:blur(10px)}
+.btn.ghost:active{background:var(--rose-l)}
+.btn.sm{padding:12px;font-size:14px;border-radius:12px}
+.btn:disabled{opacity:.45;cursor:default;box-shadow:none}
+
+/* BOTTOMBAR */
+.bottombar{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;
+  padding:18px 22px calc(18px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(14,12,18,0) 0%,var(--bg) 30%);z-index:40}
+
+/* CARD */
+.card{background:var(--glass);border-radius:var(--r);box-shadow:var(--shadow-s);
+  padding:24px;margin-bottom:16px;border:1px solid var(--glass-border);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .row{display:flex;align-items:center;gap:12px}
 .between{justify-content:space-between}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tag{font-size:11px;padding:3px 9px;border-radius:8px;background:#f1eceb;color:var(--muted);font-weight:600}
-.hr{height:1px;background:var(--line);margin:16px 0}
-input,select,textarea{width:100%;padding:14px;border:1.5px solid var(--line);border-radius:12px;font-size:16px;
-  font-family:inherit;background:#fff;color:var(--ink);outline:none;transition:.15s}
-input:focus,select,textarea:focus{border-color:var(--rose)}
-label.fld{display:block;font-size:13px;font-weight:600;margin:14px 0 6px;color:var(--ink)}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line);
-  background:#fff;font-size:14px;font-weight:500;transition:.15s;user-select:none}
-.chip.on{border-color:var(--rose);background:var(--rose-l);color:var(--rose-d)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tag{font-size:11px;padding:4px 10px;border-radius:8px;background:var(--bg3);color:var(--ink2);font-weight:600;border:1px solid var(--line)}
+.hr{height:1px;background:var(--line);margin:18px 0}
+
+/* INPUTS */
+input,select,textarea{width:100%;padding:14px 16px;border:1px solid rgba(245,237,232,0.15);border-radius:14px;
+  font-size:16px;font-family:inherit;background:rgba(245,237,232,0.07);color:var(--ink);
+  outline:none;transition:border-color .15s, box-shadow .15s}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+input:focus,select:focus,textarea:focus{border-color:var(--rose);box-shadow:0 0 0 3px rgba(232,164,176,0.18)}
+select option{background:var(--bg2);color:var(--ink)}
+label.fld{display:block;font-size:13px;font-weight:600;margin:16px 0 7px;color:var(--ink2);letter-spacing:.02em}
+
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;gap:6px;padding:11px 15px;border-radius:12px;
+  border:1px solid rgba(245,237,232,0.15);background:rgba(245,237,232,0.06);
+  font-size:14px;font-weight:500;transition:transform .12s, background .15s, border-color .15s, color .15s;
+  user-select:none;color:var(--ink2);min-height:44px}
+.chip.on{border-color:var(--rose);background:linear-gradient(135deg,rgba(232,164,176,0.2),rgba(201,126,142,0.15));
+  color:var(--rose);box-shadow:0 2px 12px rgba(232,164,176,0.2)}
+.chip:active{transform:scale(.96)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-/* top */
-.top{display:flex;align-items:center;justify-content:space-between;padding:16px 22px 8px}
-.brand{font-family:'Fraunces';font-size:19px;font-weight:600}
+
+/* TOP NAV */
+.top{display:flex;align-items:center;justify-content:space-between;padding:16px 22px 10px;
+  position:sticky;top:0;z-index:30;
+  background:rgba(14,12,18,0.82);backdrop-filter:saturate(1.4) blur(14px);
+  -webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line)}
+.brand{font-family:'Fraunces';font-size:19px;font-weight:600;color:var(--ink)}
 .brand b{color:var(--rose)}
-.back{font-size:22px;color:var(--muted);background:none;padding:4px 8px}
-.prog{height:4px;background:var(--line);border-radius:9px;margin:0 22px 10px;overflow:hidden}
-.prog>i{display:block;height:100%;background:var(--rose);border-radius:9px;transition:.4s width}
-/* welcome */
-.hero{background:linear-gradient(160deg,#2a2630 0%,#4a3a42 55%,#8a5560 100%);color:#fff;border-radius:0 0 32px 32px;
-  padding:54px 26px 40px;position:relative;overflow:hidden}
-.hero h1{color:#fff;font-size:34px;line-height:1.08}
-.hero .pill{background:rgba(255,255,255,.16);color:#fff}
-.glow{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,75,.5),transparent 70%);top:-90px;right:-90px;filter:blur(10px)}
-.feat{display:flex;gap:12px;align-items:flex-start;margin:14px 0}
-.feat .ic{flex:0 0 38px;height:38px;border-radius:11px;background:var(--rose-l);display:flex;align-items:center;justify-content:center;font-size:18px}
-/* scan */
-.cam{position:relative;width:100%;aspect-ratio:3/4;background:#15131a;border-radius:24px;overflow:hidden}
+.back{font-size:22px;color:var(--muted);background:none;padding:4px 8px;
+  min-width:40px;min-height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.back:active{background:var(--rose-l)}
+
+/* PROGRESS BAR */
+.prog{height:3px;background:var(--line);border-radius:9px;margin:0 22px 8px;overflow:hidden}
+.prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--rose),var(--gold));border-radius:9px;transition:.4s width}
+
+/* HERO — full-bleed cinematic */
+.hero{background:linear-gradient(160deg,#0e0c12 0%,#1a0e18 40%,#2d1526 70%,#3d1c2a 100%);
+  color:#fff;border-radius:0 0 36px 36px;padding:60px 26px 48px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 80% -10%,rgba(212,175,136,0.22),transparent 70%),radial-gradient(ellipse 50% 50% at 20% 110%,rgba(232,164,176,0.15),transparent 65%);pointer-events:none}
+.hero h1{color:#fff;font-size:38px;line-height:1.05;letter-spacing:-.03em;margin-top:18px}
+.glow{position:absolute;width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle,rgba(212,175,136,0.4),transparent 70%);
+  top:-100px;right:-80px;filter:blur(12px);pointer-events:none}
+.hero-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.hero-badges span{font-size:12px;font-weight:600;
+  background:rgba(245,237,232,0.12);color:rgba(245,237,232,0.92);
+  padding:8px 14px;border-radius:99px;border:1px solid rgba(245,237,232,0.18);
+  backdrop-filter:blur(8px)}
+
+/* FEATURE BLOCKS */
+.feat{display:flex;gap:14px;align-items:flex-start;margin:14px 0}
+.feat .ic{flex:0 0 42px;height:42px;border-radius:14px;
+  background:var(--rose-l);border:1px solid rgba(232,164,176,0.25);
+  display:flex;align-items:center;justify-content:center;font-size:20px}
+
+/* STEPS */
+.steps{margin:8px 0}
+.step{display:flex;gap:14px;align-items:flex-start;margin:16px 0}
+.step .n{flex:0 0 32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),rgba(212,175,136,0.7));
+  color:var(--bg);display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(212,175,136,0.4)}
+.step b{font-size:14.5px;display:block;color:var(--ink)}
+.step .d{font-size:13px;color:var(--ink2);line-height:1.5}
+
+/* QUOTE */
+.quote{font-family:'Fraunces';font-size:18px;line-height:1.4;color:var(--ink);font-style:italic}
+
+/* SCAN */
+.cam{position:relative;width:100%;aspect-ratio:3/4;background:#0a080f;border-radius:24px;overflow:hidden;
+  border:1px solid var(--glass-border)}
 .cam video,.cam canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
 .cam .ring{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .cam .ring svg{width:78%;height:78%}
-.scanstat{position:absolute;left:0;right:0;bottom:0;padding:16px;background:linear-gradient(0deg,rgba(0,0,0,.7),transparent);color:#fff;text-align:center;font-size:14px;font-weight:500}
-.count{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);color:#fff;padding:7px 16px;border-radius:99px;font-weight:600;font-size:14px;backdrop-filter:blur(6px)}
-/* score ring */
-.scorewrap{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap}
+.scanstat{position:absolute;left:0;right:0;bottom:0;padding:18px;
+  background:linear-gradient(0deg,rgba(0,0,0,.75),transparent);color:#fff;text-align:center;font-size:14px;font-weight:500}
+.count{position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.55);color:#fff;padding:7px 18px;border-radius:99px;
+  font-weight:600;font-size:14px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12)}
+
+/* SCORE DISPLAY */
+.scorewrap{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
+.score-arc-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.score-big{font-family:'Fraunces';font-size:64px;font-weight:600;line-height:1;
+  background:linear-gradient(135deg,var(--rose),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.score-label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.score-arc{width:130px;height:8px;border-radius:99px;background:var(--bg3);overflow:hidden;margin-top:4px}
+.score-arc>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--rose),var(--gold));transition:.8s width}
+/* keep .ringbox for compat in dashboard */
 .ringbox{position:relative;width:150px;height:150px}
 .ringbox .lbl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.ringbox .lbl b{font-family:'Fraunces';font-size:40px;font-weight:600;line-height:1}
+.ringbox .lbl b{font-family:'Fraunces';font-size:40px;font-weight:600;line-height:1;color:var(--ink)}
 .ringbox .lbl span{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
-/* metric bar */
-.metric{margin:13px 0}
-.metric .mh{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px}
-.metric .mh b{font-weight:600}
-.bar{height:8px;background:#efe9e7;border-radius:9px;overflow:hidden}
+
+/* METRIC BAR */
+.metric{margin:14px 0}
+.metric .mh{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px}
+.metric .mh b{font-weight:700}
+.bar{height:3px;background:var(--bg3);border-radius:9px;overflow:hidden}
 .bar>i{display:block;height:100%;border-radius:9px;transition:.7s width}
-.sub{font-size:12px;color:var(--muted);margin-top:3px}
-/* zone accordion */
-.zone{border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden;background:#fff}
-.zone>.zh{display:flex;align-items:center;gap:12px;padding:15px;cursor:pointer}
+.sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ZONE ACCORDION */
+.zone{border:1px solid var(--glass-border);border-radius:16px;margin-bottom:10px;overflow:hidden;
+  background:var(--glass);backdrop-filter:blur(10px)}
+.zone>.zh{display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer}
 .zone .zh .zi{font-size:20px}
 .zone .zh .zscore{margin-left:auto;font-weight:700;font-size:15px}
-.zone .zb{display:none;padding:0 15px 15px}
+.zone .zh::after{content:'⌄';margin-left:8px;color:var(--muted);transition:transform .2s;font-size:14px}
+.zone.open .zh::after{transform:rotate(180deg)}
+.zone .zb{display:none;padding:0 16px 16px}
 .zone.open .zb{display:block}
+.zone.open{border-color:rgba(232,164,176,0.2);box-shadow:0 4px 24px rgba(0,0,0,.3)}
 .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-/* phases */
-.phase{display:flex;gap:12px;margin-bottom:6px}
+
+/* FACE MAP */
+.face-map-section{margin:20px 0}
+.face-map-wrap{position:relative;display:flex;justify-content:center;align-items:flex-start;gap:16px}
+.zone-hit{transition:opacity .2s}
+.zone-hit:hover{opacity:.7!important}
+.face-legend{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.face-legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink2)}
+.face-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* PHASES */
+.phase{display:flex;gap:14px;margin-bottom:8px}
 .phase .tl{display:flex;flex-direction:column;align-items:center}
-.phase .tl .pn{width:30px;height:30px;border-radius:50%;background:var(--rose);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:0 0 auto}
+.phase .tl .pn{width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),rgba(212,175,136,0.7));
+  color:var(--bg);display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13px;flex:0 0 auto;box-shadow:0 4px 14px rgba(212,175,136,0.35)}
 .phase .tl .ln{width:2px;flex:1;background:var(--line);margin:4px 0}
 .phase:last-child .tl .ln{display:none}
-.phase .pc{flex:1;padding-bottom:20px}
-/* category tabs */
-.tabs{display:flex;gap:7px;overflow-x:auto;padding:4px 22px 10px;scrollbar-width:none}
+.phase .pc{flex:1;padding-bottom:22px}
+
+/* CATEGORY TABS */
+.tabs{display:flex;gap:7px;overflow-x:auto;padding:6px 22px 12px;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{flex:0 0 auto;padding:9px 14px;border-radius:11px;background:#fff;border:1.5px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
-.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-/* rec card */
-.rec{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
-.rec h4{font-family:'Inter';font-size:15.5px;font-weight:700;margin:0 0 2px}
-.rec .why{font-size:13px;color:var(--rose-d);background:var(--rose-l);padding:8px 11px;border-radius:9px;margin:9px 0}
-.recgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:12.5px;margin:10px 0}
-.recgrid div b{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
-.evi{font-size:11.5px;color:var(--muted);font-style:italic;border-left:2px solid var(--gold);padding-left:9px;margin-top:8px}
-.eng{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
-.eng button{flex:1;min-width:max-content;padding:8px;font-size:11.5px;border-radius:9px;border:1.5px solid var(--line);background:#fff;color:var(--muted);font-weight:600}
-.eng button.on{background:var(--green);color:#fff;border-color:var(--green)}
-.eng button.no.on{background:#bdb6bd;border-color:#bdb6bd}
-/* projection */
-.shots{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.shot{border-radius:16px;overflow:hidden;position:relative;background:#15131a;aspect-ratio:3/4;border:1px solid var(--line)}
+.tab{flex:0 0 auto;padding:10px 16px;border-radius:12px;background:var(--glass);
+  border:1px solid var(--glass-border);font-size:13px;font-weight:600;color:var(--ink2);transition:.15s}
+.tab.on{background:linear-gradient(135deg,var(--rose-l),var(--gold-l));
+  color:var(--rose);border-color:rgba(232,164,176,0.3)}
+
+/* REC CARD */
+.rec{background:var(--glass);border:1px solid var(--glass-border);border-radius:18px;
+  padding:20px;margin-bottom:14px;backdrop-filter:blur(12px);transition:border-color .2s}
+.rec:hover{border-color:rgba(232,164,176,0.2)}
+.rec h4{font-family:'Inter';font-size:16px;font-weight:700;margin:0 0 2px;color:var(--ink)}
+.rec.sel{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset}
+.rec-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.rec-what{font-size:13px;margin:10px 0 10px;line-height:1.6;color:var(--ink2)}
+.rec-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.rec-chips span{font-size:11.5px;background:var(--bg3);color:var(--ink2);
+  padding:5px 11px;border-radius:9px;font-weight:600;white-space:nowrap;border:1px solid var(--line)}
+.rec-why{display:inline-block;font-size:12.5px;color:var(--rose);
+  background:var(--rose-l);padding:7px 12px;border-radius:9px;margin:8px 0;
+  border:1px solid rgba(232,164,176,0.2);line-height:1.45}
+.rec-toggle{background:none;border:none;color:var(--rose);font-size:12.5px;font-weight:700;
+  padding:10px 0 2px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.rec-more{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:14px}
+.rec.open .rec-more{display:block}
+.recgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;font-size:12.5px;margin:10px 0}
+.recgrid div b{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:2px}
+.evi{font-size:11.5px;color:var(--ink2);font-style:italic;border-left:2px solid var(--gold);padding-left:10px;margin-top:10px;line-height:1.5}
+.eng{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.eng button{flex:1;min-width:max-content;padding:11px 8px;font-size:12px;border-radius:12px;
+  border:1px solid var(--glass-border);background:var(--glass);color:var(--ink2);
+  font-weight:600;transition:.15s;min-height:44px}
+.eng button.on{background:var(--green);color:var(--bg);border-color:var(--green);
+  box-shadow:0 4px 16px rgba(126,203,161,0.3)}
+.eng button.no.on{background:var(--bg3);color:var(--muted);border-color:var(--line)}
+.eng-label{font-size:11px;color:var(--muted);font-weight:700;margin:14px 0 7px;
+  text-transform:uppercase;letter-spacing:.07em}
+
+/* PROJECTION */
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.shot{border-radius:18px;overflow:hidden;position:relative;background:#0a080f;aspect-ratio:3/4;border:1px solid var(--glass-border)}
 .shot canvas,.shot .ph{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
-.shot .cap{position:absolute;left:0;right:0;bottom:0;padding:9px;background:linear-gradient(0deg,rgba(0,0,0,.75),transparent);color:#fff;font-size:12px;font-weight:600;text-align:center}
+.shot .cap{position:absolute;left:0;right:0;bottom:0;padding:10px;
+  background:linear-gradient(0deg,rgba(0,0,0,.8),transparent);color:#fff;font-size:12px;font-weight:600;text-align:center}
 .shot .cap small{display:block;font-weight:400;opacity:.85;font-size:10px}
-.tier{border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;transition:.15s}
+.tier{border:1px solid var(--glass-border);border-radius:16px;padding:16px;margin-bottom:10px;
+  transition:.15s;background:var(--glass)}
 .tier.on{border-color:var(--rose);background:var(--rose-l)}
-.tier .yr{font-family:'Fraunces';font-size:26px;font-weight:600;color:var(--rose-d)}
-/* misc */
-.note{font-size:11.5px;color:var(--muted);line-height:1.5;background:#f3efed;border-radius:11px;padding:11px 13px;margin:10px 0}
-.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:99px;font-size:13px;z-index:90;opacity:0;transition:.3s;pointer-events:none}
+.tier .yr{font-family:'Fraunces';font-size:26px;font-weight:600;color:var(--rose)}
+
+/* MISC */
+.note{font-size:12px;color:var(--ink2);line-height:1.6;background:var(--bg3);
+  border-radius:12px;padding:12px 15px;margin:12px 0;border:1px solid var(--line)}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+  background:var(--bg3);color:var(--ink);border:1px solid var(--glass-border);
+  padding:12px 20px;border-radius:99px;font-size:13px;z-index:90;opacity:0;
+  transition:.3s;pointer-events:none;backdrop-filter:blur(16px);box-shadow:var(--shadow-s)}
 .toast.show{opacity:1}
-.spin{width:30px;height:30px;border:3px solid var(--rose-l);border-top-color:var(--rose);border-radius:50%;animation:sp 1s linear infinite;margin:0 auto}
+.spin{width:30px;height:30px;border:3px solid var(--rose-l);border-top-color:var(--rose);
+  border-radius:50%;animation:sp 1s linear infinite;margin:0 auto}
 @keyframes sp{to{transform:rotate(360deg)}}
-.loadlist div{opacity:.3;padding:7px 0;font-size:14px;transition:.4s;display:flex;gap:9px;align-items:center}
+.loadlist div{opacity:.25;padding:8px 0;font-size:14px;transition:.4s;display:flex;gap:10px;align-items:center;color:var(--ink)}
 .loadlist div.on{opacity:1}
-.loadlist div.done{opacity:.55}
+.loadlist div.done{opacity:.5}
 .chk{width:18px;height:18px;border-radius:50%;border:2px solid var(--rose);flex:0 0 auto}
 .chk.f{background:var(--rose)}
 table.cmp{width:100%;border-collapse:collapse;font-size:13px}
-table.cmp td{padding:9px 6px;border-bottom:1px solid var(--line)}
+table.cmp td{padding:10px 8px;border-bottom:1px solid var(--line);color:var(--ink)}
 table.cmp td:last-child{text-align:right;font-weight:600}
 .legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
 .legend span{display:flex;align-items:center;gap:5px}
 .qcheck{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0;font-size:12px;color:var(--muted)}
 .qcheck div{display:flex;align-items:center;gap:7px}
-.qcheck .qd{width:10px;height:10px;border-radius:50%;background:#d8cfcd;flex:0 0 auto;transition:.2s}
+.qcheck .qd{width:10px;height:10px;border-radius:50%;background:var(--bg3);flex:0 0 auto;transition:.2s}
 .qcheck div.ok .qd{background:var(--green)}
 .qcheck div.ok{color:var(--ink);font-weight:600}
-.exp{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:12px}
-.exp .vb{font-size:10.5px;color:var(--green);font-weight:700;background:#e8f2ec;padding:2px 8px;border-radius:7px}
-.wa{display:block;width:100%;background:#25D366;color:#063;padding:14px;border-radius:13px;font-weight:700;text-align:center;font-size:15px;margin-top:10px;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(37,211,102,.28)}
+.exp{background:var(--glass);border:1px solid var(--glass-border);border-radius:16px;padding:16px;margin-bottom:12px}
+.exp .vb{font-size:10.5px;color:var(--green);font-weight:700;background:rgba(126,203,161,0.12);padding:2px 8px;border-radius:7px}
+.vb{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:7px}
+.wa{display:block;width:100%;background:#25D366;color:#063;padding:15px;border-radius:14px;
+  font-weight:700;text-align:center;font-size:15px;margin-top:10px;border:none;cursor:pointer;
+  box-shadow:0 6px 20px rgba(37,211,102,.3)}
 .wa:active{transform:scale(.985)}
 
-/* ============ UX POLISH PASS (UX senior) ============ */
-:root{--ring:0 0 0 3px rgba(183,110,121,.30)}
-html{scroll-behavior:smooth}
-body{text-rendering:optimizeLegibility}
-/* Motion: entrada más natural y respeto a accesibilidad */
-.screen{animation:fadeUp .42s cubic-bezier(.22,.61,.36,1)}
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-/* Tipografía: mejor ritmo */
-h1{letter-spacing:-.02em}
-h2{font-size:25px;line-height:1.15}
-.sub{line-height:1.45}
-p{line-height:1.55}
-/* Top bar: sticky con desenfoque, da orientación */
-.top{position:sticky;top:0;z-index:30;background:rgba(247,243,241,.82);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);padding-top:14px;padding-bottom:10px}
-.prog{height:5px}
-/* Botones: estados claros, foco accesible, primario con profundidad */
-.btn{transition:transform .12s ease, box-shadow .2s ease, opacity .2s}
-.btn.rose{box-shadow:0 6px 18px rgba(183,110,121,.32)}
-.btn:not(.ghost):active{transform:translateY(1px) scale(.99)}
-.btn:disabled{opacity:.55;cursor:default;box-shadow:none}
-.btn.ghost{background:#fff}
-.btn.ghost:active{background:var(--rose-l)}
-button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{outline:none;box-shadow:var(--ring)}
-/* Tap targets cómodos */
-.chip{min-height:44px}
-.eng button{min-height:40px}
-.back{min-width:40px;min-height:40px;border-radius:10px}
-.back:active{background:var(--rose-l)}
-/* Tarjetas con un poco más de aire y profundidad */
-.card{padding:20px;box-shadow:0 4px 22px rgba(60,40,45,.06)}
-/* Chips: micro-interacción al activar */
-.chip{transition:transform .12s ease, background .15s, border-color .15s, color .15s}
-.chip:active{transform:scale(.96)}
-.chip.on{box-shadow:0 2px 8px rgba(183,110,121,.18)}
-/* Inputs más suaves */
-input,select,textarea{transition:border-color .15s, box-shadow .15s}
-input:focus,select:focus,textarea:focus{box-shadow:var(--ring)}
-/* SLIDERS con la identidad rosa (antes salían azules del navegador) */
-input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:99px;background:linear-gradient(90deg,var(--rose) 0%,var(--rose) var(--p,55%),#e7dedb var(--p,55%));padding:0;margin:10px 0 4px;border:none;outline:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--rose);box-shadow:0 2px 8px rgba(60,40,45,.22);cursor:pointer;transition:transform .12s}
-input[type=range]::-webkit-slider-thumb:active{transform:scale(1.12)}
-input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--rose);box-shadow:0 2px 8px rgba(60,40,45,.22);cursor:pointer}
-input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:#e7dedb}
-input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:var(--rose)}
-/* Bottom bar más limpia */
-.bottombar{padding-top:18px}
-/* Metric bars un poco más suaves */
-.bar{height:9px}
-/* Zona accordion: indicador de abrir/cerrar */
-.zone .zh::after{content:'⌄';margin-left:8px;color:var(--muted);transition:transform .2s;font-size:14px}
-.zone.open .zh::after{transform:rotate(180deg)}
-.zone .zh{gap:10px}
-.zone.open{box-shadow:0 4px 18px rgba(60,40,45,.07)}
-/* Scrollbar discreta */
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-thumb{background:#e0d6d3;border-radius:9px}
-/* Tarjeta de recomendación compacta y escaneable */
-.rec{padding:15px}
-.rec.sel{border-color:var(--green);box-shadow:0 0 0 1.5px var(--green) inset}
-.rec h4{margin:0;font-size:15px}
-.rec-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
-.rec-what{font-size:13px;margin:7px 0 9px;line-height:1.45;color:#4a444e}
-.rec-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px}
-.rec-chips span{font-size:11.5px;background:#f5f0ee;color:var(--ink);padding:5px 10px;border-radius:9px;font-weight:600;white-space:nowrap}
-.rec-toggle{background:none;border:none;color:var(--rose-d);font-size:12.5px;font-weight:700;padding:10px 0 2px;cursor:pointer}
-.rec-more{display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:12px}
-.rec.open .rec-more{display:block}
-.eng-label{font-size:11px;color:var(--muted);font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.05em}
-/* Bienvenida magnética */
-.hero{background:linear-gradient(155deg,#221e29 0%,#4a3540 48%,#a65f6d 100%)}
-.hero h1{font-size:36px;line-height:1.06}
-.hero-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.hero-badges span{font-size:12px;font-weight:600;background:rgba(255,255,255,.16);color:#fff;padding:7px 12px;border-radius:99px}
-.steps{margin:6px 0 6px}
-.step{display:flex;gap:13px;align-items:flex-start;margin:14px 0}
-.step .n{flex:0 0 30px;height:30px;border-radius:50%;background:var(--rose);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;box-shadow:0 3px 10px rgba(183,110,121,.3)}
-.step b{font-size:14.5px;display:block}
-.step .d{font-size:13px;color:var(--muted);line-height:1.4}
-.eyebrow{text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose-d);font-weight:700;margin:22px 0 4px}
-.quote{font-family:'Fraunces';font-size:18px;line-height:1.35;color:var(--ink)}
-/* Momento WOW: revelación de edad visible */
-#s-reveal{background:linear-gradient(160deg,#201c27 0%,#48333e 52%,#a65f6d 100%);min-height:100vh;padding-bottom:40px;overflow:hidden;position:relative}
-#s-reveal .rvglow{position:absolute;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,75,.5),transparent 70%);top:-80px;left:50%;transform:translateX(-50%);filter:blur(8px);pointer-events:none}
-.reveal-wrap{text-align:center;color:#fff;padding:86px 24px 40px;position:relative}
-.reveal-eyebrow{letter-spacing:.18em;text-transform:uppercase;font-size:12px;opacity:.82}
-.reveal-num{font-family:'Fraunces';font-size:90px;line-height:1;margin-top:10px;font-weight:600;text-shadow:0 6px 30px rgba(0,0,0,.3)}
-.reveal-unit{opacity:.85;margin-top:2px;font-size:15px}
-.reveal-head{font-family:'Fraunces';font-size:25px;line-height:1.25;margin-top:28px}
-.reveal-head b{color:#ffdcb8}
-.reveal-sub{font-size:14px;opacity:.9;margin-top:12px}
-#s-reveal .btn.rose{background:#fff;color:#2a2630;box-shadow:0 10px 30px rgba(0,0,0,.28)}
-.reveal-fade{opacity:0;transform:translateY(8px);transition:opacity .55s ease, transform .55s ease}
+/* SLIDERS */
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:99px;
+  background:linear-gradient(90deg,var(--rose) 0%,var(--rose) var(--p,55%),var(--bg3) var(--p,55%));
+  padding:0;margin:12px 0 6px;border:none;outline:none;width:100%}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;
+  border-radius:50%;background:var(--bg2);border:2.5px solid var(--rose);
+  box-shadow:0 2px 10px rgba(232,164,176,0.4);cursor:pointer;transition:transform .12s}
+input[type=range]::-webkit-slider-thumb:active{transform:scale(1.15)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--bg2);
+  border:2.5px solid var(--rose);cursor:pointer}
+input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:var(--bg3)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:99px;background:var(--rose)}
+button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
+  outline:none;box-shadow:0 0 0 3px rgba(232,164,176,0.35)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:9px}
+
+/* REVEAL SCREEN — cinematic WOW */
+#s-reveal{background:linear-gradient(160deg,#0a0810 0%,#180e1c 35%,#2d1228 65%,#3e1a30 100%);
+  min-height:100vh;padding-bottom:60px;overflow:hidden;position:relative}
+#s-reveal::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% -5%,rgba(212,175,136,0.35),transparent 65%),
+    radial-gradient(ellipse 60% 60% at 50% 110%,rgba(232,164,176,0.2),transparent 70%);
+  pointer-events:none}
+#s-reveal .rvglow{position:absolute;width:420px;height:420px;border-radius:50%;
+  background:radial-gradient(circle,rgba(212,175,136,0.5),transparent 70%);
+  top:-110px;left:50%;transform:translateX(-50%);filter:blur(10px);pointer-events:none}
+.reveal-wrap{text-align:center;color:#fff;padding:90px 28px 48px;position:relative;z-index:1}
+.reveal-eyebrow{letter-spacing:.2em;text-transform:uppercase;font-size:11.5px;opacity:.75;font-weight:600}
+.reveal-num{font-family:'Fraunces';font-size:110px;line-height:1;margin-top:8px;font-weight:600;
+  background:linear-gradient(135deg,#fff 0%,rgba(212,175,136,0.95) 50%,var(--rose) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 40px rgba(212,175,136,0.4))}
+.reveal-unit{opacity:.75;margin-top:4px;font-size:16px;letter-spacing:.1em;text-transform:uppercase}
+.reveal-head{font-family:'Fraunces';font-size:28px;line-height:1.22;margin-top:32px;color:#fff}
+.reveal-head b{background:linear-gradient(135deg,var(--gold),var(--rose));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.reveal-sub{font-size:14.5px;opacity:.85;margin-top:14px;line-height:1.6}
+#s-reveal .btn.rose{background:rgba(255,255,255,0.95);color:#1a1620;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);border:none;font-size:17px;padding:19px}
+#s-reveal .btn.rose:hover{background:#fff}
+.reveal-share-btn{width:100%;background:rgba(245,237,232,0.1);color:#fff;border:1px solid rgba(245,237,232,0.2);
+  padding:15px;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px)}
+.reveal-fade{opacity:0;transform:translateY(10px);transition:opacity .6s ease, transform .6s ease}
 .reveal-fade.in{opacity:1;transform:none}
-@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
-.reveal-num.pop{animation:pop .5s ease both}
+@keyframes pop{0%{transform:scale(.5);opacity:0;filter:blur(8px)}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1;filter:blur(0)}}
+.reveal-num.pop{animation:pop .65s cubic-bezier(.22,.61,.36,1) both}
+
+/* PRIORITY CHIPS (face map section) */
+.priority-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.priority-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;
+  border-radius:99px;font-size:12.5px;font-weight:600;border:1px solid;cursor:pointer;transition:.15s}
+.priority-chip:active{transform:scale(.96)}
 </style>
 </head>
 <body>
@@ -258,37 +360,40 @@ input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:
   <section class="screen active" id="s-welcome">
     <div class="hero">
       <div class="glow"></div>
-      <div class="brand" style="color:#fff;font-size:16px;opacity:.9">Inside<b style="color:#f3c9cf">Out</b>Med</div>
-      <span class="pill" style="margin-top:16px">Análisis facial médico · 100% gratis</span>
-      <h1 style="margin-top:14px">¿Qué edad<br>aparenta tu rostro?</h1>
-      <p style="opacity:.92;font-size:15.5px;line-height:1.5;margin-top:12px">
-        Descúbrelo en 90 segundos con el análisis facial más completo fuera de una clínica de $300
-        — y recibe tu <b>plan exacto</b> para verte años más joven.</p>
-      <div class="hero-badges"><span>💎 $300 → Gratis</span><span>🔒 100% privado</span><span>⏱️ 90 segundos</span></div>
+      <div class="brand" style="color:rgba(245,237,232,0.85);font-size:16px;letter-spacing:.05em">Inside<b>Out</b>Med</div>
+      <span class="pill" style="margin-top:18px;display:inline-block">Análisis facial · IA local · Gratis</span>
+      <h1>¿Qué edad<br>aparenta tu<br>rostro hoy?</h1>
+      <p style="opacity:.85;font-size:15.5px;line-height:1.6;margin-top:14px;color:rgba(245,237,232,0.9)">
+        Descúbrelo en 90 segundos con el análisis facial más preciso fuera de una clínica — y recibe tu <b style="color:var(--gold)">plan exacto</b> para verte años más joven.</p>
+      <div class="hero-badges">
+        <span>💎 Valor $300 → Gratis</span>
+        <span>🔒 100% privado</span>
+        <span>⏱️ 90 segundos</span>
+      </div>
     </div>
-    <div class="pad" style="margin-top:22px">
+    <div class="pad" style="margin-top:28px">
       <div class="eyebrow">Cómo funciona</div>
       <div class="steps">
-        <div class="step"><div class="n">1</div><div><b>Escanea tu rostro</b><div class="d">La cámara analiza 478 puntos. Tu foto <b>nunca sale de tu teléfono</b>.</div></div></div>
+        <div class="step"><div class="n">1</div><div><b>Escanea tu rostro</b><div class="d">La cámara analiza 478 puntos faciales. Tu foto <b>nunca sale de tu teléfono</b>.</div></div></div>
         <div class="step"><div class="n">2</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible, tu score y un análisis honesto por zona — como el de una dermatóloga.</div></div></div>
-        <div class="step"><div class="n">3</div><div><b>Sigue tu plan y transfórmate</b><div class="d">Tu ruta personalizada de 12 meses, y cada 90 días ves bajar tu edad visible en números.</div></div></div>
+        <div class="step"><div class="n">3</div><div><b>Sigue tu plan y transfórmate</b><div class="d">Tu ruta personalizada de 12 meses; cada 90 días ves bajar tu edad visible en números reales.</div></div></div>
       </div>
-      <div class="eyebrow" style="margin-top:24px">Lo que obtienes</div>
-      <div class="feat"><div class="ic">🔬</div><div><b>478 puntos faciales</b><br><span class="muted" style="font-size:13.5px">Mediciones reales por zona, no horóscopo de cremas.</span></div></div>
-      <div class="feat"><div class="ic">📈</div><div><b>Tu edad visible y tu percentil</b><br><span class="muted" style="font-size:13.5px">Qué tan adelantada o atrasada vas vs tu edad.</span></div></div>
-      <div class="feat"><div class="ic">🗓️</div><div><b>Plan personalizado de 12 meses</b><br><span class="muted" style="font-size:13.5px">Skincare · hábitos · suplementos · tratamientos · capilar.</span></div></div>
-      <div class="feat"><div class="ic">✨</div><div><b>Tu progreso en números</b><br><span class="muted" style="font-size:13.5px">Mira caer tu edad visible escaneo tras escaneo.</span></div></div>
-      <div class="card center" style="margin-top:16px;background:linear-gradient(160deg,#fff,#faf1f0)">
-        <div class="quote">"Sabe más sobre mi cara que mi última consulta — y me dijo exactamente qué hacer."</div>
-        <p class="sub" style="margin-top:8px">Ciencia dermatológica, no marketing de cremas.</p>
+      <div class="eyebrow" style="margin-top:28px">Lo que obtienes</div>
+      <div class="feat"><div class="ic">🔬</div><div><b style="color:var(--ink)">478 puntos faciales</b><br><span class="muted" style="font-size:13.5px">Mediciones reales por zona, no horóscopo de cremas.</span></div></div>
+      <div class="feat"><div class="ic">📈</div><div><b style="color:var(--ink)">Tu edad visible y tu percentil</b><br><span class="muted" style="font-size:13.5px">Qué tan adelantada o atrasada vas vs tu edad real.</span></div></div>
+      <div class="feat"><div class="ic">🗓️</div><div><b style="color:var(--ink)">Plan personalizado de 12 meses</b><br><span class="muted" style="font-size:13.5px">Skincare · hábitos · suplementos · tratamientos · capilar.</span></div></div>
+      <div class="feat"><div class="ic">✨</div><div><b style="color:var(--ink)">Tu progreso en números</b><br><span class="muted" style="font-size:13.5px">Mira caer tu edad visible escaneo tras escaneo.</span></div></div>
+      <div class="card center" style="margin-top:20px;border-color:rgba(212,175,136,0.2)">
+        <div class="quote" style="color:var(--gold)">"Sabe más sobre mi cara que mi última consulta — y me dijo exactamente qué hacer."</div>
+        <p class="sub" style="margin-top:10px">Ciencia dermatológica. No marketing de cremas.</p>
       </div>
-      <div class="note">🔒 <b>Privacidad real:</b> el análisis de imagen ocurre en tu dispositivo con IA local. Tu rostro nunca se envía a ningún servidor.</div>
+      <div class="note" style="background:rgba(232,164,176,0.08);border-color:rgba(232,164,176,0.2)">🔒 <b style="color:var(--rose)">Privacidad real:</b> el análisis ocurre en tu dispositivo con IA local. Tu rostro nunca se envía a ningún servidor.</div>
     </div>
     <div class="bottombar">
-      <button class="btn rose" onclick="go('onboarding')">Escanear mi rostro gratis →</button>
-      <p class="center sub" style="margin-top:7px">Sin registro previo · Resultados al instante</p>
-      <button class="btn ghost sm" style="margin-top:8px" onclick="go('returning')">Ya tengo cuenta — ver mi progreso</button>
-      <p class="center" style="margin-top:8px"><a onclick="go('admin')" style="font-size:10px;color:var(--muted);cursor:pointer;opacity:.7">·</a></p>
+      <button class="btn rose" onclick="go('onboarding')" style="font-size:17px;padding:19px">Escanear mi rostro gratis →</button>
+      <p class="center sub" style="margin-top:8px">Sin registro · Resultados al instante · 90 segundos</p>
+      <button class="btn ghost sm" style="margin-top:10px" onclick="go('returning')">Ya tengo cuenta — ver mi progreso</button>
+      <p class="center" style="margin-top:8px"><a onclick="go('admin')" style="font-size:10px;color:var(--muted);cursor:pointer;opacity:.5">·</a></p>
     </div>
   </section>
 
@@ -446,19 +551,22 @@ function consultMsg(pro){ const s=STATE.scan,p=STATE.profile;
 function waLink(pro){ return `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(consultMsg(pro))}`; }
 window.waConsult=function(pro){ window.open(waLink(pro),'_blank'); };
 window.openConsult=function(){ renderExperts(); go('experts'); };
-function consultCard(){ return `<div class="card" style="background:linear-gradient(160deg,#2a2630,#8a5560);color:#fff">
-  <b style="font-family:Fraunces;font-size:18px">¿Quieres un plan validado por un experto?</b>
-  <p style="font-size:13px;opacity:.92;margin:6px 0 12px">Agenda una consulta personalizada: te conectamos por WhatsApp con un profesional verificado que revisa tu escaneo contigo.</p>
+function consultCard(){ return `<div class="card" style="background:linear-gradient(135deg,rgba(14,12,18,0.95),rgba(45,21,40,0.95));border-color:rgba(232,164,176,0.3)">
+  <div class="eyebrow" style="margin-top:0;text-align:left">Consulta personalizada</div>
+  <b style="font-family:Fraunces;font-size:20px;color:var(--ink)">¿Quieres un plan validado por un experto?</b>
+  <p style="font-size:13.5px;color:var(--ink2);margin:8px 0 14px;line-height:1.6">Agenda una consulta personalizada: te conectamos por WhatsApp con un profesional verificado que revisa tu escaneo contigo.</p>
   <button class="wa" onclick="openConsult()">Agendar consulta personalizada 🩺</button></div>`; }
-function shareCard(){ return `<div class="card center" style="background:linear-gradient(160deg,#fff,#faf1f0)">
-  <b style="font-family:Fraunces;font-size:18px">Presume tu resultado ✨</b>
-  <p class="sub" style="margin:6px 0 12px">Comparte tu edad visible con una amiga y rétala a descubrir la suya. (No se comparte tu foto.)</p>
+function shareCard(){ return `<div class="card center" style="border-color:rgba(212,175,136,0.25)">
+  <div class="eyebrow" style="margin-top:0">Comparte tu resultado</div>
+  <b style="font-family:Fraunces;font-size:20px;color:var(--gold)">Presume tu resultado ✨</b>
+  <p class="sub" style="margin:8px 0 14px">Comparte tu edad visible con una amiga y rétala a descubrir la suya. No se comparte tu foto.</p>
   <button class="btn rose" onclick="shareResult()">Compartir mi resultado 📲</button></div>`; }
 function renderExperts(){
-  let h=`<div class="card center"><span class="pill">Consulta personalizada</span>
-    <h2 style="margin-top:12px">Habla con un experto</h2>
-    <p class="sub">Un profesional revisa tu análisis y ajusta tu plan a tu caso real. La conversación inicia por WhatsApp.</p>
-    <button class="wa" onclick="waConsult('')">Iniciar por WhatsApp ahora 💬</button></div>
+  let h=`<div class="card center" style="border-color:rgba(232,164,176,0.3)">
+    <span class="pill">Consulta personalizada</span>
+    <h2 style="margin-top:14px">Habla con un experto</h2>
+    <p class="sub" style="margin-top:8px">Un profesional revisa tu análisis y ajusta tu plan a tu caso real. La conversación inicia por WhatsApp.</p>
+    <button class="wa" onclick="waConsult('')" style="margin-top:16px">Iniciar por WhatsApp ahora 💬</button></div>
     <div class="note">Se abre WhatsApp con un mensaje pre-llenado con tu resumen. No se envía tu foto. No sustituye una valoración médica presencial.</div>`;
   $('experts-body').innerHTML=h;
 }
@@ -747,20 +855,22 @@ function renderReveal(){
   else if(d>=0.5){ emoji='💪'; head=`Aparentas <b>${d} años más</b> — tu plan lo revierte`; }
   else { emoji='✨'; head='Aparentas justo tu edad — vamos a ganarte años'; }
   $('reveal-body').innerHTML=`<div class="reveal-wrap">
-    <div class="reveal-eyebrow">Tu edad visible</div>
+    <div class="reveal-eyebrow">Tu edad visible estimada</div>
     <div class="reveal-num pop" id="rv-num">--</div>
     <div class="reveal-unit">años ${s.ageRange?('± '+s.ageRange):''}</div>
     <div class="reveal-head reveal-fade" id="rv-head">${emoji} ${head}</div>
-    <div class="reveal-sub reveal-fade" id="rv-sub">Tu edad real: <b>${p.age}</b> · Score facial: <b>${s.overall}/100</b> · Percentil <b>${s.percentile}</b></div>
-    <button class="btn rose reveal-fade" id="rv-btn" style="margin-top:26px" onclick="go('report')">Ver mi análisis completo →</button>
-    <button class="reveal-fade" id="rv-share" style="margin-top:10px;width:100%;background:rgba(255,255,255,.14);color:#fff;border:none;padding:15px;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer" onclick="shareResult()">Compartir mi resultado 📲</button>
-    <p class="reveal-sub reveal-fade" id="rv-note" style="opacity:.7;font-size:12px;margin-top:14px">Estimación basada en tu piel y estructura, no diagnóstico médico.</p>
+    <div class="reveal-sub reveal-fade" id="rv-sub" style="margin-top:16px">
+      Edad real: <b style="color:var(--gold)">${p.age} años</b> &nbsp;·&nbsp; Score: <b style="color:var(--rose)">${s.overall}/100</b> &nbsp;·&nbsp; Percentil <b style="color:var(--gold)">P${s.percentile}</b>
+    </div>
+    <button class="btn rose reveal-fade" id="rv-btn" style="margin-top:30px" onclick="go('report')">Ver mi análisis completo →</button>
+    <button class="reveal-share-btn reveal-fade" id="rv-share" style="margin-top:10px" onclick="shareResult()">Compartir mi resultado 📲</button>
+    <p class="reveal-sub reveal-fade" id="rv-note" style="opacity:.6;font-size:12px;margin-top:16px">Estimación basada en geometría facial y piel · No es diagnóstico médico</p>
   </div>`;
   setTimeout(()=>{ const num=$('rv-num'); if(!num)return;
-    countUp(num, s.visibleAge, 1600, 1, ()=>{
-      ['rv-head','rv-sub','rv-btn','rv-share','rv-note'].forEach((id,i)=>setTimeout(()=>{ const el=$(id); if(el)el.classList.add('in'); }, i*240));
+    countUp(num, s.visibleAge, 1800, 1, ()=>{
+      ['rv-head','rv-sub','rv-btn','rv-share','rv-note'].forEach((id,i)=>setTimeout(()=>{ const el=$(id); if(el)el.classList.add('in'); }, i*280));
     });
-  },250);
+  },300);
 }
 /* ---- COMPARTIR: tarjeta visual + share nativo ---- */
 function wrapTextC(ctx,text,cx,y,maxW,lh){ const words=(text||'').split(' '); let line='',yy=y;
@@ -1032,58 +1142,101 @@ function renderReport(){
   const s=STATE.scan, p=STATE.profile;
   $('rep-date').textContent=new Date(s.date).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
   const deltaTxt = s.ageDelta<=0? `${Math.abs(s.ageDelta)} años más joven` : `${s.ageDelta} años mayor`;
+  const deltaColor = s.ageDelta<=0 ? 'var(--green)' : 'var(--amber)';
+
+  // ---- HERO SCORE CARD ----
   let h=`
   <div class="card center">
-    <span class="pill">${s.real?('Medición real · 478 puntos · '+(s.samples||0)+' muestras · '+(s.regions||14)+' regiones'):'Modo demo'}</span>
-    <h2 style="margin-top:14px">${p.name?p.name+', ':''}esto dice tu rostro hoy</h2>
-    <div class="scorewrap" style="margin-top:10px">
-      ${ringSVG(s.overall,'Score global')}
-      <div style="text-align:left">
-        <div style="font-size:13px" class="muted">Edad cronológica</div><div style="font-family:Fraunces;font-size:22px">${p.age} años</div>
-        <div style="font-size:13px;margin-top:8px" class="muted">Edad visible estimada</div>
-        <div style="font-family:Fraunces;font-size:26px;color:${s.ageDelta<=0?'var(--green)':'var(--amber)'}">${s.visibleAge} <span style="font-size:16px">± ${s.ageRange||3}</span> años</div>
-        <div class="sub">${deltaTxt} de lo cronológico</div>
+    <span class="pill">${s.real?('Medición real · '+(s.samples||0)+' muestras · '+(s.regions||14)+' regiones'):'Modo demo'}</span>
+    <h2 style="margin-top:16px">${p.name?p.name+', ':''}esto dice tu rostro hoy</h2>
+    <div class="scorewrap" style="margin-top:18px">
+      <div class="score-arc-wrap">
+        <div class="score-big">${s.overall}</div>
+        <div class="score-label">Score facial</div>
+        <div class="score-arc"><i style="width:${s.overall}%"></i></div>
+      </div>
+      <div style="text-align:left;flex:1;min-width:0">
+        <div class="sub">Edad cronológica</div>
+        <div style="font-family:Fraunces;font-size:22px;color:var(--ink);margin:2px 0 10px">${p.age} años</div>
+        <div class="sub">Edad visible estimada</div>
+        <div style="font-family:Fraunces;font-size:32px;color:${deltaColor};line-height:1">${s.visibleAge}<span style="font-size:18px"> ± ${s.ageRange||3}</span></div>
+        <div class="sub" style="margin-top:4px"><b style="color:${deltaColor}">${deltaTxt}</b></div>
       </div>
     </div>
-    ${s.real?`<p class="sub" style="margin-top:8px">Calidad de captura: <b>${s.quality||'—'}/100</b> · a mayor calidad, menor margen de error.</p>`:''}
+    ${s.real?`<p class="sub" style="margin-top:12px;text-align:center">Calidad de captura: <b style="color:var(--ink)">${s.quality||'—'}/100</b></p>`:''}
     <div class="hr"></div>
     <div class="grid2" style="text-align:center">
-      <div><div style="font-family:Fraunces;font-size:24px;color:var(--rose-d)">P${s.percentile}</div><div class="sub">percentil vs tu edad</div></div>
-      <div><div style="font-family:Fraunces;font-size:24px;color:var(--rose-d)">${s.symmetry}</div><div class="sub">simetría facial</div></div>
+      <div><div style="font-family:Fraunces;font-size:28px;color:var(--rose)">P${s.percentile}</div><div class="sub">percentil vs tu edad</div></div>
+      <div><div style="font-family:Fraunces;font-size:28px;color:var(--gold)">${s.symmetry}</div><div class="sub">simetría facial</div></div>
     </div>
-    <p class="sub" style="margin-top:10px">Estás en el percentil ${s.percentile} de mujeres de tu rango: ${s.percentile>=50?'vas adelante de '+s.percentile+'%':'hay margen claro de mejora'}.</p>
-    <button class="btn ghost sm" style="margin-top:12px" onclick="shareResult()">Compartir mi resultado 📲</button>
+    <p class="sub" style="margin-top:12px;text-align:center">Percentil ${s.percentile}: ${s.percentile>=50?'vas adelante del '+s.percentile+'% de mujeres de tu rango':'hay margen claro de mejora para tus próximos 90 días'}.</p>
+    <button class="btn ghost sm" style="margin-top:14px" onclick="shareResult()">Compartir mi resultado 📲</button>
   </div>`;
-  // weakest zones highlight
+
+  // ---- FACE MAP ----
+  const zc=k=>{ const z=s.zones[k]; return z?col(z.score):'var(--muted)'; };
   const sorted=Object.entries(s.zones).sort((a,b)=>a[1].score-b[1].score);
-  h+=`<h3 style="margin:18px 0 8px">Tus prioridades</h3>
-    <div class="card"><p class="muted" style="font-size:13.5px;margin-top:0">Tus 3 zonas con más oportunidad. Tu plan empieza por aquí.</p>
-    ${sorted.slice(0,3).map(([k,z])=>`<div class="row between" style="margin:9px 0"><span>${ZMETA[k][1]} <b>${ZMETA[k][0]}</b></span><span class="dot" style="background:${col(z.score)};margin-left:auto"></span><b style="color:${col(z.score)}">${z.score}</b></div>`).join('')}</div>`;
-  // biomarkers
+  const top3=sorted.slice(0,3);
+  h+=`<div class="face-map-section">
+    <div class="eyebrow" style="margin-top:8px">Mapa facial por zona</div>
+    <p class="sub center" style="margin-bottom:16px">Toca una zona para expandir su análisis detallado</p>
+    <svg id="face-map" viewBox="0 0 200 260" style="width:200px;height:260px;display:block;margin:0 auto">
+      <ellipse cx="100" cy="130" rx="68" ry="88" fill="none" stroke="rgba(245,237,232,0.15)" stroke-width="1.5"/>
+      <ellipse data-zone="frente" cx="100" cy="68" rx="52" ry="26" fill="${zc('frente')}" opacity="0.35" class="zone-hit" style="cursor:pointer"/>
+      <ellipse data-zone="periocular" cx="74" cy="108" rx="18" ry="10" fill="${zc('periocular')}" opacity="0.45" class="zone-hit" style="cursor:pointer"/>
+      <ellipse data-zone="periocular" cx="126" cy="108" rx="18" ry="10" fill="${zc('periocular')}" opacity="0.45" class="zone-hit" style="cursor:pointer"/>
+      <ellipse data-zone="nariz" cx="100" cy="148" rx="14" ry="16" fill="${zc('nariz')}" opacity="0.38" class="zone-hit" style="cursor:pointer"/>
+      <ellipse data-zone="mejillas" cx="62" cy="148" rx="22" ry="20" fill="${zc('mejillas')}" opacity="0.35" class="zone-hit" style="cursor:pointer"/>
+      <ellipse data-zone="mejillas" cx="138" cy="148" rx="22" ry="20" fill="${zc('mejillas')}" opacity="0.35" class="zone-hit" style="cursor:pointer"/>
+      <ellipse data-zone="labios" cx="100" cy="181" rx="20" ry="10" fill="${zc('labios')}" opacity="0.45" class="zone-hit" style="cursor:pointer"/>
+      <ellipse data-zone="mandibula" cx="100" cy="205" rx="38" ry="14" fill="${zc('mandibula')}" opacity="0.35" class="zone-hit" style="cursor:pointer"/>
+    </svg>
+    <div class="face-legend">
+      <span><i style="background:var(--green)"></i>Óptima (≥75)</span>
+      <span><i style="background:var(--amber)"></i>Mejora (55-74)</span>
+      <span><i style="background:var(--red)"></i>Prioridad (&lt;55)</span>
+    </div>
+    <div class="priority-chips">
+      ${top3.map(([k,z])=>`<div class="priority-chip" style="color:${col(z.score)};border-color:${col(z.score)};background:rgba(0,0,0,0.2)" onclick="document.getElementById('zone-${k}')&&(document.getElementById('zone-${k}').classList.add('open'),document.getElementById('zone-${k}').scrollIntoView({behavior:'smooth',block:'center'}))">${ZMETA[k][1]} ${ZMETA[k][0]} · ${z.score}</div>`).join('')}
+    </div>
+  </div>`;
+
+  // ---- BIOMARKERS ----
   const b=s.bio;
-  h+=`<h3 style="margin:18px 0 8px">Biomarcadores cutáneos</h3>
-   <div class="card"><p class="sub" style="margin-top:0">Derivados del muestreo de píxeles de tu piel ${b.real?'':'(estimados en demo)'}.</p>
+  h+=`<h3 style="margin:22px 0 10px">Biomarcadores cutáneos</h3>
+   <div class="card"><p class="sub" style="margin-top:0">Derivados del análisis de píxeles de tu piel ${b.real?'':'(estimados en modo demo)'}.</p>
     ${bar('Luminosidad',b.luminosidad)}${bar('Uniformidad de tono',b.uniformidad)}${bar('Hidratación aparente',b.hidratacion)}
     ${biomark('Glicación (azúcar/colágeno)',b.glicacion,true)}${biomark('Inflamación visible',b.inflamacion,true)}
     ${biomark('Daño solar estimado',b.danoSolar,true)}${biomark('Vascularidad / rojez',b.vascularidad,true)}
    </div>`;
-  // zones accordion
-  h+=`<h3 style="margin:18px 0 8px">Análisis por zona</h3>`;
+
+  // ---- ZONES ACCORDION ----
+  h+=`<h3 style="margin:22px 0 10px">Análisis por zona</h3>`;
   Object.entries(s.zones).forEach(([k,z])=>{
-    h+=`<div class="zone" onclick="this.classList.toggle('open')">
-      <div class="zh"><span class="zi">${ZMETA[k][1]}</span><b>${ZMETA[k][0]}</b>${z.est?'<span class="sub" style="margin-left:6px">estimado</span>':''}<span class="zscore" style="color:${col(z.score)}">${z.score}</span></div>
+    h+=`<div class="zone" id="zone-${k}" onclick="this.classList.toggle('open')">
+      <div class="zh"><span class="zi">${ZMETA[k][1]}</span><b style="color:var(--ink)">${ZMETA[k][0]}</b>${z.est?`<span class="sub" style="margin-left:6px;font-size:11px">estimado</span>`:''}
+      <span class="zscore" style="color:${col(z.score)}">${z.score}</span></div>
       <div class="zb">${z.subs.map(su=>bar(su[0],su[1])).join('')}
-      ${z.est?'<div class="note">Esta zona requiere un acercamiento dedicado (tricoscopía / escaneo de cuello) para medición precisa. Mostramos una estimación basada en tu edad y biomarcadores.</div>':''}</div></div>`;
+      ${z.est?'<div class="note">Esta zona requiere un acercamiento dedicado para medición precisa. Estimación basada en tu edad y biomarcadores.</div>':''}</div></div>`;
   });
   h+=consultCard();
-  h+=`<div class="note">⚕️ Esto es una estimación basada en geometría facial y color de piel, no un diagnóstico médico. No sustituye una consulta profesional.</div>`;
+  h+=`<div class="note">⚕️ Estimación basada en geometría facial y color de piel, no diagnóstico médico. No sustituye una consulta profesional.</div>`;
   $('rep-body').innerHTML=h;
+
+  // Wire face map clicks
+  document.querySelectorAll('.zone-hit').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const zk=el.dataset.zone;
+      const target=document.getElementById('zone-'+zk);
+      if(target){ target.classList.add('open'); setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'center'}),50); }
+    });
+  });
 }
 function ringSVG(v,label){ const r=64,c=2*Math.PI*r,off=c*(1-v/100);
-  return `<div class="ringbox"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="${r}" fill="none" stroke="#efe9e7" stroke-width="11"/>
-   <circle cx="75" cy="75" r="${r}" fill="none" stroke="${col(v)}" stroke-width="11" stroke-linecap="round"
+  return `<div class="ringbox"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="${r}" fill="none" stroke="rgba(245,237,232,0.08)" stroke-width="10"/>
+   <circle cx="75" cy="75" r="${r}" fill="none" stroke="${col(v)}" stroke-width="10" stroke-linecap="round"
    stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 75 75)"/></svg>
-   <div class="lbl"><b>${v}</b><span>${label}</span></div></div>`; }
+   <div class="lbl"><b style="color:var(--ink)">${v}</b><span>${label}</span></div></div>`; }
 
 /* ============================================================
    RECOMMENDATION CATALOG + ENGINE
@@ -1304,13 +1457,14 @@ function renderPlan(){
   $('plan-tabs').querySelectorAll('.tab').forEach(t=>t.onclick=()=>{STATE.activeCat=t.dataset.c;renderPlan();});
   const p=STATE.profile;
   const eng=STATE.engagement||{}; const nSel=Object.values(eng).filter(v=>['hago','probar','hecho'].includes(v)).length;
-  let h=`<div class="card" style="margin-top:6px"><div class="row between"><b>Tu plan filtrado para ti</b>
+  let h=`<div class="card" style="margin-top:6px">
+    <div class="row between"><b style="color:var(--ink)">Tu plan filtrado para ti</b>
     <span class="pill">${p.budget==='gratis'?'Gratis/bajo':p.budget==='medio'?'Medio':'Premium'}</span></div>
-    <p class="sub" style="margin-top:6px">Priorizado por tus zonas débiles (${STATE.plan.weak.map(z=>ZMETA[z][0]).join(', ')}), tus objetivos y tu presupuesto.</p>
-    <div class="note" style="background:var(--rose-l);color:var(--rose-d);margin:8px 0">👉 Toca <b>«Voy a probar»</b> en lo que harás. Tu proyección y tus años de edad visible se calculan según lo que elijas. Usa <b>«Ver detalles»</b> para costo, evidencia y riesgos. Toca de nuevo un botón para quitarlo.</div>
-    <div class="row between" style="margin-top:8px">
+    <p class="sub" style="margin-top:8px">Priorizado por tus zonas débiles (${STATE.plan.weak.map(z=>ZMETA[z][0]).join(', ')}), tus objetivos y tu presupuesto.</p>
+    <div class="note" style="background:var(--rose-l);border-color:rgba(232,164,176,0.25);margin:10px 0">👉 Toca <b style="color:var(--rose)">«Voy a probar»</b> en lo que harás. Tu proyección se calcula en tiempo real según lo que elijas.</div>
+    <div class="row between" style="margin-top:10px">
       <span class="sub">${nSel?('✓ '+nSel+' seleccionados'):'Aún no seleccionas ninguno'}</span>
-      ${nSel?`<button class="btn ghost sm" style="width:auto;padding:8px 12px" onclick="resetEngagement()">Reiniciar selección</button>`:''}
+      ${nSel?`<button class="btn ghost sm" style="width:auto;padding:8px 12px" onclick="resetEngagement()">Reiniciar</button>`:''}
     </div>
     <div style="margin-top:8px">
       <button class="btn ghost sm" onclick="toggleBudgetView()" id="bv-btn">${p.budget==='premium'?'Ver solo opciones gratis':'Ver todo el espectro (incluye premium)'}</button>
@@ -1318,20 +1472,20 @@ function renderPlan(){
   const conds=(p.conditions||[]).filter(c=>c&&c!=='Ninguna');
   if(conds.length){
     const gen=conds.map(c=>COND_WARN[c]).filter(cfg=>cfg&&!cfg.kw.length).map(cfg=>cfg.txt);
-    h+=`<div class="card" style="border-color:var(--red)"><b style="color:var(--red)">⚠️ Precauciones por tu piel</b>
-      <p class="sub" style="margin-top:4px">Declaraste: <b>${conds.join(', ')}</b>. Verás avisos en los tratamientos que requieren cuidado, y te recomendamos validarlo con tu dermatólogo.</p>
+    h+=`<div class="card" style="border-color:rgba(232,126,126,0.35)"><b style="color:var(--red)">⚠️ Precauciones por tu piel</b>
+      <p class="sub" style="margin-top:6px">Declaraste: <b style="color:var(--ink)">${conds.join(', ')}</b>. Verás avisos en los tratamientos que requieren cuidado.</p>
       ${gen.map(t=>`<p class="sub" style="margin-top:4px">• ${t}</p>`).join('')}</div>`;
   }
 
   if(STATE.activeCat==='all'){
-    h+=`<div class="note" style="margin-bottom:10px">🗓️ <b>Tu plan va por fases</b> para no abrumarte. Es el orden dermatológico recomendado: primero <b>proteger y prevenir</b> (Fundación), luego activos, y más adelante tratamientos. Cada fase muestra qué hacer en ese momento — no todo a la vez.</div>`;
+    h+=`<div class="note" style="margin-bottom:12px;border-color:rgba(212,175,136,0.25)">🗓️ <b style="color:var(--gold)">Tu plan va por fases</b> para no abrumarte. Es el orden dermatológico recomendado: primero <b>proteger y prevenir</b> (Fundación), luego activos, y más adelante tratamientos.</div>`;
     // agrupar por fase — el CABELLO se maneja aparte (se estima, no se escanea)
     PHASES.forEach((ph,i)=>{
       const inPh=STATE.plan.recs.filter(r=>r.ph===i+1 && r.c!=='hair');
       if(!inPh.length)return;
       h+=`<div class="phase"><div class="tl"><div class="pn">${i+1}</div><div class="ln"></div></div>
-        <div class="pc"><b style="font-family:Fraunces;font-size:18px">${ph[0]}</b> <span class="sub">${ph[1]}</span>
-        <p class="sub" style="margin:2px 0 10px">${ph[2]}</p>
+        <div class="pc"><b style="font-family:Fraunces;font-size:20px;color:var(--ink)">${ph[0]}</b> <span class="sub" style="font-size:12px">${ph[1]}</span>
+        <p class="sub" style="margin:4px 0 12px">${ph[2]}</p>
         ${inPh.slice(0,5).map(recCard).join('')}</div></div>`;
     });
     if(STATE.plan.recs.some(r=>r.c==='hair')){
@@ -1343,7 +1497,7 @@ function renderPlan(){
     const list=STATE.plan.recs.filter(r=>catOf(r)===STATE.activeCat);
     if(STATE.activeCat==='skincare'){
       const am=list.filter(r=>(r.rt||'AM/PM').includes('AM')), pm=list.filter(r=>(r.rt||'AM/PM').includes('PM'));
-      h+=`<div class="note" style="background:var(--rose-l);color:var(--rose-d)">Tu rutina está dividida en <b>☀️ Mañana (AM)</b> y <b>🌙 Noche (PM)</b>. El SPF va siempre en la mañana; los activos fuertes (retinol, ácidos, PDRN) por la noche.</div>`;
+      h+=`<div class="note" style="background:var(--rose-l);border-color:rgba(232,164,176,0.25)">Tu rutina está dividida en <b style="color:var(--rose)">☀️ Mañana (AM)</b> y <b style="color:var(--rose)">🌙 Noche (PM)</b>. El SPF va siempre en la mañana; los activos fuertes (retinol, ácidos, PDRN) por la noche.</div>`;
       h+=`<h3 style="margin:10px 0 8px">☀️ Rutina de mañana (AM)</h3>`+(am.length?am.map(recCard).join(''):`<div class="note">Sin activos AM para tu nivel actual.</div>`);
       h+=`<h3 style="margin:16px 0 8px">🌙 Rutina de noche (PM)</h3>`+(pm.length?pm.map(recCard).join(''):`<div class="note">Sin activos PM para tu nivel actual.</div>`);
     } else if(STATE.activeCat==='hair'){
@@ -1370,8 +1524,8 @@ const ZBEN={piel:'Cuida y previene el envejecimiento de tu piel día a día.',
   cabello:'Cuida la densidad y la salud de tu cabello.'};
 function listJoin(a){ a=a.filter(Boolean); if(a.length<=1)return a[0]||''; return a.slice(0,-1).join(', ')+' y '+a[a.length-1]; }
 function rtBadge(r){ if(r.c!=='skincare')return ''; const rt=r.rt||'AM/PM';
-  const m={'AM':'☀️ Mañana','PM':'🌙 Noche','AM/PM':'☀️🌙 AM y PM'}[rt]||rt;
-  return ` <span class="vb" style="color:#3a6ea5;background:#e8f0fa">${m}</span>`; }
+  const m={'AM':'☀️ Mañana','PM':'🌙 Noche','AM/PM':'☀️🌙 AM/PM'}[rt]||rt;
+  return ` <span class="vb" style="color:var(--gold);background:var(--gold-l);border:1px solid rgba(212,175,136,0.2)">${m}</span>`; }
 // precauciones que aplican a ESTA recomendación según las condiciones declaradas
 function condWarn(r){ const cs=STATE.profile.conditions||[], out=[];
   cs.forEach(c=>{ const cfg=COND_WARN[c]; if(!cfg||!cfg.kw.length)return;
@@ -1394,34 +1548,39 @@ function recCard(r){
   const e=STATE.engagement[r.n]||'';
   const selected = e==='hago'||e==='probar'||e==='hecho';
   const where=r.inv===0?'🏠 En casa':r.inv===1?'🏥 Consultorio':r.inv>=3?'💉 Medicina estética':'🏥 Consultorio';
-  const badges=`${r.nuevo?'<span class="vb" style="color:var(--rose-d);background:var(--rose-l)">✦ Novedad</span>':''}${(r.always30&&STATE.profile.age>=30)?'<span class="vb" style="color:var(--rose-d);background:var(--rose-l)">Preventivo 30+</span>':''}${rtBadge(r)}`;
-  const alerts=`${r.caution?`<div class="note" style="background:#fbeee9;color:var(--red)">⚠️ Tu fototipo (Fitz ${STATE.profile.fitz}) requiere precaución por riesgo de hiperpigmentación. Pide a tu médico parámetros conservadores.</div>`:''}${(r.md||r.inv>=2)?`<div class="note" style="background:#fff6e8;color:#9a6a1f">🩺 <b>Doble-chequéalo con tu médico</b> antes de empezar (contraindicaciones según tu historia, embarazo/lactancia o medicamentos).</div>`:''}${condWarn(r).map(w=>`<div class="note" style="background:#fbeee9;color:var(--red)">⚠️ ${w}</div>`).join('')}`;
+  const badges=`${r.nuevo?`<span class="vb" style="color:var(--rose);background:var(--rose-l);border:1px solid rgba(232,164,176,0.25)">✦ Novedad</span>`:''}${(r.always30&&STATE.profile.age>=30)?`<span class="vb" style="color:var(--gold);background:var(--gold-l)">Preventivo 30+</span>`:''}${rtBadge(r)}`;
+  const alerts=`${r.caution?`<div class="note" style="border-color:rgba(232,126,126,0.3);color:var(--red)">⚠️ Tu fototipo (Fitz ${STATE.profile.fitz}) requiere precaución por riesgo de hiperpigmentación. Pide a tu médico parámetros conservadores.</div>`:''}${(r.md||r.inv>=2)?`<div class="note" style="border-color:rgba(212,175,136,0.3);color:var(--amber)">🩺 <b>Consulta con tu médico</b> antes de empezar (contraindicaciones, embarazo/lactancia o medicamentos).</div>`:''}${condWarn(r).map(w=>`<div class="note" style="border-color:rgba(232,126,126,0.3);color:var(--red)">⚠️ ${w}</div>`).join('')}`;
   return `<div class="rec ${selected?'sel':''}">
-   <div class="row between" style="align-items:flex-start">
-     <div style="flex:1"><h4>${r.n}</h4>${badges?`<div class="rec-badges">${badges}</div>`:''}</div>
-     <span class="dot" title="nivel" style="background:${col(r.tier==='gratis'?85:r.tier==='medio'?65:50)};margin-top:5px"></span>
+   <div class="row between" style="align-items:flex-start;gap:10px">
+     <div style="flex:1;min-width:0">
+       <h4>${r.n}</h4>
+       ${badges?`<div class="rec-badges">${badges}</div>`:''}
+     </div>
+     <span class="dot" title="nivel" style="background:${col(r.tier==='gratis'?85:r.tier==='medio'?65:50)};flex:0 0 9px;margin-top:6px"></span>
    </div>
    <p class="rec-what">${r.what}</p>
    <div class="rec-chips"><span>💲 ${r.cost}</span><span>⏱️ ${r.freq}</span><span>${where}</span></div>
-   <div class="why">💡 <b>Por qué para ti:</b> ${whyText(r)}</div>
-   ${r.outside?`<div class="note" style="background:#f3efed">ℹ️ Recomendado por tu edad aunque queda fuera de tu presupuesto/tolerancia actual.</div>`:''}
-   ${alerts?`<div style="margin-top:2px">${alerts}</div>`:''}
+   <div class="rec-why">💡 ${whyText(r)}</div>
+   ${r.outside?`<div class="note">ℹ️ Recomendado por tu edad aunque queda fuera de tu presupuesto/tolerancia actual.</div>`:''}
+   ${alerts?`<div style="margin-top:4px">${alerts}</div>`:''}
    ${buyBtn(r)}
-   <div class="eng-label">¿Lo vas a hacer? (esto arma tu plan y tu proyección)</div>
+   <div class="eng-label">¿Lo vas a hacer?</div>
    <div class="eng">
      <button data-n="${r.n}" data-v="probar" class="${e==='probar'?'on':''}">Voy a probar</button>
      <button data-n="${r.n}" data-v="hago" class="${e==='hago'?'on':''}">Ya lo hago</button>
      <button data-n="${r.n}" data-v="hecho" class="${e==='hecho'?'on':''}">Hecho</button>
      <button data-n="${r.n}" data-v="no" class="no ${e==='no'?'on':''}">No</button>
    </div>
-   ${selected?`<p class="sub" style="margin-top:6px;color:var(--green)">✓ En tu plan. Toca de nuevo para quitarlo.</p>`:''}
+   ${selected?`<p class="sub" style="margin-top:8px;color:var(--green)">✓ En tu plan activo. Toca de nuevo para quitarlo.</p>`:''}
    <button class="rec-toggle" onclick="this.closest('.rec').classList.toggle('open')">Ver detalles y evidencia ▾</button>
    <div class="rec-more">
      <div class="recgrid">
-       <div><b>Tiempo por uso</b>${r.time}</div><div><b>Resultados</b>${r.res}</div>
-       <div><b>Duración</b>${r.dur}</div><div><b>Dónde</b>${where}</div>
+       <div><b>Tiempo por uso</b><span style="color:var(--ink)">${r.time}</span></div>
+       <div><b>Resultados</b><span style="color:var(--ink)">${r.res}</span></div>
+       <div><b>Duración del efecto</b><span style="color:var(--ink)">${r.dur}</span></div>
+       <div><b>Dónde</b><span style="color:var(--ink)">${where}</span></div>
      </div>
-     <div style="font-size:12px;margin-top:4px"><b style="color:var(--muted)">Riesgos:</b> ${r.risk}</div>
+     <div style="font-size:12px;margin-top:8px;color:var(--ink2)"><b style="color:var(--muted)">Riesgos:</b> ${r.risk}</div>
      <div class="evi">📚 ${r.evi}</div>
    </div></div>`;
 }
@@ -1495,11 +1654,11 @@ function renderProjection(){
   const pts=series.map((v,i)=>[X(i),Y(v)]);
   const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(0)+' '+p[1].toFixed(0)).join(' ');
   const area=line+` L ${X(nn-1).toFixed(0)} ${Hc-26} L 22 ${Hc-26} Z`;
-  const trend=`<svg viewBox="0 0 ${W2} ${Hc}" style="width:100%;margin-top:12px">
-    <defs><linearGradient id="trg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b76e79" stop-opacity=".34"/><stop offset="1" stop-color="#b76e79" stop-opacity="0"/></linearGradient></defs>
-    <path d="${area}" fill="url(#trg)"/><path d="${line}" fill="none" stroke="var(--rose)" stroke-width="2.6" stroke-linecap="round"/>
-    ${pts.map((p,i)=>`<circle cx="${p[0].toFixed(0)}" cy="${p[1].toFixed(0)}" r="4" fill="var(--rose)"/>
-      <text x="${p[0].toFixed(0)}" y="${(p[1]-9).toFixed(0)}" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="middle">${series[i]}</text>
+  const trend=`<svg viewBox="0 0 ${W2} ${Hc}" style="width:100%;margin-top:14px">
+    <defs><linearGradient id="trg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col(s.overall)}" stop-opacity=".3"/><stop offset="1" stop-color="${col(s.overall)}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#trg)"/><path d="${line}" fill="none" stroke="var(--rose)" stroke-width="2.8" stroke-linecap="round"/>
+    ${pts.map((p,i)=>`<circle cx="${p[0].toFixed(0)}" cy="${p[1].toFixed(0)}" r="4.5" fill="var(--rose)" stroke="var(--bg2)" stroke-width="2"/>
+      <text x="${p[0].toFixed(0)}" y="${(p[1]-11).toFixed(0)}" font-size="11" font-weight="700" fill="var(--ink)" text-anchor="middle">${series[i]}</text>
       <text x="${p[0].toFixed(0)}" y="${Hc-7}" font-size="9.5" fill="var(--muted)" text-anchor="middle">${months[i]===0?'Hoy':months[i]+' m'}</text>`).join('')}
   </svg>`;
   let h=`<div class="card">
@@ -1523,13 +1682,15 @@ function renderProjection(){
   h+=`</div>`;
   // big projected number
   const projVisible=Math.max(18,(s.visibleAge-yearsDrop)).toFixed(1);
-  h+=`<div class="card center" style="background:linear-gradient(160deg,#2a2630,#8a5560);color:#fff">
-    <div class="sub" style="color:rgba(255,255,255,.8)">Edad visible hoy</div>
-    <div style="font-family:Fraunces;font-size:30px">${s.visibleAge} años</div>
-    <div style="font-size:24px;margin:6px 0">↓</div>
-    <div class="sub" style="color:rgba(255,255,255,.8)">Proyección a 12 meses ${proj.committed?'(según tus intervenciones)':'(tu nivel declarado)'}</div>
-    <div style="font-family:Fraunces;font-size:40px;color:#f3e3e5">${projVisible} años</div>
-    <p style="font-size:12px;opacity:.85;margin-top:8px">${proj.committed?('Suma de '+proj.committed+' intervenciones, con saturación realista (no se suman linealmente).'):'Marca intervenciones en tu plan para una proyección personalizada.'}</p>
+  h+=`<div class="card center" style="background:linear-gradient(135deg,rgba(14,12,18,0.98),rgba(45,18,36,0.98));border-color:rgba(232,164,176,0.3)">
+    <div class="eyebrow" style="margin-top:0">Tu transformación en 12 meses</div>
+    <div class="sub" style="color:var(--muted)">Edad visible hoy</div>
+    <div style="font-family:Fraunces;font-size:34px;color:var(--ink)">${s.visibleAge} años</div>
+    <div style="font-size:28px;margin:8px 0;color:var(--rose)">↓</div>
+    <div class="sub" style="color:var(--muted)">Proyección a 12 meses ${proj.committed?'(según tus intervenciones)':'(tu nivel declarado)'}</div>
+    <div style="font-family:Fraunces;font-size:56px;color:var(--rose);line-height:1.05;filter:drop-shadow(0 0 20px rgba(232,164,176,0.4))">${projVisible}</div>
+    <div style="font-size:18px;color:var(--ink2);margin-top:2px">años</div>
+    <p style="font-size:12px;color:var(--muted);margin-top:10px">${proj.committed?('Suma de '+proj.committed+' intervenciones, con saturación realista.'):'Marca intervenciones en tu plan para una proyección personalizada.'}</p>
   </div>`;
   // per zone projection (según intervenciones que tocan esa zona)
   const weak=STATE.plan.weak;
@@ -1543,9 +1704,9 @@ function renderProjection(){
   h+=`<h3 style="margin:18px 0 8px">El costo de no hacer nada</h3>
    <div class="card"><p class="sub" style="margin-top:0">No es para asustarte — es real y silencioso.</p>
    <table class="cmp">
-    <tr><td>En 12 meses sin plan</td><td style="color:var(--amber)">+0.8 a 1.4 años</td></tr>
-    <tr><td>En 3 años sin plan</td><td style="color:var(--amber)">+3 a 5 años</td></tr>
-    <tr><td>En 5 años sin plan</td><td style="color:var(--red)">cambio difícil de revertir</td></tr>
+    <tr><td style="color:var(--ink2)">En 12 meses sin plan</td><td style="color:var(--amber)">+0.8 a 1.4 años</td></tr>
+    <tr><td style="color:var(--ink2)">En 3 años sin plan</td><td style="color:var(--amber)">+3 a 5 años</td></tr>
+    <tr><td style="color:var(--ink2)">En 5 años sin plan</td><td style="color:var(--red)">cambio difícil de revertir</td></tr>
    </table></div>`;
   // re-scan promise
   h+=`<div class="note">🔁 Cada 90 días te invitamos a re-escanearte. Verás tu delta real medido vs lo proyectado, lado a lado, y ajustamos tu plan si vas adelante o atrás.</div>`;
@@ -1733,12 +1894,14 @@ function renderDash(){
   const d=db(); const k=STATE.profile.email.toLowerCase(); const u=d[k]||{scans:[]};
   const scans=u.scans||[]; const p=STATE.profile;
   const last=scans[scans.length-1], first=scans[0];
-  let h=`<div style="padding-top:8px"><h2>Hola de nuevo${p.name?', '+p.name:''} 👋</h2>
-   <p class="muted" style="font-size:14px">${scans.length} escaneo${scans.length!==1?'s':''} · tu llave: ${p.email}</p></div>`;
+  let h=`<div style="padding-top:12px"><h2>Hola de nuevo${p.name?', '+p.name:''} 👋</h2>
+   <p class="muted" style="font-size:14px">${scans.length} escaneo${scans.length!==1?'s':''} · ${p.email}</p></div>`;
   if(last){
     h+=`<div class="card center">${ringSVG(last.overall,'Score actual')}
-      <div class="grid2" style="margin-top:6px"><div><div style="font-family:Fraunces;font-size:22px">${last.visibleAge}</div><div class="sub">edad visible</div></div>
-      <div><div style="font-family:Fraunces;font-size:22px">P${last.percentile}</div><div class="sub">percentil</div></div></div></div>`;
+      <div class="grid2" style="margin-top:10px;text-align:center">
+        <div><div style="font-family:Fraunces;font-size:26px;color:var(--rose)">${last.visibleAge}</div><div class="sub">edad visible</div></div>
+        <div><div style="font-family:Fraunces;font-size:26px;color:var(--gold)">P${last.percentile}</div><div class="sub">percentil</div></div>
+      </div></div>`;
   }
   if(scans.length>=2){
     const delta=last.overall-first.overall;

@@ -823,8 +823,29 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
   .ob-chips-grid { max-width: 500px; grid-template-columns: repeat(3, 1fr) !important; }
   #s-onboarding .bottombar { max-width: 580px; margin: 0 auto; position: static; padding: 0 0 40px; background: none; }
 
-  /* Scan: centered */
-  #s-scan .pad { max-width: 560px; margin: 0 auto; }
+  /* Scan: two-column on desktop so button stays visible */
+  #s-scan .scan-pad {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 40px;
+    align-items: start;
+    padding: 24px 48px;
+  }
+  #s-scan .scan-cam-col .cam {
+    aspect-ratio: auto;
+    height: calc(100vh - 160px);
+    max-height: 600px;
+    min-height: 320px;
+  }
+  #s-scan .scan-action-col {
+    position: sticky;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+  }
+  #s-scan .scan-action-col .btn { width: 100%; }
 
   /* Processing: centered */
   #s-processing .pad { max-width: 480px; margin: 0 auto; }
@@ -1077,7 +1098,7 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
         <div class="steps">
           <div class="step"><div class="n">01</div><div><b>Escanea tu rostro</b><div class="d">La IA analiza 478 puntos de tu rostro. Todo ocurre en tu teléfono — tu imagen nunca toca ningún servidor.</div></div></div>
           <div class="step"><div class="n">02</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible real. Un diagnóstico zona por zona, sin filtros, con lo que realmente está pasando.</div></div></div>
-          <div class="step"><div class="n">03</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días medís el progreso real.</div></div></div>
+          <div class="step"><div class="n">03</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días mides el progreso real.</div></div></div>
         </div>
         <button class="btn rose" style="margin-top:28px;width:100%" onclick="go('onboarding')">Descubrir mi edad visible →</button>
         <p class="center sub" style="margin-top:8px;color:rgba(245,237,232,0.5)">Tu foto nunca sale de tu teléfono.</p>
@@ -1088,7 +1109,7 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
       <div class="steps">
         <div class="step"><div class="n">01</div><div><b>Escanea tu rostro</b><div class="d">La IA analiza 478 puntos de tu rostro. Todo ocurre en tu teléfono — tu imagen nunca toca ningún servidor.</div></div></div>
         <div class="step"><div class="n">02</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible real. Un diagnóstico zona por zona, sin filtros, con lo que realmente está pasando.</div></div></div>
-        <div class="step"><div class="n">03</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días medís el progreso real.</div></div></div>
+        <div class="step"><div class="n">03</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días mides el progreso real.</div></div></div>
       </div>
       <div class="eyebrow" style="margin-top:28px">Lo que obtienes</div>
       <div class="feat"><div class="ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="6" r="3.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><line x1="2" y1="2" x2="3.5" y2="3.5"/><line x1="14" y1="2" x2="12.5" y2="3.5"/></svg></div><div><b style="color:var(--ink)">478 puntos faciales</b><br><span class="muted" style="font-size:13.5px">Geometría facial + análisis de piel. No un filtro — ciencia aplicada a tu cara.</span></div></div>
@@ -1120,24 +1141,28 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
   <!-- ============ SCAN ============ -->
   <section class="screen" id="s-scan">
     <div class="top"><button class="back" onclick="go('onboarding')">‹</button><span class="brand">Escaneo facial</span><span></span></div>
-    <div class="pad">
-      <div class="cam" id="cam">
-        <video id="vid" autoplay playsinline muted></video>
-        <canvas id="overlay"></canvas>
-        <div class="count" id="count">Listo</div>
-        <div class="ring" id="ring"><svg viewBox="0 0 100 130"><ellipse cx="50" cy="60" rx="34" ry="46" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.2" stroke-dasharray="4 4"/></svg></div>
-        <div class="scanstat" id="scanstat">Centra tu rostro en el óvalo</div>
+    <div class="pad scan-pad">
+      <div class="scan-cam-col">
+        <div class="cam" id="cam">
+          <video id="vid" autoplay playsinline muted></video>
+          <canvas id="overlay"></canvas>
+          <div class="count" id="count">Listo</div>
+          <div class="ring" id="ring"><svg viewBox="0 0 100 130"><ellipse cx="50" cy="60" rx="34" ry="46" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.2" stroke-dasharray="4 4"/></svg></div>
+          <div class="scanstat" id="scanstat">Centra tu rostro en el óvalo</div>
+        </div>
+        <div class="qcheck" id="qcheck">
+          <div data-q="bright"><span class="qd"></span> Luz suficiente y pareja</div>
+          <div data-q="size"><span class="qd"></span> Rostro llena el óvalo</div>
+          <div data-q="center"><span class="qd"></span> Centrado</div>
+          <div data-q="front"><span class="qd"></span> De frente</div>
+        </div>
+        <div class="prog" style="margin:12px 0 4px"><i id="scanprog" style="width:0%"></i></div>
       </div>
-      <div class="qcheck" id="qcheck">
-        <div data-q="bright"><span class="qd"></span> Luz suficiente y pareja</div>
-        <div data-q="size"><span class="qd"></span> Rostro llena el óvalo</div>
-        <div data-q="center"><span class="qd"></span> Centrado</div>
-        <div data-q="front"><span class="qd"></span> De frente</div>
+      <div class="scan-action-col">
+        <div class="note" id="scannote">Buena luz natural y uniforme, sin lentes ni maquillaje pesado, cabello fuera de la cara y rostro de frente. El análisis toma ~20–30 segundos. Mantente quieta.</div>
+        <button class="btn rose" id="scanbtn" onclick="startScan()" style="margin-top:16px">Iniciar análisis</button>
+        <button class="btn ghost sm" style="margin-top:8px" onclick="demoScan()">Continuar sin cámara</button>
       </div>
-      <div class="prog" style="margin:12px 22px 4px"><i id="scanprog" style="width:0%"></i></div>
-      <div class="note" id="scannote">Buena luz natural y uniforme, sin lentes ni maquillaje pesado, cabello fuera de la cara y rostro de frente. El escaneo se toma su tiempo (~20–30 s) y acumula cientos de muestras de píxeles por zona para precisión. Mantente quieta; puedes finalizar antes cuando aparezca el botón.</div>
-      <button class="btn rose" id="scanbtn" onclick="startScan()">Iniciar análisis</button>
-      <button class="btn ghost sm" style="margin-top:8px" onclick="demoScan()">Continuar sin cámara</button>
     </div>
   </section>
 
@@ -1195,7 +1220,7 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
     <div class="top"><button class="back" onclick="go('welcome')">‹</button><span class="brand">Bienvenida de vuelta</span><span></span></div>
     <div class="pad" style="padding-top:30px">
       <h2>Ver mi evolución</h2>
-      <p class="muted" style="font-size:14px">Ingresá tu email y te mandamos un código para acceder a tu historial.</p>
+      <p class="muted" style="font-size:14px">Ingresa tu email y te enviamos un código para acceder a tu historial.</p>
       <label class="fld">Email</label>
       <input id="ret-email" type="email" placeholder="tu@email.com" />
       <button class="btn rose" style="margin-top:16px" onclick="loadReturning()">Enviar código →</button>
@@ -1357,7 +1382,7 @@ const obMicroSteps=[
     const sel= cur<=25?'18-25':cur<=35?'26-35':cur<=45?'36-45':cur<=55?'46-55':'56+';
     return `<div class="ob-fullscreen">
       <div class="ob-q-num">PASO 2 DE ${OB_TOTAL}</div>
-      <h2 class="ob-headline">¿Cuántos años tenés?</h2>
+      <h2 class="ob-headline">¿Cuántos años tienes?</h2>
       <p class="ob-hint">Para calibrar tu análisis con tu edad cronológica real.</p>
       <div class="ob-answer-area">
         <input class="ob-input-large" id="f-age" type="number" min="18" max="80" value="${STATE.profile.age}" placeholder="34" style="margin-bottom:16px"/>
@@ -1379,8 +1404,8 @@ const obMicroSteps=[
   // STEP 3: Goals (multi-select)
   ()=>`<div class="ob-fullscreen">
     <div class="ob-q-num">PASO 4 DE ${OB_TOTAL}</div>
-    <h2 class="ob-headline">¿Qué querés lograr?</h2>
-    <p class="ob-hint">Elegí todo lo que aplique. Esto prioriza tu plan.</p>
+    <h2 class="ob-headline">¿Qué quieres lograr?</h2>
+    <p class="ob-hint">Elige todo lo que aplique. Esto prioriza tu plan.</p>
     <div class="ob-answer-area">
       <div class="ob-chips-lg" id="f-goals">
         ${GOALS.map(g=>`<div class="ob-chip-lg ${STATE.profile.goals.includes(g[0])?'on':''}" data-v="${g[0]}">
@@ -1406,7 +1431,7 @@ const obMicroSteps=[
   // STEP 5: Budget
   ()=>`<div class="ob-fullscreen">
     <div class="ob-q-num">PASO 6 DE ${OB_TOTAL}</div>
-    <h2 class="ob-headline">¿Cuánto querés invertir?</h2>
+    <h2 class="ob-headline">¿Cuánto quieres invertir?</h2>
     <p class="ob-hint">Solo te recomendamos lo que encaje en tu realidad.</p>
     <div class="ob-answer-area">
       <div class="ob-chips-lg" id="f-budget">
@@ -1462,7 +1487,7 @@ const obMicroSteps=[
     const sel=ex===0?'0':ex<=2?'1':ex<=4?'3':'5';
     return `<div class="ob-fullscreen">
       <div class="ob-q-num">PASO 10 DE ${OB_TOTAL}</div>
-      <h2 class="ob-headline">¿Cuánto ejercicio hacés?</h2>
+      <h2 class="ob-headline">¿Cuánto ejercicio haces?</h2>
       <p class="ob-hint">Mejora circulación y oxigenación. Más glow natural.</p>
       <div class="ob-answer-area">
         <div class="ob-chips-lg" id="f-exercise">
@@ -1740,10 +1765,10 @@ function getRevealStory(scan, profile) {
   const age = profile.age;
   if (d <= -3) return {
     headline: `Aparentás ${Math.abs(d)} años menos que tu edad.`,
-    sub: `Estás en el top ${100 - scan.percentile}% de mujeres de ${age} años. Tu piel habla bien de vos.`
+    sub: `Estás en el top ${100 - scan.percentile}% de mujeres de ${age} años. Tu piel habla muy bien.`
   };
   if (d <= -1) return {
-    headline: `Tu piel tiene ${Math.abs(d)} años menos que vos.`,
+    headline: `Tu piel tiene ${Math.abs(d)} años menos de tu edad real.`,
     sub: `Lo que estás haciendo funciona. Hay margen para seguir ganando años.`
   };
   if (d <= 1) return {
@@ -1751,8 +1776,8 @@ function getRevealStory(scan, profile) {
     sub: `Punto de inflexión: los próximos 12 meses deciden si ganás o perdés años.`
   };
   if (d <= 3) return {
-    headline: `Tu piel aparenta ${d} años más que vos.`,
-    sub: `Es recuperable. Con el plan correcto, podés revertirlo en 6-12 meses.`
+    headline: `Tu piel aparenta ${d} años más de tu edad real.`,
+    sub: `Es recuperable. Con el plan correcto, puedes revertirlo en 6-12 meses.`
   };
   return {
     headline: `Tu piel aparenta ${d} años más que tu edad.`,
@@ -2347,7 +2372,7 @@ function renderReport(){
     h += zoneHumanCard(k, z);
   });
   h+=consultCard();
-  h+=`<div class="note">Estimación educativa, no diagnóstico médico. Ante cualquier duda, consultá un profesional de la salud.</div>`;
+  h+=`<div class="note">Estimación educativa, no diagnóstico médico. Ante cualquier duda, consulta con un profesional de la salud.</div>`;
   h+=`</div></div>`;
   $('rep-body').innerHTML=h;
 
@@ -2655,7 +2680,7 @@ window.trackAffiliateClick = function(name) {
 
 const CATNAMES={skincare:['Skincare','🧴'],habits:['Hábitos','🌿'],supplements:['Suplementos','💊'],treatments:['Tratamientos','💉'],hair:['Capilar','💇‍♀️']};
 const catOf=r=> (r.c==='injectables'?'treatments':r.c); // inyectables se muestran dentro de Tratamientos
-const PHASES=[['Fundación','0–1 mes','Lo que podés empezar mañana, sin gastar nada. La base de todo.'],
+const PHASES=[['Fundación','0–1 mes','Lo que puedes empezar mañana, sin gastar nada. La base de todo.'],
   ['Activación','1–3 meses','Sumar activos que cambian la piel en semanas. Con evidencia, sin improvisar.'],
   ['Optimización','3–6 meses','El momento de sumar profesionales. Sin agujas, sin cirugía — resultados visibles.'],
   ['Aceleración','6–9 meses','Los tratamientos que más años bajan en menos tiempo.'],
@@ -2748,7 +2773,7 @@ function renderPlan(){
     }
   }
   h+=`<p style="font-size:11px;color:rgba(245,237,232,0.35);text-align:center;margin-top:20px;padding:0 10px">
-  Los links de productos son de afiliado. Si comprás desde acá nos apoyás sin costo extra para vos.
+  Los links de productos son de afiliado. Si compras desde aquí nos apoyas sin costo adicional para ti.
 </p>`;
   $('plan-body').innerHTML=h;
   bindEng();
@@ -2905,7 +2930,7 @@ function renderProjection(){
       <text x="${p[0].toFixed(0)}" y="${Hc-7}" font-size="9.5" fill="var(--muted)" text-anchor="middle">${months[i]===0?'Hoy':months[i]+' m'}</text>`).join('')}
   </svg>`;
   let h=`<div class="card">
-    <div class="center"><span class="pill">Lo que cambia si lo hacés.</span>
+    <div class="center"><span class="pill">Lo que cambia si lo haces.</span>
     <h2 style="margin-top:12px">Tu progreso proyectado</h2>
     <p class="sub">${proj.committed?('Con las '+proj.committed+' intervenciones que marcaste'):'Marca tratamientos en tu plan'} — así suben tus números en 12 meses.</p></div>
     <div class="grid2" style="margin-top:14px;text-align:center">
@@ -2944,7 +2969,7 @@ function renderProjection(){
      <div class="bar"><i style="width:${pj}%;background:linear-gradient(90deg,var(--amber),var(--green))"></i></div></div>`; });
   h+=`</div>`;
   // cost of inaction
-  h+=`<h3 style="margin:18px 0 8px">Lo que pasa si no hacés nada.</h3>
+  h+=`<h3 style="margin:18px 0 8px">Lo que pasa si no haces nada.</h3>
    <div class="card"><p class="sub" style="margin-top:0">El envejecimiento no avisa. Avanza igual si lo ignorás.</p>
    <table class="cmp">
     <tr><td style="color:var(--ink2)">12 meses sin cambios</td><td style="color:var(--amber)">+0.8 a 1.4 años</td></tr>
@@ -2952,7 +2977,7 @@ function renderProjection(){
     <tr><td style="color:var(--ink2)">5 años — punto de inflexión</td><td style="color:var(--red)">cuesta el doble revertirlo</td></tr>
    </table></div>`;
   // re-scan promise
-  h+=`<div class="note">🔁 En 90 días tu cara ya muestra cambios. Re-escaneate y compará en números: cuánto bajó tu edad visible.</div>`;
+  h+=`<div class="note">🔁 En 90 días tu cara ya muestra cambios. Vuelve a escanear y compara en números: cuánto bajó tu edad visible.</div>`;
   h+=shareCard();
   h+=consultCard();
   $('proj-body').innerHTML=h;
@@ -3352,7 +3377,7 @@ function renderDash(){
     h += '<div class="card" style="padding:32px;text-align:center">' +
       '<div style="font-size:48px;margin-bottom:16px">🔍</div>' +
       '<h3>No hay escaneos aún</h3>' +
-      '<p class="muted">Hacé tu primer análisis facial para empezar a trackear tu progreso.</p>' +
+      '<p class="muted">Haz tu primer análisis facial para empezar a registrar tu progreso.</p>' +
     '</div>';
   }
 

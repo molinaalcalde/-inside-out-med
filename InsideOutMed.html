@@ -965,6 +965,96 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
   .rep-grid { padding: 0 60px; }
   .plan-layout { padding: 0 60px; }
 }
+
+/* ===== PREMIUM GLOBAL UPGRADES ===== */
+
+/* Hide emoji icons in onboarding chips */
+.ob-chip-lg .ob-chip-icon { display: none !important; }
+
+/* Better onboarding chip — left accent bar on selected */
+.ob-chip-lg {
+  padding-left: 18px;
+  border-left: 3px solid transparent;
+  transition: all .15s;
+}
+.ob-chip-lg.on {
+  border-left-color: var(--rose);
+  padding-left: 16px;
+}
+
+/* Phase numbers redesign — editorial thin circles, no gold fill */
+.phase .tl .pn {
+  background: transparent !important;
+  border: 1px solid rgba(212,175,136,0.45);
+  color: var(--gold) !important;
+  font-size: 11px !important;
+  font-family: 'Fraunces', serif !important;
+  font-style: italic;
+  box-shadow: none !important;
+  width: 26px;
+  height: 26px;
+}
+
+/* Processing screen — nicer list items */
+.loadlist div {
+  padding: 11px 0;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(245,237,232,0.05);
+  letter-spacing: .01em;
+}
+.loadlist div:last-child { border-bottom: none; }
+.chk { border-radius: 4px; } /* square checkbox look */
+
+/* Better zone accordion */
+.zone>.zh { padding: 18px; }
+.zone .zh .zi {
+  font-size: 0 !important;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* More editorial rec-why */
+.rec-why {
+  font-size: 12.5px;
+  color: var(--ink2);
+  background: transparent;
+  border: none;
+  border-left: 2px solid rgba(212,175,136,0.4);
+  border-radius: 0;
+  padding: 6px 10px;
+  margin: 8px 0;
+  line-height: 1.55;
+}
+
+/* Better tier blocks in projection */
+.tier { border-radius: 14px; }
+
+/* More refined note component */
+.note { border-radius: 10px; letter-spacing: .01em; }
+
+/* Verify screen email icon */
+.verify-icon {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  border: 1px solid rgba(245,237,232,0.15);
+  background: rgba(245,237,232,0.05);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  color: var(--gold);
+}
+
+/* WhatsApp button refinement */
+.wa {
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em;
+}
+
+/* Global: no emoji dependency in rec-chips */
+.rec-chips span { font-size: 11.5px; letter-spacing: .02em; }
 </style>
 </head>
 <body>
@@ -1090,7 +1180,7 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
       <div class="plan-sidebar"><div class="tabs" id="plan-tabs"></div></div>
       <div class="plan-content pad" id="plan-body"></div>
     </div>
-    <div class="bottombar"><button class="btn rose" onclick="go('projection')">Ver mi transformación ✨</button></div>
+    <div class="bottombar"><button class="btn rose" onclick="go('projection')">Ver mi transformación →</button></div>
   </section>
 
   <!-- ============ PROJECTION ============ -->
@@ -1122,7 +1212,12 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
     </div>
     <div class="pad" style="padding-top:40px">
       <div class="center" style="margin-bottom:32px">
-        <div style="font-size:48px;margin-bottom:16px">📩</div>
+        <div class="verify-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="M2 7l10 7 10-7"/>
+          </svg>
+        </div>
         <h2>Revisa tu email</h2>
         <p class="muted" style="font-size:15px" id="verify-msg">Te enviamos un código de 6 dígitos a tu email para guardar tu análisis de forma segura.</p>
       </div>
@@ -1371,7 +1466,7 @@ const obMicroSteps=[
       <p class="ob-hint">Mejora circulación y oxigenación. Más glow natural.</p>
       <div class="ob-answer-area">
         <div class="ob-chips-lg" id="f-exercise">
-          ${ranges.map(r=>`<div class="ob-chip-lg ${sel===r[0]?'on':''}" data-v="${r[0]}">${{0:'🛋️',1:'🚶',3:'🏃',5:'💪'}[r[0]]} ${r[1]} por semana</div>`).join('')}
+          ${ranges.map(r=>`<div class="ob-chip-lg ${sel===r[0]?'on':''}" data-v="${r[0]}">${r[1]} por semana</div>`).join('')}
         </div>
       </div>
     </div>`;
@@ -1768,7 +1863,7 @@ function makeShareCanvas(){
 }
 function canvasToBlob(c){ return new Promise(res=>{ try{ c.toBlob(res,'image/png'); }catch(e){ res(null); } }); }
 function shareTextMsg(){ const s=STATE.scan,p=STATE.profile;
-  return `Mi edad visible es ${s.visibleAge} años (mi edad real: ${p.age}) 👀 Descubre la tuya gratis en ${CONFIG.clinic}${CONFIG.shareUrl?(' 👉 '+CONFIG.shareUrl):''}`; }
+  return `Mi edad visible es ${s.visibleAge} años (mi edad real: ${p.age}). Descubre la tuya gratis en ${CONFIG.clinic}${CONFIG.shareUrl?(' '+CONFIG.shareUrl):''}`; }
 window.shareResult=async function(){
   const s=STATE.scan; if(!s){ toast('Primero haz tu análisis'); return; }
   const c=makeShareCanvas(); const blob=c? await canvasToBlob(c) : null; const text=shareTextMsg();
@@ -2078,7 +2173,7 @@ function bioHumanScore(key, rawVal, isInverted){
   ).join('');
   return '<div style="padding:16px 0;border-bottom:1px solid rgba(245,237,232,0.08)">' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
-      '<span style="font-size:15px;font-weight:600">' + cfg.emoji + ' ' + cfg.title + '</span>' +
+      '<span style="font-size:15px;font-weight:600">' + cfg.title + '</span>' +
       '<span style="color:' + col(val) + ';font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">' + (val >= 75 ? 'Óptima' : val >= 55 ? 'Mejorable' : 'Atención') + '</span>' +
     '</div>' +
     '<p style="font-size:13px;color:rgba(245,237,232,0.7);margin:0 0 10px;line-height:1.5">' + level[1] + '</p>' +
@@ -2150,7 +2245,7 @@ function zoneHumanCard(key, zone){
   const tier = zone.score >= 65 ? (insights ? insights.good : []) : zone.score >= 50 ? (insights ? insights.mid : []) : (insights ? insights.bad : []);
   return '<div class="zone" id="zone-' + key + '" onclick="this.classList.toggle(\'open\')" style="border-color:' + status.color + '22">' +
     '<div class="zh">' +
-      '<span class="zi" style="font-size:24px">' + meta[1] + '</span>' +
+      '<span class="zi" style="width:9px;height:9px;background:' + status.color + '"></span>' +
       '<div style="flex:1">' +
         '<b style="font-size:15px">' + meta[0] + '</b>' +
         (zone.est ? '<span style="font-size:11px;color:rgba(245,237,232,0.45);margin-left:6px">estimado</span>' : '') +
@@ -2228,7 +2323,7 @@ function renderReport(){
       <span><i style="background:var(--red)"></i>Prioridad (&lt;55)</span>
     </div>
     <div class="priority-chips">
-      ${top3.map(([k,z])=>`<div class="priority-chip" style="color:${col(z.score)};border-color:${col(z.score)};background:rgba(0,0,0,0.2)" onclick="document.getElementById('zone-${k}')&&(document.getElementById('zone-${k}').classList.add('open'),document.getElementById('zone-${k}').scrollIntoView({behavior:'smooth',block:'center'}))">${ZMETA[k][1]} ${ZMETA[k][0]} · ${z.score}</div>`).join('')}
+      ${top3.map(([k,z])=>`<div class="priority-chip" style="color:${col(z.score)};border-color:${col(z.score)};background:rgba(0,0,0,0.2)" onclick="document.getElementById('zone-${k}')&&(document.getElementById('zone-${k}').classList.add('open'),document.getElementById('zone-${k}').scrollIntoView({behavior:'smooth',block:'center'}))">${ZMETA[k][0]} · ${z.score}</div>`).join('')}
     </div>
   </div>`;
 
@@ -2252,7 +2347,7 @@ function renderReport(){
     h += zoneHumanCard(k, z);
   });
   h+=consultCard();
-  h+=`<div class="note">⚕️ Estimación educativa, no diagnóstico médico. Ante cualquier duda, consultá un profesional de la salud.</div>`;
+  h+=`<div class="note">Estimación educativa, no diagnóstico médico. Ante cualquier duda, consultá un profesional de la salud.</div>`;
   h+=`</div></div>`;
   $('rep-body').innerHTML=h;
 
@@ -2598,7 +2693,7 @@ function buildPlan(){
 function renderPlan(){
   const cats=Object.keys(CATNAMES);
   $('plan-tabs').innerHTML=`<div class="tab ${STATE.activeCat==='all'?'on':''}" data-c="all">Todo</div>`+
-    cats.map(c=>`<div class="tab ${STATE.activeCat===c?'on':''}" data-c="${c}">${CATNAMES[c][1]} ${CATNAMES[c][0]}</div>`).join('');
+    cats.map(c=>`<div class="tab ${STATE.activeCat===c?'on':''}" data-c="${c}">${CATNAMES[c][0]}</div>`).join('');
   $('plan-tabs').querySelectorAll('.tab').forEach(t=>t.onclick=()=>{STATE.activeCat=t.dataset.c;renderPlan();});
   const p=STATE.profile;
   const eng=STATE.engagement||{}; const nSel=Object.values(eng).filter(v=>['hago','probar','hecho'].includes(v)).length;
@@ -2606,7 +2701,7 @@ function renderPlan(){
     <div class="row between"><b style="color:var(--ink)">Tu protocolo personalizado</b>
     <span class="pill">${p.budget==='gratis'?'Gratis/bajo':p.budget==='medio'?'Medio':'Premium'}</span></div>
     <p class="sub" style="margin-top:8px">Priorizado por tus zonas débiles (${STATE.plan.weak.map(z=>ZMETA[z][0]).join(', ')}), tus objetivos y tu presupuesto.</p>
-    <div class="note" style="background:var(--rose-l);border-color:rgba(232,164,176,0.25);margin:10px 0">👉 Toca <b style="color:var(--rose)">«Voy a probar»</b> en lo que harás. Tu proyección se calcula en tiempo real según lo que elijas.</div>
+    <div class="note" style="background:var(--rose-l);border-color:rgba(232,164,176,0.25);margin:10px 0">Toca <b style="color:var(--rose)">«Voy a probar»</b> en lo que harás. Tu proyección se calcula en tiempo real según lo que elijas.</div>
     <div class="row between" style="margin-top:10px">
       <span class="sub">${nSel?('✓ '+nSel+' seleccionados'):'Aún no seleccionas ninguno'}</span>
       ${nSel?`<button class="btn ghost sm" style="width:auto;padding:8px 12px" onclick="resetEngagement()">Reiniciar</button>`:''}
@@ -2617,13 +2712,13 @@ function renderPlan(){
   const conds=(p.conditions||[]).filter(c=>c&&c!=='Ninguna');
   if(conds.length){
     const gen=conds.map(c=>COND_WARN[c]).filter(cfg=>cfg&&!cfg.kw.length).map(cfg=>cfg.txt);
-    h+=`<div class="card" style="border-color:rgba(232,126,126,0.35)"><b style="color:var(--red)">⚠️ Precauciones por tu piel</b>
+    h+=`<div class="card" style="border-color:rgba(232,126,126,0.35)"><b style="color:var(--red)">Precauciones por tu piel</b>
       <p class="sub" style="margin-top:6px">Declaraste: <b style="color:var(--ink)">${conds.join(', ')}</b>. Verás avisos en los tratamientos que requieren cuidado.</p>
       ${gen.map(t=>`<p class="sub" style="margin-top:4px">• ${t}</p>`).join('')}</div>`;
   }
 
   if(STATE.activeCat==='all'){
-    h+=`<div class="note" style="margin-bottom:12px;border-color:rgba(212,175,136,0.25)">🗓️ <b style="color:var(--gold)">Tu plan va por fases</b> para no abrumarte. Es el orden dermatológico recomendado: primero <b>proteger y prevenir</b> (Fundación), luego activos, y más adelante tratamientos.</div>`;
+    h+=`<div class="note" style="margin-bottom:12px;border-color:rgba(212,175,136,0.25)"><b style="color:var(--gold)">Tu plan va por fases</b> para no abrumarte. Es el orden dermatológico recomendado: primero <b>proteger y prevenir</b> (Fundación), luego activos, y más adelante tratamientos.</div>`;
     // agrupar por fase — el CABELLO se maneja aparte (se estima, no se escanea)
     PHASES.forEach((ph,i)=>{
       const inPh=STATE.plan.recs.filter(r=>r.ph===i+1 && r.c!=='hair');
@@ -2634,7 +2729,7 @@ function renderPlan(){
         ${inPh.slice(0,5).map(recCard).join('')}</div></div>`;
     });
     if(STATE.plan.recs.some(r=>r.c==='hair')){
-      h+=`<div class="card"><div class="row between"><b>💇‍♀️ Rutina capilar (aparte)</b><span class="vb">estimado</span></div>
+      h+=`<div class="card"><div class="row between"><b>Rutina capilar</b><span class="vb">estimado</span></div>
         <p class="sub" style="margin-top:4px">El cabello <b>no se escanea aún</b>, así que no va en las fases del rostro: lo estimamos por tu edad y lo declarado. Tiene su propia rutina en la pestaña Capilar.</p>
         <button class="btn ghost sm" style="margin-top:8px" onclick="goCat('hair')">Ver mi rutina capilar →</button></div>`;
     }
@@ -2642,11 +2737,11 @@ function renderPlan(){
     const list=STATE.plan.recs.filter(r=>catOf(r)===STATE.activeCat);
     if(STATE.activeCat==='skincare'){
       const am=list.filter(r=>(r.rt||'AM/PM').includes('AM')), pm=list.filter(r=>(r.rt||'AM/PM').includes('PM'));
-      h+=`<div class="note" style="background:var(--rose-l);border-color:rgba(232,164,176,0.25)">Tu rutina está dividida en <b style="color:var(--rose)">☀️ Mañana (AM)</b> y <b style="color:var(--rose)">🌙 Noche (PM)</b>. El SPF va siempre en la mañana; los activos fuertes (retinol, ácidos, PDRN) por la noche.</div>`;
-      h+=`<h3 style="margin:10px 0 8px">☀️ Rutina de mañana (AM)</h3>`+(am.length?am.map(recCard).join(''):`<div class="note">Sin activos AM para tu nivel actual.</div>`);
-      h+=`<h3 style="margin:16px 0 8px">🌙 Rutina de noche (PM)</h3>`+(pm.length?pm.map(recCard).join(''):`<div class="note">Sin activos PM para tu nivel actual.</div>`);
+      h+=`<div class="note" style="background:var(--rose-l);border-color:rgba(232,164,176,0.25)">Tu rutina está dividida en <b style="color:var(--rose)">Mañana (AM)</b> y <b style="color:var(--rose)">Noche (PM)</b>. El SPF va siempre en la mañana; los activos fuertes (retinol, ácidos, PDRN) por la noche.</div>`;
+      h+=`<h3 style="margin:10px 0 8px">Mañana (AM)</h3>`+(am.length?am.map(recCard).join(''):`<div class="note">Sin activos AM para tu nivel actual.</div>`);
+      h+=`<h3 style="margin:16px 0 8px">Noche (PM)</h3>`+(pm.length?pm.map(recCard).join(''):`<div class="note">Sin activos PM para tu nivel actual.</div>`);
     } else if(STATE.activeCat==='hair'){
-      h+=`<div class="note">💡 <b>Cómo medimos el daño capilar:</b> el escaneo facial no evalúa bien el cabello. En una próxima versión sumamos un <b>escaneo de acercamiento al cuero cabelludo/línea capilar</b> (tricoscopía con la misma cámara) para medir densidad, grosor y quiebre. Por ahora estimamos según tu edad y lo declarado, y te damos una rutina de base con evidencia.</div>`;
+      h+=`<div class="note"><b>Cómo medimos el daño capilar:</b> el escaneo facial no evalúa bien el cabello. En una próxima versión sumamos un <b>escaneo de acercamiento al cuero cabelludo/línea capilar</b> (tricoscopía con la misma cámara) para medir densidad, grosor y quiebre. Por ahora estimamos según tu edad y lo declarado, y te damos una rutina de base con evidencia.</div>`;
       h+= list.length? list.map(recCard).join('') : `<div class="note">No hay recomendaciones en esta categoría para tu nivel actual.</div>`;
     } else {
       h+= list.length? list.map(recCard).join('') : `<div class="note">No hay recomendaciones en esta categoría para tu nivel de presupuesto/tolerancia actual. Amplía tu presupuesto o tolerancia para verlas.</div>`;
@@ -2672,7 +2767,7 @@ const ZBEN={piel:'Cuida y previene el envejecimiento de tu piel día a día.',
   cabello:'Cuida la densidad y la salud de tu cabello.'};
 function listJoin(a){ a=a.filter(Boolean); if(a.length<=1)return a[0]||''; return a.slice(0,-1).join(', ')+' y '+a[a.length-1]; }
 function rtBadge(r){ if(r.c!=='skincare')return ''; const rt=r.rt||'AM/PM';
-  const m={'AM':'☀️ Mañana','PM':'🌙 Noche','AM/PM':'☀️🌙 AM/PM'}[rt]||rt;
+  const m={'AM':'AM','PM':'PM','AM/PM':'AM/PM'}[rt]||rt;
   return ` <span class="vb" style="color:var(--gold);background:var(--gold-l);border:1px solid rgba(212,175,136,0.2)">${m}</span>`; }
 // precauciones que aplican a ESTA recomendación según las condiciones declaradas
 function condWarn(r){ const cs=STATE.profile.conditions||[], out=[];
@@ -2695,9 +2790,9 @@ function whyText(r){
 function recCard(r){
   const e=STATE.engagement[r.n]||'';
   const selected = e==='hago'||e==='probar'||e==='hecho';
-  const where=r.inv===0?'🏠 En casa':r.inv===1?'🏥 Consultorio':r.inv>=3?'💉 Medicina estética':'🏥 Consultorio';
+  const where=r.inv===0?'En casa':r.inv===1?'Consultorio':r.inv>=3?'Medicina estética':'Consultorio';
   const badges=`${r.nuevo?`<span class="vb" style="color:var(--rose);background:var(--rose-l);border:1px solid rgba(232,164,176,0.25)">✦ Novedad</span>`:''}${(r.always30&&STATE.profile.age>=30)?`<span class="vb" style="color:var(--gold);background:var(--gold-l)">Preventivo 30+</span>`:''}${rtBadge(r)}`;
-  const alerts=`${r.caution?`<div class="note" style="border-color:rgba(232,126,126,0.3);color:var(--red)">⚠️ Tu fototipo (Fitz ${STATE.profile.fitz}) requiere precaución por riesgo de hiperpigmentación. Pide a tu médico parámetros conservadores.</div>`:''}${(r.md||r.inv>=2)?`<div class="note" style="border-color:rgba(212,175,136,0.3);color:var(--amber)">🩺 <b>Consulta con tu médico</b> antes de empezar (contraindicaciones, embarazo/lactancia o medicamentos).</div>`:''}${condWarn(r).map(w=>`<div class="note" style="border-color:rgba(232,126,126,0.3);color:var(--red)">⚠️ ${w}</div>`).join('')}`;
+  const alerts=`${r.caution?`<div class="note" style="border-color:rgba(232,126,126,0.3);color:var(--red)">Tu fototipo (Fitz ${STATE.profile.fitz}) requiere precaución por riesgo de hiperpigmentación. Pide a tu médico parámetros conservadores.</div>`:''}${(r.md||r.inv>=2)?`<div class="note" style="border-color:rgba(212,175,136,0.3);color:var(--amber)"><b>Consulta con tu médico</b> antes de empezar (contraindicaciones, embarazo/lactancia o medicamentos).</div>`:''}${condWarn(r).map(w=>`<div class="note" style="border-color:rgba(232,126,126,0.3);color:var(--red)">${w}</div>`).join('')}`;
   return `<div class="rec ${selected?'sel':''}">
    <div class="row between" style="align-items:flex-start;gap:10px">
      <div style="flex:1;min-width:0">
@@ -2707,9 +2802,9 @@ function recCard(r){
      <span class="dot" title="nivel" style="background:${col(r.tier==='gratis'?85:r.tier==='medio'?65:50)};flex:0 0 9px;margin-top:6px"></span>
    </div>
    <p class="rec-what">${r.what}</p>
-   <div class="rec-chips"><span>💲 ${r.cost}</span><span>⏱️ ${r.freq}</span><span>${where}</span></div>
-   <div class="rec-why">💡 ${whyText(r)}</div>
-   ${r.outside?`<div class="note">ℹ️ Recomendado por tu edad aunque queda fuera de tu presupuesto/tolerancia actual.</div>`:''}
+   <div class="rec-chips"><span>${r.cost}</span><span>${r.freq}</span><span>${where}</span></div>
+   <div class="rec-why">${whyText(r)}</div>
+   ${r.outside?`<div class="note">Recomendado por tu edad aunque queda fuera de tu presupuesto/tolerancia actual.</div>`:''}
    ${alerts?`<div style="margin-top:4px">${alerts}</div>`:''}
    ${affiliateBtn(r)}
    <div class="eng-label">¿Lo vas a hacer?</div>
@@ -2729,7 +2824,7 @@ function recCard(r){
        <div><b>Dónde</b><span style="color:var(--ink)">${where}</span></div>
      </div>
      <div style="font-size:12px;margin-top:8px;color:var(--ink2)"><b style="color:var(--muted)">Riesgos:</b> ${r.risk}</div>
-     <div class="evi">📚 ${r.evi}</div>
+     <div class="evi">${r.evi}</div>
    </div></div>`;
 }
 function bindEng(){ document.querySelectorAll('.eng button').forEach(b=>b.onclick=()=>{
@@ -2845,7 +2940,7 @@ function renderProjection(){
   h+=`<h3 style="margin:18px 0 8px">Por zona, a 12 meses</h3><div class="card">`;
   weak.slice(0,3).forEach(z=>{ const cur=s.zones[z].score; const gain=proj.zoneProj[z]!=null?proj.zoneProj[z]:(proj.committed?4:(tier+2)*4);
     const pj=Math.min(96,Math.round(cur+gain*0.66));
-    h+=`<div class="metric"><div class="mh"><span>${ZMETA[z][1]} ${ZMETA[z][0]}</span><b style="color:var(--green)">${cur} → ${pj}</b></div>
+    h+=`<div class="metric"><div class="mh"><span>${ZMETA[z][0]}</span><b style="color:var(--green)">${cur} → ${pj}</b></div>
      <div class="bar"><i style="width:${pj}%;background:linear-gradient(90deg,var(--amber),var(--green))"></i></div></div>`; });
   h+=`</div>`;
   // cost of inaction

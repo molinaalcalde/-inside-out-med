@@ -351,6 +351,138 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
 .priority-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;
   border-radius:99px;font-size:12.5px;font-weight:600;border:1px solid;cursor:pointer;transition:.15s}
 .priority-chip:active{transform:scale(.96)}
+
+/* FULLSCREEN ONBOARDING — one question at a time */
+.ob-fullscreen {
+  min-height: calc(100vh - 180px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 28px;
+  animation: obSlideIn .35s cubic-bezier(.22,.61,.36,1);
+}
+@keyframes obSlideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: none; }
+}
+.ob-q-num {
+  font-size: 11px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--rose);
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.ob-headline {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 32px;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 0 0 10px;
+  letter-spacing: -.02em;
+}
+.ob-hint {
+  font-size: 14px;
+  color: var(--ink2);
+  margin: 0 0 32px;
+  line-height: 1.5;
+}
+.ob-answer-area {
+  width: 100%;
+}
+.ob-input-large {
+  width: 100%;
+  background: rgba(245,237,232,0.07);
+  border: 1.5px solid rgba(245,237,232,0.15);
+  border-radius: 16px;
+  padding: 20px;
+  font-size: 24px;
+  color: var(--ink);
+  font-family: 'Fraunces', Georgia, serif;
+  text-align: center;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.ob-input-large:focus {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(232,164,176,.2);
+}
+.ob-chips-lg {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ob-chip-lg {
+  width: 100%;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(245,237,232,0.12);
+  background: rgba(245,237,232,0.05);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ob-chip-lg:active { transform: scale(.98); }
+.ob-chip-lg.on {
+  border-color: var(--rose);
+  background: rgba(232,164,176,0.15);
+  color: var(--ink);
+}
+.ob-chip-lg .ob-chip-icon { font-size: 22px; }
+.ob-chips-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ob-chip-grid {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(245,237,232,0.12);
+  background: rgba(245,237,232,0.05);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+}
+.ob-chip-grid.on {
+  border-color: var(--rose);
+  background: rgba(232,164,176,0.15);
+}
+.ob-consent-box {
+  max-height: 180px;
+  overflow: auto;
+  background: rgba(245,237,232,0.04);
+  border: 1px solid rgba(245,237,232,0.1);
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 12.5px;
+  color: var(--ink2);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.ob-slider-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.ob-slider-val {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 56px;
+  color: var(--rose);
+  line-height: 1;
+}
+.ob-slider-label {
+  font-size: 14px;
+  color: var(--ink2);
+}
 </style>
 </head>
 <body>
@@ -399,9 +531,9 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
 
   <!-- ============ ONBOARDING ============ -->
   <section class="screen" id="s-onboarding">
-    <div class="top"><button class="back" onclick="obBack()">‹</button><span class="brand">Inside<b>Out</b>Med</span><span class="muted" id="ob-step" style="font-size:13px">1/6</span></div>
-    <div class="prog"><i id="ob-prog" style="width:16%"></i></div>
-    <div class="pad" id="ob-body"></div>
+    <div class="top"><button class="back" onclick="obBack()" id="ob-back-btn">‹</button><span class="brand">Inside<b>Out</b>Med</span><span class="muted" id="ob-step" style="font-size:13px">1/13</span></div>
+    <div class="prog"><i id="ob-prog" style="width:7.7%"></i></div>
+    <div id="ob-body"></div>
     <div class="bottombar"><button class="btn rose" id="ob-next" onclick="obNext()">Continuar</button></div>
   </section>
 
@@ -620,114 +752,256 @@ const COND_WARN={
  'Piel muy reactiva / alergias':{kw:[],txt:'Piel reactiva: haz prueba de parche 24-48h antes de cualquier producto nuevo y ve de a un activo por vez.'}
 };
 
-const obSteps=[
- ()=>`<h2>Hola 👋 Empecemos</h2><p class="muted" style="font-size:14px">Tu email es obligatorio: es la llave para volver y ver tu progreso.</p>
-   <label class="fld">Tu nombre</label><input id="f-name" value="${STATE.profile.name}" placeholder="Nombre"/>
-   <label class="fld">Edad</label><input id="f-age" type="number" min="18" max="80" value="${STATE.profile.age}"/>
-   <label class="fld">Email *</label><input id="f-email" type="email" value="${STATE.profile.email}" placeholder="tu@email.com"/>
-   <label class="fld">Celular (opcional)</label><input id="f-phone" value="${STATE.profile.phone}" placeholder="+52..."/>
-   <div class="note" style="max-height:150px;overflow:auto;margin-top:14px">
-     <b>Aviso importante y Términos de uso</b><br>
-     InsideOutMed ofrece <b>información educativa y estimaciones generadas por software</b>. <b>No es consejo médico, diagnóstico ni tratamiento.</b>
-     Los scores, la edad visible, las proyecciones y las recomendaciones son <b>orientativos</b>, se basan en estimaciones y en la literatura general, <b>no garantizan ningún resultado</b> y <b>no sustituyen la valoración de un profesional de la salud matriculado</b>.
-     Cualquier producto, suplemento, medicamento o procedimiento que decidas realizar es <b>bajo tu propia responsabilidad y decisión</b>, y debe hacerse previa consulta médica, especialmente si tienes condiciones de salud, embarazo o lactancia.
-     En la máxima medida permitida por la ley, <b>InsideOutMed, sus creadores y afiliados no serán responsables</b> por decisiones, tratamientos, reacciones, gastos o daños derivados del uso de esta herramienta o de la información aquí provista. Al continuar, aceptas estos términos y liberas de responsabilidad a InsideOutMed y a sus creadores.
-   </div>
-   <label style="display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:13.5px;cursor:pointer">
-     <input type="checkbox" id="f-consent" ${STATE.profile.consent?'checked':''} style="width:20px;height:20px;flex:0 0 auto;margin-top:1px"/>
-     <span>He leído y <b>acepto los Términos y el aviso médico</b>. Entiendo que esto no reemplaza una consulta médica.</span>
-   </label>`,
- ()=>`<h2>¿Qué te trae aquí?</h2><p class="muted" style="font-size:14px">Elige todo lo que aplique. Esto prioriza tu plan.</p>
-   <div class="chips" id="f-goals">${GOALS.map(g=>`<div class="chip ${STATE.profile.goals.includes(g[0])?'on':''}" data-v="${g[0]}">${g[1]}</div>`).join('')}</div>`,
- ()=>`<h2>Tu piel y tu tono</h2><p class="muted" style="font-size:14px">Esto nos dice qué tan fuerte y rápido puede ir tu plan sin lastimarte.</p>
-   <label class="fld">Sensibilidad de la piel</label>
-   <p class="sub" style="margin:-2px 0 6px">¿Tu piel se irrita, enrojece o pica fácil con productos nuevos o el sol? Si es así, empezamos los activos (como el retinol) más suaves y lento.</p>
-   <div class="chips" id="f-sens">${['baja','media','alta'].map(s=>`<div class="chip ${STATE.profile.sensitivity===s?'on':''}" data-v="${s}">${s[0].toUpperCase()+s.slice(1)}</div>`).join('')}</div>
-   <label class="fld">Fototipo Fitzpatrick</label>
-   <p class="sub" style="margin:-2px 0 6px">Tu tono de piel y cómo reacciona al sol, del más claro (Tipo I) al más oscuro (Tipo VI). Es clave para tu <b>seguridad</b>: define qué peels, láser o IPL son seguros para ti y cuáles podrían mancharte.</p>
-   <div class="chips" id="f-fitz">${FITZ.map((f,i)=>`<div class="chip ${STATE.profile.fitz===i+1?'on':''}" data-v="${i+1}" title="${f[1]}">Tipo ${f[0]}</div>`).join('')}</div>
-   <p class="sub" id="fitz-desc">${FITZ[STATE.profile.fitz-1][1]}</p>
-   <label class="fld">¿Tienes alguna enfermedad de la piel diagnosticada?</label>
-   <p class="sub" style="margin:-2px 0 6px">Importante para tu seguridad: con estas condiciones ciertos activos o procedimientos requieren precaución. Ajustamos tu plan y te avisamos.</p>
-   <div class="chips" id="f-cond">${CONDITIONS.map(c=>`<div class="chip ${STATE.profile.conditions.includes(c)?'on':''}" data-v="${c}">${c}</div>`).join('')}</div>`,
- ()=>`<h2>Tu presupuesto y tolerancia</h2><p class="muted" style="font-size:14px">Para mostrarte solo lo que de verdad harías — nada de recomendarte cosas fuera de tu alcance o que no quieres.</p>
-   <label class="fld">¿Cuánto quieres invertir al mes?</label>
-   <p class="sub" style="margin:-2px 0 6px">Gratis/bajo = cremas y hábitos en casa. Medio = + algún tratamiento ocasional. Premium = acceso a todo (inyectables, láser, etc.).</p>
-   <div class="chips" id="f-budget">
-     ${[['gratis','Gratis / bajo'],['medio','Medio'],['premium','Premium']].map(b=>`<div class="chip ${STATE.profile.budget===b[0]?'on':''}" data-v="${b[0]}">${b[1]}</div>`).join('')}</div>
-   <label class="fld">Tolerancia a procedimientos</label>
-   <p class="sub" style="margin:-2px 0 6px">¿Hasta dónde estás dispuesta a llegar? "Solo en casa" = nada de clínica. "Sin agujas" = peels/láser sí, inyecciones no. "Todo el espectro" = abierta a inyectables.</p>
-   <div class="chips" id="f-inv">
-     ${[['casa','Solo en casa'],['no-aguja','Sin agujas'],['todo','Todo el espectro']].map(b=>`<div class="chip ${STATE.profile.invasive===b[0]?'on':''}" data-v="${b[0]}">${b[1]}</div>`).join('')}</div>
-   <label class="fld">¿Qué tan constante vas a ser?</label>
-   <p class="sub" style="margin:-2px 0 6px">Tu honestidad aquí calibra la proyección: a más constancia, más cambio realista. Sin trampas.</p>
-   <div class="chips" id="f-commit">
-     ${[['half','~50% (lo básico)'],['full-home','Plan completo de casa'],['plus','Casa + tratamientos'],['premium','Todo / premium']].map(b=>`<div class="chip ${STATE.profile.commitment===b[0]?'on':''}" data-v="${b[0]}">${b[1]}</div>`).join('')}</div>`,
- ()=>`<h2>Tu estilo de vida</h2><p class="muted" style="font-size:14px">Tu rostro refleja tus hábitos. Esto nos deja darte consejos honestos — a veces dormir mejor cambia más tu piel que una crema cara.</p>
-   <label class="fld">Horas de sueño que duermes: <b id="sl-v">${STATE.profile.sleep}</b></label>
-   <p class="sub" style="margin:-2px 0 4px">Dormir poco sube el cortisol, que rompe el colágeno y da ojeras e hinchazón.</p>
-   <input id="f-sleep" type="range" min="4" max="10" value="${STATE.profile.sleep}" oninput="document.getElementById('sl-v').textContent=this.value"/>
-   <label class="fld">Nivel de estrés</label>
-   <p class="sub" style="margin:-2px 0 6px">El estrés crónico inflama la piel y acelera el envejecimiento.</p>
-   <div class="chips" id="f-stress">${['bajo','medio','alto'].map(s=>`<div class="chip ${STATE.profile.stress===s?'on':''}" data-v="${s}">${s}</div>`).join('')}</div>
-   <label class="fld">Dieta</label>
-   <p class="sub" style="margin:-2px 0 6px">El azúcar y los ultraprocesados aceleran la "glicación" — la piel se ve apagada y rígida.</p>
-   <div class="chips" id="f-diet">${['omnivora','vegetariana','keto','otra'].map(s=>`<div class="chip ${STATE.profile.diet===s?'on':''}" data-v="${s}">${s}</div>`).join('')}</div>
-   <label class="fld">Ejercicio / semana: <b id="ex-v">${STATE.profile.exercise}</b> días</label>
-   <p class="sub" style="margin:-2px 0 4px">Mejora circulación y oxigenación — más glow natural.</p>
-   <input id="f-ex" type="range" min="0" max="7" value="${STATE.profile.exercise}" oninput="document.getElementById('ex-v').textContent=this.value"/>
-   <label class="fld">Exposición solar semanal (sin protector)</label>
-   <p class="sub" style="margin:-2px 0 6px">El sol es la causa #1 del envejecimiento visible y las manchas. Aquí ajustamos cuánta protección y reparación necesitas.</p>
-   <div class="chips" id="f-sun">${['baja','media','alta'].map(s=>`<div class="chip ${STATE.profile.sun===s?'on':''}" data-v="${s}">${s}</div>`).join('')}</div>`,
- ()=>`<h2>Tu historial</h2>
-   <label class="fld">Rutina actual de skincare</label>
-   <div class="chips" id="f-routine">${ROUTINE.map(r=>`<div class="chip ${STATE.profile.routine.includes(r)?'on':''}" data-v="${r}">${r}</div>`).join('')}</div>
-   <label class="fld">Procedimientos previos</label>
-   <div class="chips" id="f-prior">${PRIOR.map(r=>`<div class="chip ${STATE.profile.prior.includes(r)?'on':''}" data-v="${r}">${r}</div>`).join('')}</div>
-   <div class="note">Con esto armamos tu análisis. El siguiente paso es el escaneo facial.</div>`
+const OB_TOTAL=13;
+const obMicroSteps=[
+  // STEP 0: Name
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 1 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">¿Cómo te llamás?</h2>
+    <p class="ob-hint">Para personalizar tu análisis y tu plan.</p>
+    <div class="ob-answer-area">
+      <input class="ob-input-large" id="f-name" value="${STATE.profile.name}" placeholder="Tu nombre" autofocus/>
+    </div>
+  </div>`,
+  // STEP 1: Age
+  ()=>{
+    const ranges=[['18-25','18-25'],['26-35','26-35'],['36-45','36-45'],['46-55','46-55'],['56+','56+']];
+    const cur=STATE.profile.age;
+    const sel= cur<=25?'18-25':cur<=35?'26-35':cur<=45?'36-45':cur<=55?'46-55':'56+';
+    return `<div class="ob-fullscreen">
+      <div class="ob-q-num">PASO 2 DE ${OB_TOTAL}</div>
+      <h2 class="ob-headline">¿Cuántos años tenés?</h2>
+      <p class="ob-hint">Para calibrar tu análisis con tu edad cronológica real.</p>
+      <div class="ob-answer-area">
+        <input class="ob-input-large" id="f-age" type="number" min="18" max="80" value="${STATE.profile.age}" placeholder="34" style="margin-bottom:16px"/>
+        <div class="ob-chips-grid" id="f-age-chips">
+          ${ranges.map(r=>`<div class="ob-chip-grid ${sel===r[0]?'on':''}" data-v="${r[0]}">${r[1]} años</div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  },
+  // STEP 2: Email
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 3 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">¿Cuál es tu email?</h2>
+    <p class="ob-hint">Para guardar tu análisis y que puedas volver a verlo.</p>
+    <div class="ob-answer-area">
+      <input class="ob-input-large" id="f-email" type="email" value="${STATE.profile.email}" placeholder="tu@email.com" style="font-size:18px"/>
+    </div>
+  </div>`,
+  // STEP 3: Goals (multi-select)
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 4 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">¿Qué querés lograr?</h2>
+    <p class="ob-hint">Elegí todo lo que aplique. Esto prioriza tu plan.</p>
+    <div class="ob-answer-area">
+      <div class="ob-chips-lg" id="f-goals">
+        ${GOALS.map(g=>`<div class="ob-chip-lg ${STATE.profile.goals.includes(g[0])?'on':''}" data-v="${g[0]}">
+          <span class="ob-chip-icon">${{edad:'🔍',piel:'✨',mandibula:'🦴',ojos:'👁️',cabello:'💇‍♀️',labios:'💋',longevidad:'🧬',evento:'💍'}[g[0]]||'✦'}</span>
+          ${g[1]}
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`,
+  // STEP 4: Sensitivity
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 5 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">¿Cómo reacciona tu piel?</h2>
+    <p class="ob-hint">Esto nos dice qué tan fuerte puede ir tu plan sin lastimarte.</p>
+    <div class="ob-answer-area">
+      <div class="ob-chips-lg" id="f-sens">
+        <div class="ob-chip-lg ${STATE.profile.sensitivity==='baja'?'on':''}" data-v="baja"><span class="ob-chip-icon">😌</span> Tranquila — rara vez se irrita</div>
+        <div class="ob-chip-lg ${STATE.profile.sensitivity==='media'?'on':''}" data-v="media"><span class="ob-chip-icon">😐</span> A veces se irrita</div>
+        <div class="ob-chip-lg ${STATE.profile.sensitivity==='alta'?'on':''}" data-v="alta"><span class="ob-chip-icon">🔴</span> Muy reactiva</div>
+      </div>
+    </div>
+  </div>`,
+  // STEP 5: Budget
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 6 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">¿Cuánto querés invertir?</h2>
+    <p class="ob-hint">Solo te recomendamos lo que encaje en tu realidad.</p>
+    <div class="ob-answer-area">
+      <div class="ob-chips-lg" id="f-budget">
+        <div class="ob-chip-lg ${STATE.profile.budget==='gratis'?'on':''}" data-v="gratis"><span class="ob-chip-icon">🆓</span> Básico gratis — cremas y hábitos</div>
+        <div class="ob-chip-lg ${STATE.profile.budget==='medio'?'on':''}" data-v="medio"><span class="ob-chip-icon">💳</span> Productos seleccionados</div>
+        <div class="ob-chip-lg ${STATE.profile.budget==='premium'?'on':''}" data-v="premium"><span class="ob-chip-icon">💎</span> Sin límites</div>
+      </div>
+    </div>
+  </div>`,
+  // STEP 6: Invasive tolerance
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 7 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">¿Hasta dónde llegás?</h2>
+    <p class="ob-hint">Tu tolerancia a procedimientos define qué te recomendamos.</p>
+    <div class="ob-answer-area">
+      <div class="ob-chips-lg" id="f-inv">
+        <div class="ob-chip-lg ${STATE.profile.invasive==='casa'?'on':''}" data-v="casa"><span class="ob-chip-icon">🏠</span> En casa — nada de clínica</div>
+        <div class="ob-chip-lg ${STATE.profile.invasive==='no-aguja'?'on':''}" data-v="no-aguja"><span class="ob-chip-icon">🚫</span> Sin agujas — peels y láser sí</div>
+        <div class="ob-chip-lg ${STATE.profile.invasive==='todo'?'on':''}" data-v="todo"><span class="ob-chip-icon">💉</span> Todo el espectro</div>
+      </div>
+    </div>
+  </div>`,
+  // STEP 7: Sleep (slider)
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 8 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">¿Cómo dormís?</h2>
+    <p class="ob-hint">Dormir poco sube el cortisol, que rompe el colágeno y da ojeras.</p>
+    <div class="ob-answer-area">
+      <div class="ob-slider-wrap">
+        <div class="ob-slider-val" id="sl-v">${STATE.profile.sleep}</div>
+        <div class="ob-slider-label">horas por noche</div>
+        <input id="f-sleep" type="range" min="4" max="10" value="${STATE.profile.sleep}" style="margin-top:24px" oninput="document.getElementById('sl-v').textContent=this.value"/>
+      </div>
+    </div>
+  </div>`,
+  // STEP 8: Stress
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 9 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">¿Cómo es tu estrés?</h2>
+    <p class="ob-hint">El estrés crónico inflama la piel y acelera el envejecimiento.</p>
+    <div class="ob-answer-area">
+      <div class="ob-chips-lg" id="f-stress">
+        <div class="ob-chip-lg ${STATE.profile.stress==='bajo'?'on':''}" data-v="bajo"><span class="ob-chip-icon">🧘</span> Bajo — tranquila la mayor parte del tiempo</div>
+        <div class="ob-chip-lg ${STATE.profile.stress==='medio'?'on':''}" data-v="medio"><span class="ob-chip-icon">😤</span> Medio — picos frecuentes</div>
+        <div class="ob-chip-lg ${STATE.profile.stress==='alto'?'on':''}" data-v="alto"><span class="ob-chip-icon">🔥</span> Alto — crónico</div>
+      </div>
+    </div>
+  </div>`,
+  // STEP 9: Exercise
+  ()=>{
+    const ex=STATE.profile.exercise;
+    const ranges=[['0','0 días'],['1','1-2 días'],['3','3-4 días'],['5','5+ días']];
+    const sel=ex===0?'0':ex<=2?'1':ex<=4?'3':'5';
+    return `<div class="ob-fullscreen">
+      <div class="ob-q-num">PASO 10 DE ${OB_TOTAL}</div>
+      <h2 class="ob-headline">¿Cuánto ejercicio hacés?</h2>
+      <p class="ob-hint">Mejora circulación y oxigenación. Más glow natural.</p>
+      <div class="ob-answer-area">
+        <div class="ob-chips-lg" id="f-exercise">
+          ${ranges.map(r=>`<div class="ob-chip-lg ${sel===r[0]?'on':''}" data-v="${r[0]}">${{0:'🛋️',1:'🚶',3:'🏃',5:'💪'}[r[0]]} ${r[1]} por semana</div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  },
+  // STEP 10: Sun exposure
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 11 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">¿Qué tan seguido te exponés al sol sin protector?</h2>
+    <p class="ob-hint">El sol es la causa #1 del envejecimiento visible y las manchas.</p>
+    <div class="ob-answer-area">
+      <div class="ob-chips-lg" id="f-sun">
+        <div class="ob-chip-lg ${STATE.profile.sun==='baja'?'on':''}" data-v="baja"><span class="ob-chip-icon">🏠</span> Casi nunca — siempre protegida</div>
+        <div class="ob-chip-lg ${STATE.profile.sun==='media'?'on':''}" data-v="media"><span class="ob-chip-icon">⛅</span> A veces — los fines de semana</div>
+        <div class="ob-chip-lg ${STATE.profile.sun==='alta'?'on':''}" data-v="alta"><span class="ob-chip-icon">☀️</span> Seguido — trabajo o vida al aire libre</div>
+      </div>
+    </div>
+  </div>`,
+  // STEP 11: Skin conditions (multi-select)
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 12 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">¿Tenés alguna condición de piel?</h2>
+    <p class="ob-hint">Para tu seguridad: ciertos activos requieren precaución con estas condiciones.</p>
+    <div class="ob-answer-area">
+      <div class="ob-chips-lg" id="f-cond">
+        ${CONDITIONS.map(c=>`<div class="ob-chip-lg ${STATE.profile.conditions.includes(c)?'on':''}" data-v="${c}">${c}</div>`).join('')}
+      </div>
+    </div>
+  </div>`,
+  // STEP 12: Legal consent
+  ()=>`<div class="ob-fullscreen">
+    <div class="ob-q-num">PASO 13 DE ${OB_TOTAL}</div>
+    <h2 class="ob-headline">Casi listo</h2>
+    <p class="ob-hint">Un último paso antes de escanearte.</p>
+    <div class="ob-answer-area">
+      <div class="ob-consent-box">
+        <b>Aviso importante y Términos de uso</b><br><br>
+        InsideOutMed ofrece <b>información educativa y estimaciones generadas por software</b>. <b>No es consejo médico, diagnóstico ni tratamiento.</b>
+        Los scores, la edad visible, las proyecciones y las recomendaciones son <b>orientativos</b>, se basan en estimaciones y en la literatura general, <b>no garantizan ningún resultado</b> y <b>no sustituyen la valoración de un profesional de la salud matriculado</b>.
+        Cualquier producto, suplemento, medicamento o procedimiento que decidas realizar es <b>bajo tu propia responsabilidad y decisión</b>, y debe hacerse previa consulta médica, especialmente si tienes condiciones de salud, embarazo o lactancia.
+        En la máxima medida permitida por la ley, <b>InsideOutMed, sus creadores y afiliados no serán responsables</b> por decisiones, tratamientos, reacciones, gastos o daños derivados del uso de esta herramienta o de la información aquí provista. Al continuar, aceptas estos términos y liberas de responsabilidad a InsideOutMed y a sus creadores.
+      </div>
+      <label style="display:flex;gap:12px;align-items:flex-start;font-size:15px;cursor:pointer;padding:16px;border-radius:16px;border:1.5px solid rgba(245,237,232,0.12);background:rgba(245,237,232,0.05)">
+        <input type="checkbox" id="f-consent" ${STATE.profile.consent?'checked':''} style="width:22px;height:22px;flex:0 0 auto;margin-top:2px;accent-color:var(--rose)"/>
+        <span style="color:var(--ink)">He leído y <b>acepto los Términos y el aviso médico</b>. Entiendo que esto no reemplaza una consulta médica.</span>
+      </label>
+    </div>
+  </div>`
 ];
 
 function renderOb(){
-  $('ob-body').innerHTML=obSteps[obStep]();
-  $('ob-step').textContent=(obStep+1)+'/6';
-  $('ob-prog').style.width=((obStep+1)/6*100)+'%';
-  $('ob-next').textContent= obStep===5?'Ir al escaneo →':'Continuar';
-  // chip handlers
-  bindChips('f-goals',true,'goals'); bindChips('f-sens',false,'sensitivity');
-  bindChips('f-budget',false,'budget'); bindChips('f-inv',false,'invasive');
-  bindChips('f-commit',false,'commitment'); bindChips('f-stress',false,'stress');
-  bindChips('f-diet',false,'diet'); bindChips('f-sun',false,'sun');
-  bindChips('f-routine',true,'routine'); bindChips('f-prior',true,'prior'); bindChips('f-cond',true,'conditions');
-  const fz=$('f-fitz'); if(fz) fz.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
-    fz.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); c.classList.add('on');
-    STATE.profile.fitz=+c.dataset.v; $('fitz-desc').textContent=FITZ[STATE.profile.fitz-1][1];});
-  // relleno de sliders acorde a la marca
+  $('ob-body').innerHTML=obMicroSteps[obStep]();
+  $('ob-step').textContent=(obStep+1)+'/'+OB_TOTAL;
+  $('ob-prog').style.width=((obStep+1)/OB_TOTAL*100)+'%';
+  $('ob-next').textContent= obStep===OB_TOTAL-1?'Ir al escaneo →':'Continuar →';
+  // bind chips for this step
+  bindObChips();
+  // sliders
   $('ob-body').querySelectorAll('input[type=range]').forEach(r=>{
     const upd=()=>{ const mn=+r.min||0, mx=+r.max||100; r.style.setProperty('--p', ((r.value-mn)/(mx-mn)*100)+'%'); };
     upd(); r.addEventListener('input',upd);
   });
 }
+function bindObChips(){
+  // Goals (multi-select)
+  bindChips('f-goals',true,'goals');
+  // Sensitivity (single)
+  bindChips('f-sens',false,'sensitivity');
+  // Budget (single)
+  bindChips('f-budget',false,'budget');
+  // Invasive (single)
+  bindChips('f-inv',false,'invasive');
+  // Stress (single)
+  bindChips('f-stress',false,'stress');
+  // Sun (single)
+  bindChips('f-sun',false,'sun');
+  // Conditions (multi)
+  bindChips('f-cond',true,'conditions');
+  // Age chips
+  const ac=$('f-age-chips');
+  if(ac) ac.querySelectorAll('.ob-chip-grid').forEach(c=>c.onclick=()=>{
+    ac.querySelectorAll('.ob-chip-grid').forEach(x=>x.classList.remove('on')); c.classList.add('on');
+    const v=c.dataset.v; const mid={['18-25']:22,['26-35']:30,['36-45']:40,['46-55']:50,['56+']:60}[v]||34;
+    const ageInput=$('f-age'); if(ageInput) ageInput.value=mid;
+    STATE.profile.age=mid;
+  });
+  // Exercise chips
+  const exc=$('f-exercise');
+  if(exc) exc.querySelectorAll('.ob-chip-lg').forEach(c=>c.onclick=()=>{
+    exc.querySelectorAll('.ob-chip-lg').forEach(x=>x.classList.remove('on')); c.classList.add('on');
+    STATE.profile.exercise=+c.dataset.v;
+  });
+}
 function bindChips(id,multi,key){ const el=$(id); if(!el)return;
-  el.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+  el.querySelectorAll('.ob-chip-lg,.ob-chip-grid,.chip').forEach(c=>c.onclick=()=>{
     if(multi){ c.classList.toggle('on');
       const v=c.dataset.v; const arr=STATE.profile[key];
       if(c.classList.contains('on')){if(!arr.includes(v))arr.push(v);} else {STATE.profile[key]=arr.filter(x=>x!==v);}
-    } else { el.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); c.classList.add('on');
+    } else { el.querySelectorAll('.ob-chip-lg,.ob-chip-grid,.chip').forEach(x=>x.classList.remove('on')); c.classList.add('on');
       STATE.profile[key]= isNaN(+c.dataset.v)? c.dataset.v : +c.dataset.v; }
   });
 }
 window.obNext=function(){
-  if(obStep===0){ // capture text fields
-    STATE.profile.name=$('f-name').value.trim();
-    STATE.profile.age=+$('f-age').value||34;
-    STATE.profile.email=$('f-email').value.trim();
-    STATE.profile.phone=$('f-phone').value.trim();
+  // Capture data from the current step before advancing
+  if(obStep===0){ // Name
+    const v=$('f-name'); if(v) STATE.profile.name=v.value.trim();
+  }
+  if(obStep===1){ // Age
+    const v=$('f-age'); if(v) STATE.profile.age=+v.value||34;
+  }
+  if(obStep===2){ // Email
+    const v=$('f-email'); if(v) STATE.profile.email=v.value.trim();
     if(!STATE.profile.email||!/.+@.+\..+/.test(STATE.profile.email)){toast('Ingresa un email válido');return;}
-    const cons=$('f-consent'); if(!cons||!cons.checked){ toast('Debes aceptar los Términos para continuar'); return; }
+  }
+  if(obStep===7){ // Sleep slider
+    const v=$('f-sleep'); if(v) STATE.profile.sleep=+v.value;
+  }
+  if(obStep===12){ // Consent
+    const cons=$('f-consent');
+    if(!cons||!cons.checked){ toast('Debes aceptar los Términos para continuar'); return; }
     STATE.profile.consent={accepted:true, ts:new Date().toISOString(), version:'1.0'};
   }
-  if(obStep===4){ STATE.profile.sleep=+$('f-sleep').value; STATE.profile.exercise=+$('f-ex').value; }
-  if(obStep<5){ obStep++; renderOb(); } else { go('scan'); }
+  if(obStep<OB_TOTAL-1){ obStep++; renderOb(); } else { go('scan'); }
 };
 window.obBack=function(){ if(obStep>0){obStep--;renderOb();} else go('welcome'); };
 
@@ -874,30 +1148,84 @@ function countUp(el,to,dur,dec,cb){
     el.textContent=v.toFixed(dec||0); if(p<1) requestAnimationFrame(tick); else if(cb) cb(); }
   requestAnimationFrame(tick);
 }
-function renderReveal(){
-  const s=STATE.scan, p=STATE.profile, d=Math.round(s.ageDelta*10)/10;
-  let emoji,head;
-  if(d<=-0.5){ emoji='🎉'; head=`Aparentas <b>${Math.abs(d)} años menos</b> que tu edad`; }
-  else if(d>=0.5){ emoji='💪'; head=`Aparentas <b>${d} años más</b> — tu plan lo revierte`; }
-  else { emoji='✨'; head='Aparentas justo tu edad — vamos a ganarte años'; }
-  $('reveal-body').innerHTML=`<div class="reveal-wrap">
-    <div class="reveal-eyebrow">Tu edad visible estimada</div>
-    <div class="reveal-num pop" id="rv-num">--</div>
-    <div class="reveal-unit">años ${s.ageRange?('± '+s.ageRange):''}</div>
-    <div class="reveal-head reveal-fade" id="rv-head">${emoji} ${head}</div>
-    <div class="reveal-sub reveal-fade" id="rv-sub" style="margin-top:16px">
-      Edad real: <b style="color:var(--gold)">${p.age} años</b> &nbsp;·&nbsp; Score: <b style="color:var(--rose)">${s.overall}/100</b> &nbsp;·&nbsp; Percentil <b style="color:var(--gold)">P${s.percentile}</b>
-    </div>
-    <button class="btn rose reveal-fade" id="rv-btn" style="margin-top:30px" onclick="go('report')">Ver mi análisis completo →</button>
-    <button class="reveal-share-btn reveal-fade" id="rv-share" style="margin-top:10px" onclick="shareResult()">Compartir mi resultado 📲</button>
-    <p class="reveal-sub reveal-fade" id="rv-note" style="opacity:.6;font-size:12px;margin-top:16px">Estimación basada en geometría facial y piel · No es diagnóstico médico</p>
-  </div>`;
-  setTimeout(()=>{ const num=$('rv-num'); if(!num)return;
-    countUp(num, s.visibleAge, 1800, 1, ()=>{
-      ['rv-head','rv-sub','rv-btn','rv-share','rv-note'].forEach((id,i)=>setTimeout(()=>{ const el=$(id); if(el)el.classList.add('in'); }, i*280));
-    });
-  },300);
+function getRevealStory(scan, profile) {
+  const d = Math.round(scan.ageDelta);
+  const age = profile.age;
+  if (d <= -3) return {
+    headline: `Aparentás ${Math.abs(d)} años menos que tu edad.`,
+    sub: `Estás en el top ${100 - scan.percentile}% de mujeres de ${age} años. Tu piel habla bien de vos.`
+  };
+  if (d <= -1) return {
+    headline: `Tu piel tiene ${Math.abs(d)} años menos que vos.`,
+    sub: `Lo que estás haciendo funciona. Hay margen para seguir ganando años.`
+  };
+  if (d <= 1) return {
+    headline: `Aparentás exactamente tu edad.`,
+    sub: `Punto de inflexión: los próximos 12 meses deciden si ganás o perdés años.`
+  };
+  if (d <= 3) return {
+    headline: `Tu piel aparenta ${d} años más que vos.`,
+    sub: `Es recuperable. Con el plan correcto, podés revertirlo en 6-12 meses.`
+  };
+  return {
+    headline: `Tu piel aparenta ${d} años más que tu edad.`,
+    sub: `El plan que armamos es para esto. Hay mujeres que revirtieron más.`
+  };
 }
+
+function renderReveal(){
+  const s=STATE.scan, p=STATE.profile;
+  const story = getRevealStory(s, p);
+
+  // Phase 1: Suspense overlay, Phase 2: Number, Phase 3: Story
+  $('reveal-body').innerHTML=`
+    <div id="rv-suspense" style="position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,8,16,0.97)">
+      <div style="width:80px;height:80px;border-radius:50%;border:3px solid rgba(232,164,176,0.3);border-top-color:var(--rose);animation:sp 1.2s linear infinite"></div>
+      <p style="color:rgba(245,237,232,0.7);font-size:16px;margin-top:24px;font-weight:500;letter-spacing:.02em">Procesando tu análisis...</p>
+    </div>
+    <div class="reveal-wrap">
+      <div class="reveal-eyebrow">Tu edad visible estimada</div>
+      <div class="reveal-num pop" id="rv-num" style="opacity:0">--</div>
+      <div class="reveal-unit" id="rv-unit" style="opacity:0">años ${s.ageRange?('± '+s.ageRange):''}</div>
+      <div class="reveal-fade" id="rv-story" style="margin-top:28px">
+        <div style="font-family:Fraunces;font-size:24px;line-height:1.3;color:#fff;margin-bottom:12px">${story.headline}</div>
+        <div style="font-size:15px;color:rgba(245,237,232,0.8);line-height:1.6">${story.sub}</div>
+      </div>
+      <div class="reveal-sub reveal-fade" id="rv-sub" style="margin-top:24px">
+        Edad real: <b style="color:var(--gold)">${p.age} años</b> &nbsp;·&nbsp; Score: <b style="color:var(--rose)">${s.overall}/100</b> &nbsp;·&nbsp; Percentil <b style="color:var(--gold)">P${s.percentile}</b>
+      </div>
+      <button class="btn rose reveal-fade" id="rv-btn" style="margin-top:30px" onclick="go('report')">Ver mi análisis completo →</button>
+      <div class="reveal-fade" id="rv-share-wrap" style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+        <button style="width:100%;background:#25D366;color:#fff;border:none;padding:16px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 20px rgba(37,211,102,0.3)" onclick="shareWhatsApp()">Compartir por WhatsApp</button>
+        <button class="reveal-share-btn" onclick="shareResult()">Compartir resultado</button>
+      </div>
+      <p class="reveal-sub reveal-fade" id="rv-note" style="opacity:.6;font-size:12px;margin-top:16px">Estimación basada en geometría facial y piel. No es diagnóstico médico.</p>
+    </div>`;
+
+  // Phase 1: Suspense (1.5s)
+  setTimeout(()=>{
+    const susp=$('rv-suspense');
+    if(susp) susp.style.transition='opacity .5s';
+    setTimeout(()=>{
+      if(susp){ susp.style.opacity='0'; setTimeout(()=>susp.remove(),500); }
+      // Phase 2: Number count-up
+      const num=$('rv-num'); if(!num)return;
+      num.style.opacity='1';
+      const unit=$('rv-unit'); if(unit) unit.style.opacity='1';
+      countUp(num, s.visibleAge, 1400, 1, ()=>{
+        // Phase 3: Story + buttons
+        ['rv-story','rv-sub','rv-btn','rv-share-wrap','rv-note'].forEach((id,i)=>setTimeout(()=>{ const el=$(id); if(el)el.classList.add('in'); }, i*250));
+      });
+    },200);
+  },1500);
+}
+
+window.shareWhatsApp=function(){
+  const s=STATE.scan, p=STATE.profile;
+  if(!s){ toast('Primero hacé tu análisis'); return; }
+  const text=shareTextMsg();
+  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+};
 /* ---- COMPARTIR: tarjeta visual + share nativo ---- */
 function wrapTextC(ctx,text,cx,y,maxW,lh){ const words=(text||'').split(' '); let line='',yy=y;
   for(const w of words){ const t=line?line+' '+w:w; if(ctx.measureText(t).width>maxW && line){ ctx.fillText(line,cx,yy); line=w; yy+=lh; } else line=t; }
@@ -905,23 +1233,45 @@ function wrapTextC(ctx,text,cx,y,maxW,lh){ const words=(text||'').split(' '); le
 function makeShareCanvas(){
   const s=STATE.scan, p=STATE.profile; if(!s) return null;
   const W=1080,H=1350, c=document.createElement('canvas'); c.width=W;c.height=H; const x=c.getContext('2d');
-  const g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,'#201c27'); g.addColorStop(.55,'#48333e'); g.addColorStop(1,'#a65f6d');
+  // Deep dark gradient background
+  const g=x.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#0e0c12'); g.addColorStop(0.35,'#1a0e18'); g.addColorStop(0.65,'#2d1526'); g.addColorStop(1,'#3e1a30');
   x.fillStyle=g; x.fillRect(0,0,W,H);
-  const rg=x.createRadialGradient(W/2,300,20,W/2,300,560); rg.addColorStop(0,'rgba(201,162,75,.35)'); rg.addColorStop(1,'rgba(201,162,75,0)');
+  // Gold radial glow behind the number
+  const rg=x.createRadialGradient(W/2,520,20,W/2,520,420);
+  rg.addColorStop(0,'rgba(212,175,136,.45)'); rg.addColorStop(0.5,'rgba(212,175,136,.12)'); rg.addColorStop(1,'rgba(212,175,136,0)');
   x.fillStyle=rg; x.fillRect(0,0,W,H);
+  // Second rose glow
+  const rg2=x.createRadialGradient(W/2,520,10,W/2,520,300);
+  rg2.addColorStop(0,'rgba(232,164,176,.2)'); rg2.addColorStop(1,'rgba(232,164,176,0)');
+  x.fillStyle=rg2; x.fillRect(0,0,W,H);
   x.textAlign='center';
-  x.fillStyle='rgba(255,255,255,.92)'; x.font='600 42px Georgia, serif'; x.fillText('InsideOutMed', W/2, 135);
-  x.fillStyle='rgba(255,255,255,.72)'; x.font='700 30px Arial'; x.fillText('MI EDAD VISIBLE', W/2, 380);
-  x.fillStyle='#fff'; x.font='700 290px Georgia, serif'; x.fillText(String(s.visibleAge), W/2, 660);
-  x.fillStyle='rgba(255,255,255,.85)'; x.font='400 46px Arial'; x.fillText('años', W/2, 730);
-  const d=Math.round(s.ageDelta*10)/10; let head;
-  if(d<=-0.5) head=Math.abs(d)+' años menos que mi edad real'; else if(d>=0.5) head=d+' años más — con plan para revertirlo'; else head='Justo mi edad — a ganar años';
-  x.fillStyle='#ffdcb8'; x.font='600 50px Georgia, serif'; wrapTextC(x,head,W/2,850,900,62);
-  x.fillStyle='rgba(255,255,255,.9)'; x.font='400 38px Arial';
-  x.fillText('Edad real '+p.age+'   ·   Score '+s.overall+'/100   ·   P'+s.percentile, W/2, 1050);
-  x.fillStyle='#fff'; x.font='700 48px Arial'; x.fillText('Descubre TU edad visible', W/2, 1200);
-  x.fillStyle='rgba(255,255,255,.85)'; x.font='400 36px Arial'; x.fillText('Gratis · Privado · 90 segundos', W/2, 1258);
-  if(CONFIG.shareUrl){ x.fillStyle='#ffdcb8'; x.font='600 34px Arial'; x.fillText(CONFIG.shareUrl.replace(/^https?:\/\//,''), W/2, 1315); }
+  // Top: brand
+  x.fillStyle='rgba(245,237,232,.6)'; x.font='500 36px Georgia, serif'; x.fillText('InsideOutMed', W/2, 100);
+  // Small caps label
+  x.fillStyle='rgba(245,237,232,.55)'; x.font='700 28px Arial';
+  x.letterSpacing='0.2em'; x.fillText('MI EDAD VISIBLE ES', W/2, 340);
+  // HUGE number with gradient
+  const numGrad = x.createLinearGradient(W/2-200, 400, W/2+200, 700);
+  numGrad.addColorStop(0,'#ffffff'); numGrad.addColorStop(0.5,'rgba(212,175,136,0.95)'); numGrad.addColorStop(1,'#e8a4b0');
+  x.fillStyle=numGrad; x.font='700 280px Georgia, serif'; x.fillText(String(Math.round(s.visibleAge)), W/2, 650);
+  // "años"
+  x.fillStyle='rgba(245,237,232,.6)'; x.font='400 42px Arial'; x.fillText('años', W/2, 720);
+  // Personalized headline
+  const story = getRevealStory(s, p);
+  x.fillStyle='#ffdcb8'; x.font='600 46px Georgia, serif'; wrapTextC(x, story.headline, W/2, 850, 900, 58);
+  // Stats bar
+  x.fillStyle='rgba(245,237,232,.7)'; x.font='400 34px Arial';
+  x.fillText('Edad real '+p.age+'  ·  Score '+s.overall+'/100  ·  P'+s.percentile, W/2, 1040);
+  // Divider line
+  x.strokeStyle='rgba(245,237,232,.15)'; x.lineWidth=1; x.beginPath(); x.moveTo(W/2-300,1090); x.lineTo(W/2+300,1090); x.stroke();
+  // CTA
+  x.fillStyle='#fff'; x.font='700 42px Arial'; x.fillText('Descubrí la tuya', W/2, 1170);
+  // URL
+  const shareUrl = CONFIG.shareUrl || 'inside-out-med-web.vercel.app';
+  x.fillStyle='#ffdcb8'; x.font='500 32px Arial'; x.fillText(shareUrl.replace(/^https?:\/\//,''), W/2, 1230);
+  // Gratis badge
+  x.fillStyle='rgba(245,237,232,.45)'; x.font='400 28px Arial'; x.fillText('Gratis · Privado · 90 segundos', W/2, 1290);
   return c;
 }
 function canvasToBlob(c){ return new Promise(res=>{ try{ c.toBlob(res,'image/png'); }catch(e){ res(null); } }); }
@@ -1603,6 +1953,118 @@ const CAT=[
  res:'Efecto lifting inmediato + colágeno progresivo',dur:'12-18 meses',risk:'Hematomas, asimetría o extrusión si mala técnica — solo médico experto',
  evi:'Los hilos PDO producen tensado mecánico inmediato y neocolagénesis (revisiones de medicina estética).'},
 ];
+const AFFILIATE_LINKS = {
+  'Protector solar SPF 50': {
+    url: 'https://www.amazon.com/s?k=protector+solar+spf+50+cara&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Limpiador suave + hidratante con ceramidas': {
+    url: 'https://www.amazon.com/s?k=hidratante+ceramidas+cara&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Vitamina C 15–20% (AM)': {
+    url: 'https://www.amazon.com/s?k=vitamina+c+serum+cara+15%25&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Retinol 0.3% → 1% (PM)': {
+    url: 'https://www.amazon.com/s?k=retinol+serum+0.3%25&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Niacinamida 10%': {
+    url: 'https://www.amazon.com/s?k=niacinamida+10%25+serum&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Contorno de ojos con cafeína + péptidos': {
+    url: 'https://www.amazon.com/s?k=contorno+ojos+cafeina+peptidos&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'AHA/BHA exfoliación química': {
+    url: 'https://www.amazon.com/s?k=exfoliante+quimico+AHA+BHA&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Sérum de péptidos para firmeza': {
+    url: 'https://www.amazon.com/s?k=serum+peptidos+firmeza+cara&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Sérum de polinucleótidos (PDRN) tópico': {
+    url: 'https://www.amazon.com/s?k=polinucleotidos+serum+piel&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Bakuchiol (alternativa al retinol)': {
+    url: 'https://www.amazon.com/s?k=bakuchiol+serum+crema&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Colágeno hidrolizado tipo I y III': {
+    url: 'https://www.amazon.com/s?k=colageno+hidrolizado+suplemento&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Omega-3 EPA/DHA': {
+    url: 'https://www.amazon.com/s?k=omega+3+EPA+DHA+suplemento&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Vitamina D3 + K2': {
+    url: 'https://www.amazon.com/s?k=vitamina+D3+K2+suplemento&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Astaxantina 4–12 mg': {
+    url: 'https://www.amazon.com/s?k=astaxantina+suplemento&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Zinc bisglicinato + Vitamina C oral': {
+    url: 'https://www.amazon.com/s?k=zinc+bisglicinato+vitamina+c&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Magnesio glicinato': {
+    url: 'https://www.amazon.com/s?k=magnesio+glicinato+suplemento&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'NMN / NR (precursores de NAD+)': {
+    url: 'https://www.amazon.com/s?k=NMN+NAD+suplemento&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Aceite de romero (masaje en cuero cabelludo)': {
+    url: 'https://www.amazon.com/s?k=aceite+romero+cabello+crecimiento&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Champú con cafeína (+ adenosina)': {
+    url: 'https://www.amazon.com/s?k=champu+cafeina+adenosina+cabello&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Minoxidil tópico 5%': {
+    url: 'https://www.amazon.com/s?k=minoxidil+5%25+mujer&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'Saw palmetto (antagonista DHT natural)': {
+    url: 'https://www.amazon.com/s?k=saw+palmetto+suplemento&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'LED rojo para cuero cabelludo + biotina': {
+    url: 'https://www.amazon.com/s?k=led+rojo+cuero+cabelludo+gorra&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  },
+  'LED rojo terapéutico': {
+    url: 'https://www.amazon.com/s?k=mascara+led+rojo+facial&tag=insideoutmed-20',
+    label: 'Ver en Amazon'
+  }
+};
+function affiliateBtn(r) {
+  const aff = AFFILIATE_LINKS[r.n];
+  if (!aff) return '';
+  return `<a href="${aff.url}" target="_blank" rel="noopener"
+    style="display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;padding:14px;border-radius:13px;
+    background:linear-gradient(135deg,rgba(212,175,136,0.2),rgba(212,175,136,0.1));
+    border:1px solid rgba(212,175,136,0.35);color:var(--gold);
+    font-weight:700;font-size:14px;text-decoration:none;margin-top:10px;
+    transition:all .15s"
+    onclick="trackAffiliateClick('${r.n.replace(/'/g,"\\'")}')">
+    ${aff.label} &#x2197;
+  </a>`;
+}
+window.trackAffiliateClick = function(name) {
+  console.log('[InsideOutMed] Affiliate click:', name);
+};
+
 const CATNAMES={skincare:['Skincare','🧴'],habits:['Hábitos','🌿'],supplements:['Suplementos','💊'],treatments:['Tratamientos','💉'],hair:['Capilar','💇‍♀️']};
 const catOf=r=> (r.c==='injectables'?'treatments':r.c); // inyectables se muestran dentro de Tratamientos
 const PHASES=[['Fundación','0–1 mes','Lo no-negociable: base que sostiene todo lo demás.'],
@@ -1697,6 +2159,9 @@ function renderPlan(){
       h+= list.length? list.map(recCard).join('') : `<div class="note">No hay recomendaciones en esta categoría para tu nivel de presupuesto/tolerancia actual. Amplía tu presupuesto o tolerancia para verlas.</div>`;
     }
   }
+  h+=`<p style="font-size:11px;color:rgba(245,237,232,0.35);text-align:center;margin-top:20px;padding:0 10px">
+  Los links de productos son de afiliado. Si comprás desde acá nos apoyás sin costo extra para vos.
+</p>`;
   $('plan-body').innerHTML=h;
   bindEng();
 }
@@ -1753,7 +2218,7 @@ function recCard(r){
    <div class="rec-why">💡 ${whyText(r)}</div>
    ${r.outside?`<div class="note">ℹ️ Recomendado por tu edad aunque queda fuera de tu presupuesto/tolerancia actual.</div>`:''}
    ${alerts?`<div style="margin-top:4px">${alerts}</div>`:''}
-   ${buyBtn(r)}
+   ${affiliateBtn(r)}
    <div class="eng-label">¿Lo vas a hacer?</div>
    <div class="eng">
      <button data-n="${r.n}" data-v="probar" class="${e==='probar'?'on':''}">Voy a probar</button>

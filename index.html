@@ -489,6 +489,27 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
     </div>
   </section>
 
+  <!-- ============ VERIFY OTP ============ -->
+  <section class="screen" id="s-verify">
+    <div class="top">
+      <button class="back" onclick="go('welcome')">&#x2039;</button>
+      <span class="brand">Inside<b>Out</b>Med</span>
+      <span></span>
+    </div>
+    <div class="pad" style="padding-top:40px">
+      <div class="center" style="margin-bottom:32px">
+        <div style="font-size:48px;margin-bottom:16px">📩</div>
+        <h2>Revisa tu email</h2>
+        <p class="muted" style="font-size:15px" id="verify-msg">Te enviamos un código de 6 dígitos a tu email para guardar tu análisis de forma segura.</p>
+      </div>
+      <label class="fld">Código de verificación</label>
+      <input id="otp-input" type="number" placeholder="123456" style="font-size:28px;text-align:center;letter-spacing:8px" maxlength="6"/>
+      <button class="btn rose" style="margin-top:20px" onclick="verifyOTP()">Verificar y guardar mi análisis</button>
+      <button class="btn ghost sm" style="margin-top:10px" onclick="resendOTP()">Reenviar código</button>
+      <p class="muted center" id="verify-status" style="margin-top:14px;font-size:13px"></p>
+    </div>
+  </section>
+
   <!-- ============ DASHBOARD ============ -->
   <section class="screen" id="s-dash">
     <div class="top"><span class="brand">Inside<b>Out</b>Med</span><button class="back" style="font-size:14px" onclick="logout()">salir</button></div>
@@ -513,6 +534,11 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
 
 <script type="module">
 import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.12";
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const supabase = createClient(
+  'https://lefekepacvdgftlbefxv.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZmVrZXBhY3ZkZ2Z0bGJlZnh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NzUxMzUsImV4cCI6MjA5OTM1MTEzNX0.uKr5BxQDr3IKXhIYI1vy7wBep9q34R0IKfbryRlcE-w'
+);
 
 /* ============================================================
    STATE
@@ -521,7 +547,7 @@ const STATE = {
   profile:{ name:'', age:34, email:'', phone:'', goals:[], sensitivity:'media',
     budget:'medio', fitz:3, sleep:7, stress:'medio', diet:'omnivora', exercise:2,
     sun:'media', routine:[], prior:[], conditions:[], invasive:'todo', commitment:'full-home' },
-  scan:null, photo:null, plan:null, engagement:{}, activeCat:'skincare'
+  scan:null, photo:null, plan:null, engagement:{}, activeCat:'skincare', history:[], currentScanId:null
 };
 const $=id=>document.getElementById(id);
 function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1136,8 +1162,171 @@ const ZMETA={frente:['Frente','🟤'],periocular:['Periocular','👁️'],nariz:
 function col(v){ return v>=75?'var(--green)':v>=55?'var(--amber)':'var(--red)'; }
 function bar(label,v,sub){ v=Math.round(v); return `<div class="metric"><div class="mh"><span>${label}</span><b style="color:${col(v)}">${v}</b></div>
   <div class="bar"><i style="width:${v}%;background:${col(v)}"></i></div>${sub?`<div class="sub">${sub}</div>`:''}</div>`; }
-function biomark(label,v,inv){ const disp=inv?100-Math.round(v):Math.round(v); // for "lower is better" markers show as score
+function biomark(label,v,inv){ const disp=inv?100-Math.round(v):Math.round(v);
   return `<div class="metric"><div class="mh"><span>${label}</span><b style="color:${col(disp)}">${disp}</b></div><div class="bar"><i style="width:${disp}%;background:${col(disp)}"></i></div></div>`; }
+
+/* ---- HUMAN-READABLE BIOMARKERS ---- */
+const BIO_HUMAN = {
+  luminosidad: {
+    emoji: '✨', title: 'Luminosidad',
+    levels: [
+      [80, 'Tu piel tiene un glow natural visible. Está bien nutrida y oxigenada.'],
+      [60, 'Tu piel tiene algo de brillo pero puede mejorar. Más hidratación y antioxidantes.'],
+      [0,  'Tu piel se ve apagada. Es señal de que necesita renovación celular urgente.']
+    ]
+  },
+  uniformidad: {
+    emoji: '🎨', title: 'Uniformidad de tono',
+    levels: [
+      [80, 'Tono muy parejo. Sin manchas ni rojeces notables.'],
+      [60, 'Algunas irregularidades de tono visibles. Daño solar o inflamación leve.'],
+      [0,  'Manchas, rojeces o zonas oscuras visibles. Requiere atención activa.']
+    ]
+  },
+  hidratacion: {
+    emoji: '💧', title: 'Hidratación',
+    levels: [
+      [75, 'Bien hidratada. Tu barrera cutánea está funcionando correctamente.'],
+      [55, 'Hidratación moderada. Tu piel puede estar perdiendo agua más rápido de lo ideal.'],
+      [0,  'Piel deshidratada. Esto acentúa líneas finas y opaca el tono.']
+    ]
+  },
+  glicacion: {
+    emoji: '🍬', title: 'Glicación (efecto azúcar)',
+    levels: [
+      [75, 'Tu colágeno está en buen estado. La glicación está controlada.'],
+      [50, 'Hay señales de glicación moderada. Reduce azúcares y ultraprocesados.'],
+      [0,  'Glicación alta: el azúcar está endureciendo tu colágeno y apagando tu piel.']
+    ]
+  },
+  inflamacion: {
+    emoji: '🔥', title: 'Inflamación visible',
+    levels: [
+      [80, 'Sin inflamación visible. Tu piel está tranquila y en equilibrio.'],
+      [55, 'Inflamación leve. Puede ser estrés, dieta o productos irritantes.'],
+      [0,  'Inflamación notable. Acelera el envejecimiento y sensibiliza la piel.']
+    ]
+  },
+  danoSolar: {
+    emoji: '☀️', title: 'Daño solar acumulado',
+    levels: [
+      [80, 'Daño solar mínimo. Tu protección solar está funcionando.'],
+      [55, 'Daño solar moderado. Manchas y textura irregular empiezan a aparecer.'],
+      [0,  'Daño solar alto. Es la causa #1 del envejecimiento visible prematuro.']
+    ]
+  },
+  vascularidad: {
+    emoji: '🩸', title: 'Rojez / vascularidad',
+    levels: [
+      [75, 'Sin rojez excesiva. Circulación equilibrada.'],
+      [50, 'Algo de rojez visible. Puede ser rosácea leve, temperatura o reactividad.'],
+      [0,  'Rojez alta. Tu piel está reactiva — los activos agresivos la empeorarán.']
+    ]
+  }
+};
+
+function bioHumanScore(key, rawVal, isInverted){
+  const val = isInverted ? 100 - Math.round(rawVal) : Math.round(rawVal);
+  const cfg = BIO_HUMAN[key];
+  if(!cfg) return '';
+  const level = cfg.levels.find(l => val >= l[0]) || cfg.levels[cfg.levels.length - 1];
+  const dots = Math.round(val / 20);
+  const dotsHtml = Array.from({length:5}, (_, i) =>
+    '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (i < dots ? col(val) : 'rgba(245,237,232,0.15)') + ';margin:0 2px"></span>'
+  ).join('');
+  return '<div style="padding:16px 0;border-bottom:1px solid rgba(245,237,232,0.08)">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+      '<span style="font-size:15px;font-weight:600">' + cfg.emoji + ' ' + cfg.title + '</span>' +
+      '<span style="color:' + col(val) + ';font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">' + (val >= 75 ? 'Óptima' : val >= 55 ? 'Mejorable' : 'Atención') + '</span>' +
+    '</div>' +
+    '<p style="font-size:13px;color:rgba(245,237,232,0.7);margin:0 0 10px;line-height:1.5">' + level[1] + '</p>' +
+    '<div>' + dotsHtml + '</div>' +
+  '</div>';
+}
+
+/* ---- HUMAN-READABLE ZONES ---- */
+const ZONE_INSIGHTS = {
+  frente: {
+    good: ['Frente lisa sin líneas marcadas.', 'Cejas en posición natural y simétricas.'],
+    mid:  ['Líneas de expresión visibles en reposo.', 'Las cejas podrían estar un poco caídas.'],
+    bad:  ['Líneas de expresión profundas.', 'La frente está envejeciendo más rápido que el resto.']
+  },
+  periocular: {
+    good: ['Mirada fresca y abierta.', 'Sin ojeras ni bolsas significativas.'],
+    mid:  ['Algo de cansancio visible alrededor de los ojos.', 'Las patas de gallo están empezando a marcarse.'],
+    bad:  ['Ojeras o bolsas notables.', 'La zona de los ojos es tu mayor prioridad estética.']
+  },
+  nariz: {
+    good: ['Proporciones nasales armónicas.', 'Simetría excelente.'],
+    mid:  ['Pequeñas asimetrías de proporción.', 'Normal y fácil de armonizar.'],
+    bad:  ['Proporciones que podrían mejorar con técnica.', 'Un especialista puede asesorarte.']
+  },
+  labios: {
+    good: ['Labios voluminosos e hidratados.', 'Arco de Cupido bien definido.'],
+    mid:  ['Los labios están algo deshidratados.', 'El volumen puede restaurarse fácilmente.'],
+    bad:  ['Volumen reducido y líneas peribucales visibles.', 'Es una de las primeras zonas en envejecer.']
+  },
+  mejillas: {
+    good: ['Pómulos proyectados y mejillas llenas.', 'Tono parejo y sin surcos visibles.'],
+    mid:  ['El volumen de mejillas está empezando a bajar.', 'El surco nasogeniano es visible.'],
+    bad:  ['Pérdida de volumen notable en mejillas.', 'El surco nasogeniano está marcado.']
+  },
+  mandibula: {
+    good: ['Óvalo facial bien definido.', 'Mandíbula firme y simétrica.'],
+    mid:  ['El óvalo está perdiendo definición.', 'Algo de flacidez en la línea mandibular.'],
+    bad:  ['Flacidez mandibular visible.', 'El jowl (caída de la mandíbula) es perceptible.']
+  },
+  cuello: {
+    good: ['Cuello firme sin líneas marcadas.', 'Buen ángulo cervical.'],
+    mid:  ['Algunas líneas horizontales visibles.', 'El cuello envejece más rápido de lo que creemos.'],
+    bad:  ['El cuello requiere atención urgente.', 'Es el área más olvidada y que más delata la edad.']
+  },
+  piel: {
+    good: ['Piel lisa, luminosa y de tono parejo.', 'Tu cuidado diario está dando resultados.'],
+    mid:  ['Piel con algo de textura y tono irregular.', 'Con una rutina consistente mejorará notablemente.'],
+    bad:  ['Piel con textura, manchas o apagada.', 'Tu piel global es la prioridad del plan.']
+  },
+  cabello: {
+    good: ['Cabello con buena densidad y línea capilar intacta.', 'Tu salud capilar está bien.'],
+    mid:  ['Densidad levemente reducida o línea levemente retrocedida.', 'Es buen momento para empezar prevención.'],
+    bad:  ['Pérdida de densidad o retroceso notable de la línea capilar.', 'La intervención temprana da los mejores resultados.']
+  }
+};
+
+function zoneStatusLabel(score){
+  if(score >= 80) return { label: 'Excelente', color: 'var(--green)' };
+  if(score >= 65) return { label: 'Bien', color: 'var(--green)' };
+  if(score >= 50) return { label: 'Mejorable', color: 'var(--amber)' };
+  return { label: 'Prioridad', color: 'var(--red)' };
+}
+
+function zoneHumanCard(key, zone){
+  const meta = ZMETA[key];
+  if(!meta) return '';
+  const status = zoneStatusLabel(zone.score);
+  const insights = ZONE_INSIGHTS[key];
+  const tier = zone.score >= 65 ? (insights ? insights.good : []) : zone.score >= 50 ? (insights ? insights.mid : []) : (insights ? insights.bad : []);
+  return '<div class="zone" id="zone-' + key + '" onclick="this.classList.toggle(\'open\')" style="border-color:' + status.color + '22">' +
+    '<div class="zh">' +
+      '<span class="zi" style="font-size:24px">' + meta[1] + '</span>' +
+      '<div style="flex:1">' +
+        '<b style="font-size:15px">' + meta[0] + '</b>' +
+        (zone.est ? '<span style="font-size:11px;color:rgba(245,237,232,0.45);margin-left:6px">estimado</span>' : '') +
+        '<div style="font-size:12px;margin-top:2px;color:' + status.color + ';font-weight:700;letter-spacing:.05em">' + status.label + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="zb">' +
+      '<ul style="margin:0;padding:0 0 0 4px;list-style:none">' +
+        tier.map(function(t){ return '<li style="font-size:13.5px;color:rgba(245,237,232,0.75);padding:5px 0;border-bottom:1px solid rgba(245,237,232,0.06)">\u2192 ' + t + '</li>'; }).join('') +
+      '</ul>' +
+      (zone.est ? '<div class="note" style="margin-top:12px">Esta zona requiere un escaneo dedicado para mayor precisión.</div>' : '') +
+      '<div style="margin-top:12px;border-top:1px solid rgba(245,237,232,0.08);padding-top:12px">' +
+        '<div style="font-size:12px;color:rgba(245,237,232,0.4);margin-bottom:8px;font-weight:600;letter-spacing:.05em;text-transform:uppercase">Detalle por sub-zona</div>' +
+        zone.subs.map(function(su){ return bar(su[0], su[1]); }).join('') +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
 function renderReport(){
   const s=STATE.scan, p=STATE.profile;
   $('rep-date').textContent=new Date(s.date).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
@@ -1201,23 +1390,24 @@ function renderReport(){
     </div>
   </div>`;
 
-  // ---- BIOMARKERS ----
+  // ---- BIOMARKERS (human-readable) ----
   const b=s.bio;
   h+=`<h3 style="margin:22px 0 10px">Biomarcadores cutáneos</h3>
-   <div class="card"><p class="sub" style="margin-top:0">Derivados del análisis de píxeles de tu piel ${b.real?'':'(estimados en modo demo)'}.</p>
-    ${bar('Luminosidad',b.luminosidad)}${bar('Uniformidad de tono',b.uniformidad)}${bar('Hidratación aparente',b.hidratacion)}
-    ${biomark('Glicación (azúcar/colágeno)',b.glicacion,true)}${biomark('Inflamación visible',b.inflamacion,true)}
-    ${biomark('Daño solar estimado',b.danoSolar,true)}${biomark('Vascularidad / rojez',b.vascularidad,true)}
+   <div class="card"><p class="sub" style="margin-top:0">${b.real?'Derivados del análisis de píxeles de tu piel. Cada marcador te dice qué está pasando en lenguaje humano.':'Estimados en modo demo — haz un escaneo real para resultados precisos.'}</p>
+    ${bioHumanScore('luminosidad', b.luminosidad, false)}
+    ${bioHumanScore('uniformidad', b.uniformidad, false)}
+    ${bioHumanScore('hidratacion', b.hidratacion, false)}
+    ${bioHumanScore('glicacion', b.glicacion, true)}
+    ${bioHumanScore('inflamacion', b.inflamacion, true)}
+    ${bioHumanScore('danoSolar', b.danoSolar, true)}
+    ${bioHumanScore('vascularidad', b.vascularidad, true)}
    </div>`;
 
-  // ---- ZONES ACCORDION ----
-  h+=`<h3 style="margin:22px 0 10px">Análisis por zona</h3>`;
+  // ---- ZONES (human-readable cards) ----
+  h+=`<h3 style="margin:22px 0 10px">Análisis por zona</h3>
+  <p class="sub" style="margin:-6px 0 14px">Cada zona te dice su estado en lenguaje claro. Toca para ver el detalle.</p>`;
   Object.entries(s.zones).forEach(([k,z])=>{
-    h+=`<div class="zone" id="zone-${k}" onclick="this.classList.toggle('open')">
-      <div class="zh"><span class="zi">${ZMETA[k][1]}</span><b style="color:var(--ink)">${ZMETA[k][0]}</b>${z.est?`<span class="sub" style="margin-left:6px;font-size:11px">estimado</span>`:''}
-      <span class="zscore" style="color:${col(z.score)}">${z.score}</span></div>
-      <div class="zb">${z.subs.map(su=>bar(su[0],su[1])).join('')}
-      ${z.est?'<div class="note">Esta zona requiere un acercamiento dedicado para medición precisa. Estimación basada en tu edad y biomarcadores.</div>':''}</div></div>`;
+    h += zoneHumanCard(k, z);
   });
   h+=consultCard();
   h+=`<div class="note">⚕️ Estimación basada en geometría facial y color de piel, no diagnóstico médico. No sustituye una consulta profesional.</div>`;
@@ -1797,7 +1987,7 @@ function drawSilhouette(ctx,cv,intensity){
 }
 
 /* ============================================================
-   PERSISTENCE
+   PERSISTENCE (local + Supabase)
 ============================================================ */
 function db(){ try{return JSON.parse(localStorage.getItem('iom_users')||'{}');}catch(e){return{};} }
 function saveDB(d){ try{localStorage.setItem('iom_users',JSON.stringify(d));}catch(e){} }
@@ -1824,26 +2014,154 @@ function pushScan(){
   const d=db(); const k=STATE.profile.email.toLowerCase(); if(!k)return;
   const u=d[k]||{profile:STATE.profile,scans:[],engagement:{}};
   u.profile=STATE.profile; u.engagement=STATE.engagement;
-  // store scan without heavy photo (keep small thumb)
   u.scans=u.scans||[]; u.scans.push({date:STATE.scan.date,overall:STATE.scan.overall,visibleAge:STATE.scan.visibleAge,
     percentile:STATE.scan.percentile, quality:STATE.scan.quality||0, light:STATE.scan.light||0,
     zones:Object.fromEntries(Object.entries(STATE.scan.zones).map(([k2,z])=>[k2,z.score]))});
   d[k]=u; saveDB(d); saveRemote(u);
 }
-window.finishFlow=function(){ pushScan(); toast('Guardado en tu email'); go('dash'); renderDash(); };
 
-window.loadReturning=async function(){
-  const em=$('ret-email').value.trim().toLowerCase();
-  if(!em){ $('ret-msg').textContent='Ingresa tu email.'; return; }
-  let u=db()[em];
-  if(!u){ $('ret-msg').textContent='Buscando tus resultados…'; u=await fetchRemote(em);
-    if(u){ const d=db(); d[em]=u; saveDB(d); } }   // cachea local para la próxima
-  if(!u){ $('ret-msg').textContent='No encontramos escaneos con ese email. Haz tu primer análisis.'; return; }
-  STATE.profile=u.profile; STATE.engagement=u.engagement||{};
-  STATE.returningScans=u.scans||[];
-  $('ret-msg').textContent=''; renderDash(); go('dash');
+/* ============================================================
+   SUPABASE DATA FUNCTIONS
+============================================================ */
+async function saveToSupabase(){
+  const { data: { user } } = await supabase.auth.getUser();
+  if(!user) return;
+  const p = STATE.profile;
+  await supabase.from('profiles').upsert({
+    id: user.id,
+    name: p.name, age: p.age, email: p.email, phone: p.phone,
+    goals: p.goals, sensitivity: p.sensitivity, budget: p.budget,
+    fitz: p.fitz, sleep: p.sleep, stress: p.stress, diet: p.diet,
+    exercise: p.exercise, sun: p.sun, routine: p.routine,
+    prior: p.prior, conditions: p.conditions, invasive: p.invasive,
+    commitment: p.commitment, consent: p.consent,
+    updated_at: new Date().toISOString()
+  });
+  if(STATE.scan){
+    const s = STATE.scan;
+    const { data: scan } = await supabase.from('scans').insert({
+      user_id: user.id,
+      overall: s.overall, visible_age: s.visibleAge, age_delta: s.ageDelta,
+      age_range: s.ageRange, percentile: s.percentile, symmetry: s.symmetry,
+      harmony: s.harmony, zones: s.zones, bio: s.bio,
+      is_real: s.real, quality: s.quality || 0, samples: s.samples || 0
+    }).select().single();
+    if(scan){
+      STATE.currentScanId = scan.id;
+      await supabase.from('engagements').insert({
+        user_id: user.id, scan_id: scan.id, data: STATE.engagement
+      });
+    }
+  }
+}
+
+async function loadUserHistory(){
+  const { data: { user } } = await supabase.auth.getUser();
+  if(!user) return null;
+  const { data: scans } = await supabase
+    .from('scans').select('*').eq('user_id', user.id)
+    .order('created_at', { ascending: false }).limit(10);
+  const { data: profile } = await supabase
+    .from('profiles').select('*').eq('id', user.id).single();
+  const { data: engagements } = await supabase
+    .from('engagements').select('*').eq('user_id', user.id)
+    .order('updated_at', { ascending: false }).limit(1);
+  return { scans, profile, engagements };
+}
+
+/* ============================================================
+   OTP AUTH FLOW
+============================================================ */
+window.finishFlow = async function(){
+  pushScan();
+  const email = STATE.profile.email;
+  if(!email){ toast('Guardado localmente'); go('dash'); renderDash(); return; }
+  toast('Enviando código a tu email...');
+  const { error } = await supabase.auth.signInWithOtp({
+    email, options: { shouldCreateUser: true }
+  });
+  if(error){
+    toast('Error al enviar código. Guardado localmente.');
+    go('dash'); renderDash(); return;
+  }
+  STATE._verifyMode = 'save';
+  $('verify-msg').textContent = 'Te enviamos un código a ' + email + ' para guardar tu análisis.';
+  $('verify-status').textContent = '';
+  $('otp-input').value = '';
+  go('verify');
 };
-window.logout=function(){ go('welcome'); };
+
+window.verifyOTP = async function(){
+  const token = ($('otp-input').value || '').trim();
+  const email = STATE.profile.email || STATE._returnEmail;
+  if(!token || token.length < 6){ toast('Ingresa el código de 6 dígitos'); return; }
+  $('verify-status').textContent = 'Verificando...';
+  const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+  if(error){
+    $('verify-status').textContent = 'Código incorrecto o expirado. Intenta de nuevo.';
+    return;
+  }
+  if(STATE._verifyMode === 'save'){
+    $('verify-status').textContent = 'Guardando tu análisis...';
+    await saveToSupabase();
+    const history = await loadUserHistory();
+    if(history && history.scans) STATE.history = history.scans;
+    toast('Análisis guardado. Podrás verlo cuando vuelvas.');
+    renderDash(); go('dash');
+  } else {
+    $('verify-status').textContent = 'Cargando tu historial...';
+    const history = await loadUserHistory();
+    if(history){
+      if(history.profile){
+        const hp = history.profile;
+        STATE.profile.name = hp.name || STATE.profile.name;
+        STATE.profile.age = hp.age || STATE.profile.age;
+        STATE.profile.email = hp.email || STATE.profile.email;
+        STATE.profile.phone = hp.phone || STATE.profile.phone;
+        STATE.profile.goals = hp.goals || STATE.profile.goals;
+        STATE.profile.sensitivity = hp.sensitivity || STATE.profile.sensitivity;
+        STATE.profile.budget = hp.budget || STATE.profile.budget;
+        STATE.profile.fitz = hp.fitz || STATE.profile.fitz;
+        STATE.profile.commitment = hp.commitment || STATE.profile.commitment;
+      }
+      STATE.history = history.scans || [];
+      if(history.engagements && history.engagements[0] && history.engagements[0].data){
+        STATE.engagement = history.engagements[0].data;
+      }
+      renderDash(); go('dash');
+    } else {
+      $('verify-status').textContent = 'No encontramos datos. Haz tu primer análisis.';
+    }
+  }
+};
+
+window.resendOTP = async function(){
+  const email = STATE.profile.email || STATE._returnEmail;
+  if(!email){ toast('No hay email configurado'); return; }
+  await supabase.auth.signInWithOtp({ email });
+  toast('Código reenviado');
+};
+
+window.loadReturning = async function(){
+  const email = ($('ret-email').value || '').trim();
+  if(!email || !/.+@.+\..+/.test(email)){ toast('Email inválido'); return; }
+  STATE._returnEmail = email;
+  STATE.profile.email = email;
+  $('ret-msg').textContent = 'Enviando código...';
+  const { error } = await supabase.auth.signInWithOtp({ email });
+  if(error){ $('ret-msg').textContent = 'Error al enviar código. Intenta de nuevo.'; return; }
+  STATE._verifyMode = 'load';
+  $('verify-msg').textContent = 'Te enviamos un código a ' + email + '.';
+  $('verify-status').textContent = '';
+  $('otp-input').value = '';
+  go('verify');
+};
+
+window.logout = async function(){
+  await supabase.auth.signOut();
+  STATE.history = [];
+  go('welcome');
+};
 window.rescan=function(){ obStep=0; go('scan'); };
 
 /* ============================================================
@@ -1891,49 +2209,118 @@ window.adminSave=function(){
 };
 
 function renderDash(){
-  const d=db(); const k=STATE.profile.email.toLowerCase(); const u=d[k]||{scans:[]};
-  const scans=u.scans||[]; const p=STATE.profile;
-  const last=scans[scans.length-1], first=scans[0];
-  let h=`<div style="padding-top:12px"><h2>Hola de nuevo${p.name?', '+p.name:''} 👋</h2>
-   <p class="muted" style="font-size:14px">${scans.length} escaneo${scans.length!==1?'s':''} · ${p.email}</p></div>`;
-  if(last){
-    h+=`<div class="card center">${ringSVG(last.overall,'Score actual')}
-      <div class="grid2" style="margin-top:10px;text-align:center">
-        <div><div style="font-family:Fraunces;font-size:26px;color:var(--rose)">${last.visibleAge}</div><div class="sub">edad visible</div></div>
-        <div><div style="font-family:Fraunces;font-size:26px;color:var(--gold)">P${last.percentile}</div><div class="sub">percentil</div></div>
-      </div></div>`;
-  }
-  if(scans.length>=2){
-    const delta=last.overall-first.overall;
-    h+=`<div class="card"><b>Tu progreso</b>
-      <div class="sub">Score global a lo largo del tiempo</div>${sparkline(scans.map(s=>s.overall))}
-      <div class="row between" style="margin-top:10px"><span class="sub">Desde tu primer escaneo</span>
-      <b style="color:${delta>=0?'var(--green)':'var(--red)'}">${delta>=0?'+':''}${delta} pts · ${(first.visibleAge-last.visibleAge).toFixed(1)} años visibles</b></div></div>`;
-    // delta real vs proyectado
-    h+=`<div class="card"><b>Real vs proyectado</b>
-      <table class="cmp"><tr><td>Cambio real medido</td><td style="color:var(--green)">${delta>=0?'+':''}${delta} pts</td></tr>
-      <tr><td>Cambio proyectado</td><td>+${(TIERS[adoptionTier()].yr[0])*2}–${(TIERS[adoptionTier()].yr[1])*2} pts est.</td></tr></table>
-      <p class="sub">${delta>= TIERS[adoptionTier()].yr[0]*2 ?'Vas en línea o adelante de tu objetivo 🎉':'Vas un poco atrás — ajustaremos tu plan para acelerar.'}</p></div>`;
-    // comparabilidad de captura entre escaneos
-    const comp=(first.light&&last.light)? (Math.abs(first.light-last.light)<28
-        ? '✓ Escaneos comparables (iluminación similar)'
-        : '⚠️ Iluminación distinta entre escaneos — el delta puede tener ruido. Repite con luz pareja para comparar mejor.')
-      : 'Sugerencia: re-escanéate con luz similar para que la comparación sea precisa.';
-    h+=`<div class="note">${comp}</div>`;
+  const p = STATE.profile;
+  // Merge sources: Supabase history + local scans
+  const d = db(); const k = (p.email || '').toLowerCase(); const u = d[k] || {scans:[]};
+  const localScans = u.scans || [];
+  const supaScans = STATE.history || [];
+  // Use supabase scans if available, else local
+  const history = supaScans.length ? supaScans : localScans;
+  const latest = supaScans.length ? history[0] : (history.length ? history[history.length - 1] : null);
+  const previous = supaScans.length ? history[1] : (history.length >= 2 ? history[history.length - 2] : null);
+
+  let h = '<div style="padding-top:16px">';
+  // Welcome header
+  h += '<div style="padding:0 0 24px">' +
+    '<div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);font-weight:700;margin-bottom:6px">Bienvenida de vuelta</div>' +
+    '<h2 style="font-size:28px;margin:0">' + (p.name || 'Tu progreso') + '</h2>' +
+    '<p class="muted" style="font-size:13px;margin-top:4px">' + history.length + ' escaneo' + (history.length !== 1 ? 's' : '') + ' · ' + (p.email || '') + '</p>' +
+  '</div>';
+
+  if(latest){
+    const latestAge = supaScans.length ? latest.visible_age : latest.visibleAge;
+    const latestOverall = latest.overall;
+    const latestPercentile = latest.percentile;
+    const latestIsReal = supaScans.length ? latest.is_real : (latest.quality > 0);
+    const prevAge = previous ? (supaScans.length ? previous.visible_age : previous.visibleAge) : null;
+    const delta = prevAge ? (prevAge - latestAge).toFixed(1) : null;
+
+    // Progress hero card
+    h += '<div class="card" style="background:linear-gradient(135deg,rgba(232,164,176,0.15),rgba(212,175,136,0.08));border-color:rgba(232,164,176,0.3);padding:24px;margin-bottom:16px">' +
+      '<div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);font-weight:700;margin-bottom:12px">Tu edad visible hoy</div>' +
+      '<div style="display:flex;align-items:flex-end;gap:16px">' +
+        '<div style="font-family:Fraunces;font-size:72px;line-height:1;color:var(--ink)">' + latestAge + '</div>' +
+        '<div style="padding-bottom:12px">' +
+          '<div style="font-size:14px;color:rgba(245,237,232,0.6)">años</div>' +
+          (delta ? ('<div style="font-size:16px;font-weight:700;color:' + (delta > 0 ? 'var(--green)' : 'var(--amber)') + '">' +
+            (delta > 0 ? '▼ ' + delta + ' años ganados' : '▲ ' + Math.abs(delta) + ' años a trabajar') +
+          '</div>') : '<div style="font-size:13px;color:rgba(245,237,232,0.5)">primer escaneo</div>') +
+        '</div>' +
+      '</div>' +
+      '<div class="grid2" style="margin-top:16px;text-align:center">' +
+        '<div><div style="font-family:Fraunces;font-size:26px;color:var(--rose)">' + latestOverall + '/100</div><div class="sub">score facial</div></div>' +
+        '<div><div style="font-family:Fraunces;font-size:26px;color:var(--gold)">P' + latestPercentile + '</div><div class="sub">percentil</div></div>' +
+      '</div>' +
+    '</div>';
+
+    // History timeline chart (if more than 1 scan)
+    if(history.length > 1){
+      var reversed = history.slice().reverse();
+      var vals = reversed.map(function(sc){ return supaScans.length ? sc.visible_age : sc.visibleAge; });
+      var W = 320, H = 100;
+      var mn = Math.min.apply(null, vals) - 2, mx = Math.max.apply(null, vals) + 2, rng = (mx - mn) || 1;
+      var Xf = function(i){ return 20 + i * (W - 40) / (vals.length - 1); };
+      var Yf = function(v){ return H - 20 - ((v - mn) / rng) * (H - 40); };
+      var pts = vals.map(function(v, i){ return [Xf(i), Yf(v)]; });
+      var line = pts.map(function(pp, i){ return (i ? 'L' : 'M') + pp[0].toFixed(0) + ' ' + pp[1].toFixed(0); }).join(' ');
+
+      h += '<div class="card" style="padding:20px">' +
+        '<div style="font-size:13px;font-weight:700;margin-bottom:12px;color:rgba(245,237,232,0.7)">Tu evolución de edad visible</div>' +
+        '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;overflow:visible">' +
+          '<path d="' + line + '" fill="none" stroke="var(--rose)" stroke-width="2.5" stroke-linecap="round"/>' +
+          pts.map(function(pp, i){
+            return '<circle cx="' + pp[0] + '" cy="' + pp[1] + '" r="5" fill="var(--rose)"/>' +
+              '<text x="' + pp[0] + '" y="' + (pp[1] - 10) + '" font-size="11" fill="var(--ink)" text-anchor="middle" font-weight="700">' + vals[i] + '</text>';
+          }).join('') +
+        '</svg>' +
+        '<div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(245,237,232,0.4);margin-top:4px">' +
+          '<span>Primer escaneo</span><span>Hoy</span>' +
+        '</div>' +
+      '</div>';
+    }
+
+    // Scan history list
+    h += '<h3 style="margin:20px 0 10px">Historial de escaneos</h3>';
+    history.forEach(function(scan, i){
+      var dateStr = new Date(scan.created_at || scan.date).toLocaleDateString('es', {day:'numeric', month:'short', year:'numeric'});
+      var scanAge = supaScans.length ? scan.visible_age : scan.visibleAge;
+      var scanOverall = scan.overall;
+      var scanReal = supaScans.length ? scan.is_real : (scan.quality > 0);
+      h += '<div class="card" style="padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:16px">' +
+        '<div style="font-family:Fraunces;font-size:32px;color:' + (i === 0 ? 'var(--rose)' : 'rgba(245,237,232,0.5)') + '">' + scanAge + '</div>' +
+        '<div style="flex:1">' +
+          '<div style="font-size:14px;font-weight:600">' + dateStr + '</div>' +
+          '<div style="font-size:12px;color:rgba(245,237,232,0.5)">Score: ' + scanOverall + '/100 · ' + (scanReal ? 'Escaneo real' : 'Demo') + '</div>' +
+        '</div>' +
+        (i === 0 ? '<span style="font-size:11px;background:var(--rose-l);color:var(--rose);padding:4px 10px;border-radius:99px;font-weight:700">Último</span>' : '') +
+      '</div>';
+    });
   } else {
-    h+=`<div class="note">Re-escanéate en ~90 días para ver tu primera curva de progreso real vs proyectado.</div>`;
+    h += '<div class="card" style="padding:32px;text-align:center">' +
+      '<div style="font-size:48px;margin-bottom:16px">🔍</div>' +
+      '<h3>No hay escaneos aún</h3>' +
+      '<p class="muted">Hacé tu primer análisis facial para empezar a trackear tu progreso.</p>' +
+    '</div>';
   }
+
   // engagement summary
-  const eng=STATE.engagement||{}; const counts={hago:0,probar:0,hecho:0};
-  Object.values(eng).forEach(v=>{if(counts[v]!==undefined)counts[v]++;});
-  h+=`<div class="card"><b>Tu plan</b><div class="grid2" style="margin-top:8px;text-align:center">
-    <div><div style="font-family:Fraunces;font-size:22px;color:var(--green)">${counts.hago+counts.hecho}</div><div class="sub">en marcha / hechos</div></div>
-    <div><div style="font-family:Fraunces;font-size:22px;color:var(--rose-d)">${counts.probar}</div><div class="sub">por probar</div></div></div>
-    <button class="btn ghost sm" style="margin-top:12px" onclick="go('plan')">Ver mi plan completo</button>
-    <button class="btn ghost sm" style="margin-top:8px" onclick="go('report')">Ver mi último análisis</button></div>`;
-  h+=shareCard();
-  h+=consultCard();
-  $('dash-body').innerHTML=h;
+  const eng = STATE.engagement || {}; const counts = {hago:0, probar:0, hecho:0};
+  Object.values(eng).forEach(function(v){ if(counts[v] !== undefined) counts[v]++; });
+  if(counts.hago + counts.hecho + counts.probar > 0){
+    h += '<div class="card"><b>Tu plan</b><div class="grid2" style="margin-top:8px;text-align:center">' +
+      '<div><div style="font-family:Fraunces;font-size:22px;color:var(--green)">' + (counts.hago + counts.hecho) + '</div><div class="sub">en marcha / hechos</div></div>' +
+      '<div><div style="font-family:Fraunces;font-size:22px;color:var(--rose-d)">' + counts.probar + '</div><div class="sub">por probar</div></div></div>';
+    if(STATE.scan){
+      h += '<button class="btn ghost sm" style="margin-top:12px" onclick="go(\'plan\')">Ver mi plan completo</button>' +
+        '<button class="btn ghost sm" style="margin-top:8px" onclick="go(\'report\')">Ver mi último análisis</button>';
+    }
+    h += '</div>';
+  }
+
+  h += '</div>';
+  h += shareCard();
+  h += consultCard();
+  $('dash-body').innerHTML = h;
 }
 function sparkline(vals){
   if(vals.length<2)return'';

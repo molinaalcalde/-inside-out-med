@@ -117,7 +117,11 @@ label.fld{display:block;font-size:13px;font-weight:600;margin:16px 0 7px;color:v
 /* HERO — full-bleed cinematic */
 .hero{background:linear-gradient(160deg,#0e0c12 0%,#1a0e18 40%,#2d1526 70%,#3d1c2a 100%);
   color:#fff;border-radius:0 0 36px 36px;padding:60px 26px 48px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 80% -10%,rgba(212,175,136,0.22),transparent 70%),radial-gradient(ellipse 50% 50% at 20% 110%,rgba(232,164,176,0.15),transparent 65%);pointer-events:none}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 80% -10%,rgba(212,175,136,0.22),transparent 70%),radial-gradient(ellipse 50% 50% at 20% 110%,rgba(232,164,176,0.15),transparent 65%);pointer-events:none;z-index:0}
+.hero::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.04;mix-blend-mode:overlay}
+.hero>*{position:relative;z-index:1}
 .hero h1{color:#fff;font-size:38px;line-height:1.05;letter-spacing:-.03em;margin-top:18px}
 .glow{position:absolute;width:340px;height:340px;border-radius:50%;
   background:radial-gradient(circle,rgba(212,175,136,0.4),transparent 70%);
@@ -127,22 +131,29 @@ label.fld{display:block;font-size:13px;font-weight:600;margin:16px 0 7px;color:v
   background:rgba(245,237,232,0.12);color:rgba(245,237,232,0.92);
   padding:8px 14px;border-radius:99px;border:1px solid rgba(245,237,232,0.18);
   backdrop-filter:blur(8px)}
+/* TRUST LINE */
+.hero-trust{font-size:12px;letter-spacing:.1em;color:rgba(245,237,232,0.45);
+  margin-top:22px;font-weight:400}
 
 /* FEATURE BLOCKS */
 .feat{display:flex;gap:14px;align-items:flex-start;margin:14px 0}
-.feat .ic{flex:0 0 42px;height:42px;border-radius:14px;
-  background:var(--rose-l);border:1px solid rgba(232,164,176,0.25);
-  display:flex;align-items:center;justify-content:center;font-size:20px}
+.feat .ic{flex:0 0 38px;height:38px;border-radius:10px;
+  background:rgba(212,175,136,0.07);border:1px solid rgba(212,175,136,0.22);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);font-size:0}
+.feat .ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
+  stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 
 /* STEPS */
-.steps{margin:8px 0}
-.step{display:flex;gap:14px;align-items:flex-start;margin:16px 0}
-.step .n{flex:0 0 32px;height:32px;border-radius:50%;
-  background:linear-gradient(135deg,var(--gold),rgba(212,175,136,0.7));
-  color:var(--bg);display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(212,175,136,0.4)}
-.step b{font-size:14.5px;display:block;color:var(--ink)}
-.step .d{font-size:13px;color:var(--ink2);line-height:1.5}
+.steps{margin:8px 0;border-top:1px solid rgba(245,237,232,0.08)}
+.step{display:flex;gap:0;flex-direction:column;align-items:flex-start;padding:22px 0;
+  border-bottom:1px solid rgba(245,237,232,0.08);margin:0}
+.step .n{font-family:'Fraunces';font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);font-weight:400;font-style:italic;margin-bottom:10px;
+  background:none;border-radius:0;width:auto;height:auto;box-shadow:none;
+  display:block;flex:none}
+.step b{font-size:15px;display:block;color:var(--ink);font-weight:600;margin-bottom:5px}
+.step .d{font-size:13.5px;color:var(--ink2);line-height:1.65}
 
 /* QUOTE */
 .quote{font-family:'Fraunces';font-size:18px;line-height:1.4;color:var(--ink);font-style:italic}
@@ -409,6 +420,10 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
     margin: 0 auto;
   }
 
+  /* Hide duplicated mobile content on desktop */
+  #s-welcome .pad { display: none; }
+  #s-welcome .bottombar { display: none; }
+
   /* Onboarding: centered card */
   #s-onboarding .ob-fullscreen {
     max-width: 600px;
@@ -512,6 +527,19 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
   /* Hero badges horizontal */
   .hero-badges { gap: 12px; }
   .hero-badges span { font-size: 13px; padding: 9px 16px; }
+
+  /* Premium white CTA on dark welcome */
+  #s-welcome .btn.rose {
+    background: rgba(245,237,232,0.96);
+    color: #0e0c12;
+    box-shadow: 0 4px 28px rgba(245,237,232,0.15);
+    border-radius: 10px;
+    letter-spacing: .04em;
+    font-weight: 700;
+  }
+  #s-welcome .btn.rose:hover {
+    box-shadow: 0 8px 40px rgba(245,237,232,0.25);
+  }
 
   /* Steps: horizontal on desktop */
   #s-welcome .steps {
@@ -764,12 +792,21 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
   #s-welcome .pad > h2 { display: none; }
 
   /* Steps: 3-column on desktop */
-  .steps {
+  #s-welcome .steps {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 0;
+    border-top: 1px solid rgba(245,237,232,0.08);
   }
-  .step { flex-direction: column; align-items: flex-start; }
+  #s-welcome .step {
+    flex-direction: column;
+    align-items: flex-start;
+    border-bottom: none;
+    border-right: 1px solid rgba(245,237,232,0.08);
+    padding: 28px 28px 0 0;
+  }
+  #s-welcome .step:last-child { border-right: none; padding-right: 0; }
+  #s-welcome .step:not(:first-child) { padding-left: 28px; }
 
   /* Features: 2-column */
   #s-welcome .pad .feat { display: flex; flex-direction: row; gap: 16px; }
@@ -939,22 +976,18 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
       <div class="glow"></div>
       <div class="hero-left">
         <div class="brand" style="color:rgba(245,237,232,0.85);font-size:16px;letter-spacing:.05em">Inside<b>Out</b>Med</div>
-        <span class="pill" style="margin-top:18px;display:inline-block">✦ Sin registro · Resultados en 90 segundos</span>
+        <span class="pill" style="margin-top:18px;display:inline-block">Sin registro · Resultados en 90 segundos</span>
         <h1>Tu cara sabe cosas<br>que el espejo no te dice.</h1>
         <p style="opacity:.85;font-size:15.5px;line-height:1.6;margin-top:14px;color:rgba(245,237,232,0.9)">
           En 90 segundos vas a saber exactamente qué edad aparenta tu cara — y el plan exacto para cambiarla.</p>
-        <div class="hero-badges">
-          <span>✦ 100% gratis</span>
-          <span>🔒 100% privado</span>
-          <span>⏱️ 90 segundos</span>
-        </div>
+        <div class="hero-trust">100% gratis · 100% privado · 90 segundos</div>
       </div>
       <div class="hero-right">
         <div class="eyebrow" style="text-align:left;width:100%">Cómo funciona</div>
         <div class="steps">
-          <div class="step"><div class="n">1</div><div><b>Escanea tu rostro</b><div class="d">La IA analiza 478 puntos de tu rostro. Todo ocurre en tu teléfono — tu imagen nunca toca ningún servidor.</div></div></div>
-          <div class="step"><div class="n">2</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible real. Un diagnóstico zona por zona, sin filtros, con lo que realmente está pasando.</div></div></div>
-          <div class="step"><div class="n">3</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días medís el progreso real.</div></div></div>
+          <div class="step"><div class="n">01</div><div><b>Escanea tu rostro</b><div class="d">La IA analiza 478 puntos de tu rostro. Todo ocurre en tu teléfono — tu imagen nunca toca ningún servidor.</div></div></div>
+          <div class="step"><div class="n">02</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible real. Un diagnóstico zona por zona, sin filtros, con lo que realmente está pasando.</div></div></div>
+          <div class="step"><div class="n">03</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días medís el progreso real.</div></div></div>
         </div>
         <button class="btn rose" style="margin-top:28px;width:100%" onclick="go('onboarding')">Descubrir mi edad visible →</button>
         <p class="center sub" style="margin-top:8px;color:rgba(245,237,232,0.5)">Tu foto nunca sale de tu teléfono.</p>
@@ -963,20 +996,20 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
     <div class="pad" style="margin-top:28px">
       <div class="eyebrow">Cómo funciona</div>
       <div class="steps">
-        <div class="step"><div class="n">1</div><div><b>Escanea tu rostro</b><div class="d">La IA analiza 478 puntos de tu rostro. Todo ocurre en tu teléfono — tu imagen nunca toca ningún servidor.</div></div></div>
-        <div class="step"><div class="n">2</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible real. Un diagnóstico zona por zona, sin filtros, con lo que realmente está pasando.</div></div></div>
-        <div class="step"><div class="n">3</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días medís el progreso real.</div></div></div>
+        <div class="step"><div class="n">01</div><div><b>Escanea tu rostro</b><div class="d">La IA analiza 478 puntos de tu rostro. Todo ocurre en tu teléfono — tu imagen nunca toca ningún servidor.</div></div></div>
+        <div class="step"><div class="n">02</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible real. Un diagnóstico zona por zona, sin filtros, con lo que realmente está pasando.</div></div></div>
+        <div class="step"><div class="n">03</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días medís el progreso real.</div></div></div>
       </div>
       <div class="eyebrow" style="margin-top:28px">Lo que obtienes</div>
-      <div class="feat"><div class="ic">🔬</div><div><b style="color:var(--ink)">478 puntos faciales</b><br><span class="muted" style="font-size:13.5px">Geometría facial + análisis de piel. No un filtro — ciencia aplicada a tu cara.</span></div></div>
-      <div class="feat"><div class="ic">📈</div><div><b style="color:var(--ink)">Tu edad visible y tu percentil</b><br><span class="muted" style="font-size:13.5px">Cómo estás vs otras mujeres de tu edad. Honesto, sin suavizar.</span></div></div>
-      <div class="feat"><div class="ic">🗓️</div><div><b style="color:var(--ink)">Plan personalizado de 12 meses</b><br><span class="muted" style="font-size:13.5px">Skincare · hábitos · suplementos · tratamientos · capilar. Todo ordenado por impacto.</span></div></div>
-      <div class="feat"><div class="ic">✨</div><div><b style="color:var(--ink)">Tu progreso en números</b><br><span class="muted" style="font-size:13.5px">Cada re-escaneo muestra cuántos años ganaste. Accountability real.</span></div></div>
+      <div class="feat"><div class="ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="6" r="3.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><line x1="2" y1="2" x2="3.5" y2="3.5"/><line x1="14" y1="2" x2="12.5" y2="3.5"/></svg></div><div><b style="color:var(--ink)">478 puntos faciales</b><br><span class="muted" style="font-size:13.5px">Geometría facial + análisis de piel. No un filtro — ciencia aplicada a tu cara.</span></div></div>
+      <div class="feat"><div class="ic"><svg viewBox="0 0 16 16"><polyline points="1,12 5,7 9,9 15,2"/><polyline points="11,2 15,2 15,6"/></svg></div><div><b style="color:var(--ink)">Tu edad visible y tu percentil</b><br><span class="muted" style="font-size:13.5px">Cómo estás vs otras mujeres de tu edad. Honesto, sin suavizar.</span></div></div>
+      <div class="feat"><div class="ic"><svg viewBox="0 0 16 16"><rect x="2" y="3.5" width="12" height="11" rx="1.5"/><path d="M2 7h12M5.5 1.5v4M10.5 1.5v4"/></svg></div><div><b style="color:var(--ink)">Plan personalizado de 12 meses</b><br><span class="muted" style="font-size:13.5px">Skincare · hábitos · suplementos · tratamientos · capilar. Todo ordenado por impacto.</span></div></div>
+      <div class="feat"><div class="ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v4l2.5 2"/></svg></div><div><b style="color:var(--ink)">Tu progreso en números</b><br><span class="muted" style="font-size:13.5px">Cada re-escaneo muestra cuántos años ganaste. Accountability real.</span></div></div>
       <div class="card center" style="margin-top:20px;border-color:rgba(212,175,136,0.2)">
         <div class="quote" style="color:var(--gold)">"Me dijo lo que 5 años de cremas caras no lograron cambiar."</div>
         <p class="sub" style="margin-top:10px">Lo que tu piel necesita, en orden, con evidencia.</p>
       </div>
-      <div class="note" style="background:rgba(232,164,176,0.08);border-color:rgba(232,164,176,0.2)">🔒 <b style="color:var(--rose)">Privacidad real:</b> el análisis ocurre en tu dispositivo con IA local. Tu rostro nunca se envía a ningún servidor.</div>
+      <div class="note" style="background:rgba(232,164,176,0.08);border-color:rgba(232,164,176,0.2)"><b style="color:var(--rose)">Privacidad real:</b> el análisis ocurre en tu dispositivo con IA local. Tu rostro nunca se envía a ningún servidor.</div>
     </div>
     <div class="bottombar">
       <button class="btn rose" onclick="go('onboarding')" style="font-size:17px;padding:19px">Descubrir mi edad visible →</button>

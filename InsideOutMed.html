@@ -1076,6 +1076,437 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
 
 /* Global: no emoji dependency in rec-chips */
 .rec-chips span { font-size: 11.5px; letter-spacing: .02em; }
+
+/* ===== LANDING PAGE FULL REDESIGN ===== */
+
+/* Entrance animations */
+.lp-fade {
+  animation: lpFadeUp .75s cubic-bezier(.22,.61,.36,1) both;
+}
+@keyframes lpFadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Scroll-reveal */
+.lp-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1);
+}
+.lp-reveal.lp-in { opacity: 1; transform: none; }
+
+/* NAV */
+.lp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
+}
+
+/* HERO */
+.lp-hero {
+  background: linear-gradient(160deg,#0e0c12 0%,#1a0e18 40%,#2d1526 70%,#3d1c2a 100%);
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 100px 24px 60px;
+}
+.lp-hero-glow {
+  position: absolute;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle,rgba(212,175,136,0.35),transparent 70%);
+  top: -160px; right: -100px;
+  filter: blur(14px);
+  pointer-events: none;
+}
+.lp-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 80% -5%,rgba(212,175,136,0.18),transparent 65%),
+    radial-gradient(ellipse 50% 50% at 15% 105%,rgba(232,164,176,0.12),transparent 60%);
+  pointer-events: none;
+}
+.lp-hero::after {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: .04; mix-blend-mode: overlay;
+}
+.lp-hero-inner {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+.lp-hero-left { flex: 1; }
+.lp-hero-left h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 42px;
+  line-height: 1.08;
+  letter-spacing: -.03em;
+  color: #fff;
+  margin: 16px 0 0;
+}
+.lp-hero-actions { margin-top: 28px; }
+.lp-hero-social {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+.lp-hero-stars { color: var(--gold); font-size: 13px; letter-spacing: 2px; }
+
+/* FACE CARD in hero */
+.lp-hero-right { display: flex; justify-content: center; }
+.lp-face-card {
+  background: rgba(245,237,232,0.04);
+  border: 1px solid rgba(245,237,232,0.1);
+  border-radius: 24px;
+  padding: 22px 20px;
+  width: 240px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.lp-face-card-label {
+  font-size: 10.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+.lp-face-svg { width: 100%; height: auto; }
+.lp-face-scores {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  border-top: 1px solid rgba(245,237,232,0.08);
+  padding-top: 14px;
+}
+.lp-mini-score { text-align: center; }
+.lp-mini-num {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 500;
+  display: block;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.lp-mini-score span:last-child {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .05em;
+}
+
+/* Scanline animation */
+.lp-scanline {
+  animation: lp-scan 3.5s ease-in-out infinite;
+}
+@keyframes lp-scan {
+  0%,100% { transform: translateY(0); opacity: .6; }
+  50% { transform: translateY(140px); opacity: .2; }
+}
+/* Dots pulse */
+.lp-dots circle { animation: lp-dot 4s ease-in-out infinite; }
+.lp-dots circle:nth-child(3n+1) { animation-delay: .4s; }
+.lp-dots circle:nth-child(3n+2) { animation-delay: .8s; }
+@keyframes lp-dot {
+  0%,100% { opacity: .65; }
+  50% { opacity: 1; }
+}
+
+/* CTA button override */
+.lp-cta-btn {
+  background: rgba(245,237,232,0.96) !important;
+  color: #0e0c12 !important;
+  box-shadow: 0 4px 32px rgba(245,237,232,0.1) !important;
+  border-radius: 10px !important;
+  letter-spacing: .04em !important;
+  font-weight: 700 !important;
+  border: none !important;
+  transition: box-shadow .2s, transform .12s !important;
+}
+.lp-cta-btn:hover { box-shadow: 0 8px 48px rgba(245,237,232,0.2) !important; }
+.lp-cta-btn:active { transform: scale(.985) !important; }
+
+/* STATS BAR */
+.lp-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 28px 20px;
+  background: rgba(245,237,232,0.025);
+  border-top: 1px solid rgba(245,237,232,0.07);
+  border-bottom: 1px solid rgba(245,237,232,0.07);
+  flex-wrap: wrap;
+  row-gap: 18px;
+}
+.lp-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px;
+  text-align: center;
+}
+.lp-stat-num {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.lp-stat-label {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.lp-stat-div {
+  width: 1px; height: 30px;
+  background: rgba(245,237,232,0.09);
+  flex-shrink: 0;
+}
+
+/* SECTIONS */
+.lp-section { padding: 72px 24px; }
+.lp-dark-section {
+  background: rgba(245,237,232,0.018);
+  border-top: 1px solid rgba(245,237,232,0.06);
+  border-bottom: 1px solid rgba(245,237,232,0.06);
+}
+.lp-section-inner { max-width: 960px; margin: 0 auto; }
+.lp-section-title {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  line-height: 1.22;
+  letter-spacing: -.022em;
+  margin: 8px 0 40px;
+  color: var(--ink);
+}
+
+/* HOW IT WORKS */
+.lp-steps-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.lp-step-card {
+  background: rgba(245,237,232,0.04);
+  border: 1px solid rgba(245,237,232,0.08);
+  border-radius: 20px;
+  padding: 26px 22px;
+  transition: border-color .2s, transform .2s;
+}
+.lp-step-card:hover { border-color: rgba(212,175,136,0.2); transform: translateY(-2px); }
+.lp-step-num {
+  font-family: 'Fraunces', serif;
+  font-size: 11px;
+  letter-spacing: .2em;
+  color: var(--gold);
+  font-style: italic;
+  margin-bottom: 16px;
+}
+.lp-step-icon {
+  width: 46px; height: 46px;
+  border-radius: 13px;
+  border: 1px solid rgba(245,237,232,0.1);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+  color: var(--gold);
+}
+.lp-step-icon svg { width: 24px; height: 24px; }
+.lp-step-card h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0 0 8px;
+  color: var(--ink);
+}
+.lp-step-card p { font-size: 13.5px; color: var(--ink2); line-height: 1.65; margin: 0; }
+
+/* BENEFITS */
+.lp-benefits-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lp-benefit {
+  background: rgba(245,237,232,0.04);
+  border: 1px solid rgba(245,237,232,0.08);
+  border-radius: 16px;
+  padding: 22px 18px;
+  transition: border-color .2s;
+}
+.lp-benefit:hover { border-color: rgba(212,175,136,0.15); }
+.lp-benefit-num {
+  font-family: 'Fraunces', serif;
+  font-size: 11px;
+  letter-spacing: .18em;
+  color: var(--gold);
+  font-style: italic;
+  margin-bottom: 10px;
+}
+.lp-benefit h4 { font-size: 14px; font-weight: 700; color: var(--ink); margin: 0 0 6px; }
+.lp-benefit p { font-size: 13px; color: var(--ink2); line-height: 1.6; margin: 0; }
+
+/* TESTIMONIALS */
+.lp-testimonials { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.lp-testi {
+  background: rgba(245,237,232,0.04);
+  border: 1px solid rgba(245,237,232,0.09);
+  border-radius: 20px;
+  padding: 24px 20px;
+}
+.lp-testi-stars { color: var(--gold); font-size: 13px; letter-spacing: 2px; margin-bottom: 14px; }
+.lp-testi-quote {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink);
+  margin: 0 0 20px;
+  font-style: italic;
+}
+.lp-testi-author { display: flex; align-items: center; gap: 12px; }
+.lp-testi-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 15px; color: #0e0c12; flex-shrink: 0;
+}
+.lp-testi-name { font-size: 14px; font-weight: 700; color: var(--ink); }
+.lp-testi-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+/* TECH SECTION */
+.lp-tech-section {
+  background: linear-gradient(160deg,#0e0c12 0%,#16101c 50%,#0e0c12 100%);
+  border-top: 1px solid rgba(245,237,232,0.06);
+  border-bottom: 1px solid rgba(245,237,232,0.06);
+}
+.lp-tech-grid { display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center; }
+.lp-tech-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 28px; }
+.lp-tech-fact { display: flex; flex-direction: column; gap: 4px; }
+.lp-tech-fact-num {
+  font-family: 'Fraunces', serif;
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--gold);
+  line-height: 1;
+}
+.lp-tech-fact div:last-child { font-size: 11.5px; color: var(--muted); letter-spacing: .04em; }
+.lp-tech-visual { display: flex; justify-content: center; }
+.lp-face-demo {
+  width: 220px;
+  background: rgba(245,237,232,0.03);
+  border: 1px solid rgba(245,237,232,0.1);
+  border-radius: 22px;
+  padding: 20px;
+}
+.lp-face-caption {
+  font-size: 10.5px;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* FINAL CTA */
+.lp-cta-section {
+  background: linear-gradient(160deg,#1a0e18 0%,#2d1228 50%,#1a0e18 100%);
+  border-top: 1px solid rgba(245,237,232,0.07);
+  padding: 80px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.lp-cta-section::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% -5%,rgba(212,175,136,0.18),transparent 65%);
+  pointer-events: none;
+}
+.lp-cta-inner { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; }
+.lp-cta-headline {
+  font-family: 'Fraunces', serif;
+  font-size: 30px;
+  line-height: 1.22;
+  letter-spacing: -.022em;
+  margin: 10px 0 16px;
+  color: var(--ink);
+}
+.lp-cta-sub { font-size: 15px; color: var(--ink2); margin: 0 0 28px; }
+
+/* FAQ */
+.lp-faqs { display: flex; flex-direction: column; margin-top: 8px; }
+.lp-faq { border-bottom: 1px solid rgba(245,237,232,0.08); cursor: pointer; }
+.lp-faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  user-select: none;
+  gap: 12px;
+}
+.lp-faq-arrow {
+  color: var(--muted);
+  font-size: 20px;
+  font-weight: 300;
+  transition: transform .25s, color .2s;
+  flex-shrink: 0;
+}
+.lp-faq.open .lp-faq-arrow { transform: rotate(90deg); color: var(--rose); }
+.lp-faq-a {
+  display: none;
+  font-size: 14px;
+  color: var(--ink2);
+  line-height: 1.72;
+  padding: 0 0 18px;
+}
+.lp-faq.open .lp-faq-a { display: block; }
+
+/* NAV mobile CTA button style */
+.lp-nav-cta { width: auto !important; }
+
+/* ===== DESKTOP LANDING PAGE ===== */
+@media (min-width: 768px) {
+  .lp-nav { padding: 22px 48px; }
+  .lp-hero { padding: 80px 48px 80px; }
+  .lp-hero-inner { flex-direction: row; align-items: center; gap: 60px; }
+  .lp-hero-left h1 { font-size: 58px; }
+  .lp-hero-right { flex: 0 0 auto; }
+  .lp-face-card { width: 280px; }
+  .lp-steps-grid { grid-template-columns: repeat(3,1fr); gap: 16px; }
+  .lp-benefits-grid { grid-template-columns: repeat(3,1fr); gap: 14px; }
+  .lp-testimonials { grid-template-columns: repeat(3,1fr); gap: 14px; }
+  .lp-tech-grid { grid-template-columns: 1fr 1fr; gap: 60px; }
+  .lp-section { padding: 90px 48px; }
+  .lp-section-title { font-size: 36px; }
+  .lp-cta-headline { font-size: 38px; }
+  .lp-stat-num { font-size: 32px; }
+  .lp-face-demo { width: 280px; }
+  .lp-stats-bar { gap: 0; }
+  #s-welcome .bottombar { display: none; }
+}
+
+@media (min-width: 1200px) {
+  .lp-hero-left h1 { font-size: 68px; }
+  .lp-section-inner { max-width: 1100px; }
+  .lp-section-title { font-size: 42px; }
+  .lp-face-card { width: 300px; }
+  .lp-section { padding: 100px 60px; }
+}
 </style>
 </head>
 <body>
@@ -1083,51 +1514,300 @@ button:focus-visible,.chip:focus-visible,input:focus-visible,a:focus-visible{
 
   <!-- ============ WELCOME ============ -->
   <section class="screen active" id="s-welcome">
-    <div class="hero">
-      <div class="glow"></div>
-      <div class="hero-left">
-        <div class="brand" style="color:rgba(245,237,232,0.85);font-size:16px;letter-spacing:.05em">Inside<b>Out</b>Med</div>
-        <span class="pill" style="margin-top:18px;display:inline-block">Sin registro · Resultados en 90 segundos</span>
-        <h1>Tu cara sabe cosas<br>que el espejo no te dice.</h1>
-        <p style="opacity:.85;font-size:15.5px;line-height:1.6;margin-top:14px;color:rgba(245,237,232,0.9)">
-          En 90 segundos vas a saber exactamente qué edad aparenta tu cara — y el plan exacto para cambiarla.</p>
-        <div class="hero-trust">100% gratis · 100% privado · 90 segundos</div>
-      </div>
-      <div class="hero-right">
-        <div class="eyebrow" style="text-align:left;width:100%">Cómo funciona</div>
-        <div class="steps">
-          <div class="step"><div class="n">01</div><div><b>Escanea tu rostro</b><div class="d">La IA analiza 478 puntos de tu rostro. Todo ocurre en tu teléfono — tu imagen nunca toca ningún servidor.</div></div></div>
-          <div class="step"><div class="n">02</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible real. Un diagnóstico zona por zona, sin filtros, con lo que realmente está pasando.</div></div></div>
-          <div class="step"><div class="n">03</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días mides el progreso real.</div></div></div>
+
+    <!-- NAV -->
+    <div class="lp-nav">
+      <div class="brand">Inside<b>Out</b>Med</div>
+      <button class="btn ghost sm lp-nav-cta" onclick="go('onboarding')" style="width:auto;padding:10px 20px">Comenzar gratis →</button>
+    </div>
+
+    <!-- HERO -->
+    <div class="lp-hero">
+      <div class="lp-hero-glow"></div>
+      <div class="lp-hero-inner">
+        <div class="lp-hero-left">
+          <span class="pill lp-fade" style="animation-delay:.05s">Sin registro · Resultados en 90 segundos</span>
+          <h1 class="lp-fade" style="animation-delay:.12s">Tu cara sabe cosas<br>que el espejo<br>no te dice.</h1>
+          <p class="lp-fade" style="animation-delay:.22s;font-size:16px;line-height:1.65;color:rgba(245,237,232,0.8);margin-top:16px;max-width:420px">
+            En 90 segundos sabrás exactamente qué edad aparenta tu cara — y el plan dermatológico exacto para cambiarla.</p>
+          <div class="lp-hero-actions lp-fade" style="animation-delay:.32s">
+            <button class="btn lp-cta-btn" onclick="go('onboarding')" style="width:auto;padding:16px 32px;font-size:16px">Descubrir mi edad visible →</button>
+            <p style="font-size:12px;color:rgba(245,237,232,0.4);margin-top:10px">100% gratis · 100% privado · Tu foto nunca sale de tu teléfono</p>
+          </div>
+          <div class="lp-hero-social lp-fade" style="animation-delay:.42s">
+            <div class="lp-hero-stars">★★★★★</div>
+            <div style="font-size:13px;color:rgba(245,237,232,0.6)"><b style="color:rgba(245,237,232,0.9)">4.9/5</b> · Más de 43,000 análisis realizados</div>
+          </div>
         </div>
-        <button class="btn rose" style="margin-top:28px;width:100%" onclick="go('onboarding')">Descubrir mi edad visible →</button>
-        <p class="center sub" style="margin-top:8px;color:rgba(245,237,232,0.5)">Tu foto nunca sale de tu teléfono.</p>
+        <div class="lp-hero-right lp-fade" style="animation-delay:.18s">
+          <div class="lp-face-card">
+            <div class="lp-face-card-label">Analizando · 478 puntos</div>
+            <svg class="lp-face-svg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="100" cy="118" rx="72" ry="92" fill="none" stroke="rgba(212,175,136,0.18)" stroke-width="1.5"/>
+              <line x1="28" y1="70" x2="172" y2="70" stroke="rgba(212,175,136,0.5)" stroke-width="0.8" class="lp-scanline"/>
+              <g fill="rgba(212,175,136,0.65)" class="lp-dots">
+                <circle cx="100" cy="38" r="1.8"/><circle cx="78" cy="46" r="1.4"/><circle cx="122" cy="46" r="1.4"/>
+                <circle cx="62" cy="58" r="1.3"/><circle cx="138" cy="58" r="1.3"/><circle cx="52" cy="72" r="1.2"/><circle cx="148" cy="72" r="1.2"/>
+                <circle cx="70" cy="98" r="1.8"/><circle cx="80" cy="94" r="1.3"/><circle cx="90" cy="96" r="1.3"/><circle cx="80" cy="104" r="1.3"/>
+                <circle cx="130" cy="98" r="1.8"/><circle cx="120" cy="94" r="1.3"/><circle cx="110" cy="96" r="1.3"/><circle cx="120" cy="104" r="1.3"/>
+                <circle cx="66" cy="86" r="1.3"/><circle cx="76" cy="82" r="1.3"/><circle cx="86" cy="82" r="1.3"/>
+                <circle cx="134" cy="86" r="1.3"/><circle cx="124" cy="82" r="1.3"/><circle cx="114" cy="82" r="1.3"/>
+                <circle cx="100" cy="128" r="1.6"/><circle cx="88" cy="134" r="1.3"/><circle cx="112" cy="134" r="1.3"/>
+                <circle cx="100" cy="140" r="1.3"/><circle cx="86" cy="138" r="1.1"/><circle cx="114" cy="138" r="1.1"/>
+                <circle cx="100" cy="154" r="1.6"/><circle cx="88" cy="150" r="1.3"/><circle cx="112" cy="150" r="1.3"/>
+                <circle cx="84" cy="158" r="1.3"/><circle cx="116" cy="158" r="1.3"/><circle cx="100" cy="164" r="1.3"/>
+                <circle cx="38" cy="136" r="1.3"/><circle cx="42" cy="156" r="1.2"/><circle cx="52" cy="176" r="1.2"/>
+                <circle cx="66" cy="196" r="1.2"/><circle cx="82" cy="208" r="1.2"/><circle cx="100" cy="212" r="1.6"/>
+                <circle cx="118" cy="208" r="1.2"/><circle cx="134" cy="196" r="1.2"/><circle cx="148" cy="176" r="1.2"/>
+                <circle cx="158" cy="156" r="1.2"/><circle cx="162" cy="136" r="1.3"/>
+                <circle cx="52" cy="124" r="1.2"/><circle cx="46" cy="110" r="1.1"/><circle cx="58" cy="116" r="1.1"/>
+                <circle cx="148" cy="124" r="1.2"/><circle cx="154" cy="110" r="1.1"/><circle cx="142" cy="116" r="1.1"/>
+              </g>
+              <ellipse cx="100" cy="52" rx="32" ry="16" fill="rgba(126,203,161,0.07)" stroke="rgba(126,203,161,0.25)" stroke-width="0.8"/>
+              <ellipse cx="80" cy="98" rx="16" ry="10" fill="rgba(212,175,136,0.06)" stroke="rgba(212,175,136,0.2)" stroke-width="0.8"/>
+              <ellipse cx="120" cy="98" rx="16" ry="10" fill="rgba(212,175,136,0.06)" stroke="rgba(212,175,136,0.2)" stroke-width="0.8"/>
+              <text x="100" y="33" text-anchor="middle" fill="rgba(126,203,161,0.7)" font-size="7" font-family="Inter,sans-serif" font-weight="500">Frente · 94/100</text>
+              <text x="56" y="106" text-anchor="middle" fill="rgba(212,175,136,0.65)" font-size="6" font-family="Inter,sans-serif">Periocular</text>
+              <text x="144" y="106" text-anchor="middle" fill="rgba(212,175,136,0.65)" font-size="6" font-family="Inter,sans-serif">Periocular</text>
+            </svg>
+            <div class="lp-face-scores">
+              <div class="lp-mini-score"><span class="lp-mini-num" style="color:var(--green)">82</span><span>Luminosidad</span></div>
+              <div class="lp-mini-score"><span class="lp-mini-num" style="color:var(--amber)">61</span><span>Hidratación</span></div>
+              <div class="lp-mini-score"><span class="lp-mini-num" style="color:var(--green)">77</span><span>Uniformidad</span></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="pad" style="margin-top:28px">
-      <div class="eyebrow">Cómo funciona</div>
-      <div class="steps">
-        <div class="step"><div class="n">01</div><div><b>Escanea tu rostro</b><div class="d">La IA analiza 478 puntos de tu rostro. Todo ocurre en tu teléfono — tu imagen nunca toca ningún servidor.</div></div></div>
-        <div class="step"><div class="n">02</div><div><b>Recibe tu diagnóstico</b><div class="d">Tu edad visible real. Un diagnóstico zona por zona, sin filtros, con lo que realmente está pasando.</div></div></div>
-        <div class="step"><div class="n">03</div><div><b>Sigue tu plan y transfórmate</b><div class="d">El plan exacto para tu cara: qué aplicar, cuándo, en qué orden. Y cada 90 días mides el progreso real.</div></div></div>
-      </div>
-      <div class="eyebrow" style="margin-top:28px">Lo que obtienes</div>
-      <div class="feat"><div class="ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="6" r="3.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><line x1="2" y1="2" x2="3.5" y2="3.5"/><line x1="14" y1="2" x2="12.5" y2="3.5"/></svg></div><div><b style="color:var(--ink)">478 puntos faciales</b><br><span class="muted" style="font-size:13.5px">Geometría facial + análisis de piel. No un filtro — ciencia aplicada a tu cara.</span></div></div>
-      <div class="feat"><div class="ic"><svg viewBox="0 0 16 16"><polyline points="1,12 5,7 9,9 15,2"/><polyline points="11,2 15,2 15,6"/></svg></div><div><b style="color:var(--ink)">Tu edad visible y tu percentil</b><br><span class="muted" style="font-size:13.5px">Cómo estás vs otras mujeres de tu edad. Honesto, sin suavizar.</span></div></div>
-      <div class="feat"><div class="ic"><svg viewBox="0 0 16 16"><rect x="2" y="3.5" width="12" height="11" rx="1.5"/><path d="M2 7h12M5.5 1.5v4M10.5 1.5v4"/></svg></div><div><b style="color:var(--ink)">Plan personalizado de 12 meses</b><br><span class="muted" style="font-size:13.5px">Skincare · hábitos · suplementos · tratamientos · capilar. Todo ordenado por impacto.</span></div></div>
-      <div class="feat"><div class="ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v4l2.5 2"/></svg></div><div><b style="color:var(--ink)">Tu progreso en números</b><br><span class="muted" style="font-size:13.5px">Cada re-escaneo muestra cuántos años ganaste. Accountability real.</span></div></div>
-      <div class="card center" style="margin-top:20px;border-color:rgba(212,175,136,0.2)">
-        <div class="quote" style="color:var(--gold)">"Me dijo lo que 5 años de cremas caras no lograron cambiar."</div>
-        <p class="sub" style="margin-top:10px">Lo que tu piel necesita, en orden, con evidencia.</p>
-      </div>
-      <div class="note" style="background:rgba(232,164,176,0.08);border-color:rgba(232,164,176,0.2)"><b style="color:var(--rose)">Privacidad real:</b> el análisis ocurre en tu dispositivo con IA local. Tu rostro nunca se envía a ningún servidor.</div>
+
+    <!-- STATS BAR -->
+    <div class="lp-stats-bar lp-reveal">
+      <div class="lp-stat"><span class="lp-stat-num" data-target="43000">0</span><span class="lp-stat-label">análisis realizados</span></div>
+      <div class="lp-stat-div"></div>
+      <div class="lp-stat"><span class="lp-stat-num">4.9★</span><span class="lp-stat-label">puntuación media</span></div>
+      <div class="lp-stat-div"></div>
+      <div class="lp-stat"><span class="lp-stat-num">478</span><span class="lp-stat-label">puntos analizados</span></div>
+      <div class="lp-stat-div"></div>
+      <div class="lp-stat"><span class="lp-stat-num">0</span><span class="lp-stat-label">datos enviados a servidores</span></div>
     </div>
-    <div class="bottombar">
-      <button class="btn rose" onclick="go('onboarding')" style="font-size:17px;padding:19px">Descubrir mi edad visible →</button>
-      <p class="center sub" style="margin-top:8px">Tu foto nunca sale de tu teléfono.</p>
-      <button class="btn ghost sm" style="margin-top:10px" onclick="go('returning')">Ya lo hice — ver mi evolución</button>
-      <p class="center" style="margin-top:8px"><a onclick="go('admin')" style="font-size:10px;color:var(--muted);cursor:pointer;opacity:.5">·</a></p>
+
+    <!-- HOW IT WORKS -->
+    <div class="lp-section lp-reveal">
+      <div class="lp-section-inner">
+        <div class="eyebrow center">El proceso</div>
+        <h2 class="lp-section-title center">Tres pasos. 90 segundos.<br>Un diagnóstico que cambia todo.</h2>
+        <div class="lp-steps-grid">
+          <div class="lp-step-card lp-reveal" style="transition-delay:.04s">
+            <div class="lp-step-num">01</div>
+            <div class="lp-step-icon">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="24" cy="15" r="8"/>
+                <path d="M8 44c0-8.8 7.2-16 16-16s16 7.2 16 16"/>
+                <path d="M4 6l5 5M39 6l5 5" stroke-width="1.2"/>
+                <path d="M4 44l5-5M39 44l5-5" stroke-width="1.2"/>
+              </svg>
+            </div>
+            <h3>Escanea</h3>
+            <p>Activa la cámara. La IA mapea 478 puntos de tu rostro en tiempo real. Todo ocurre en tu dispositivo — tu imagen nunca sale.</p>
+          </div>
+          <div class="lp-step-card lp-reveal" style="transition-delay:.1s">
+            <div class="lp-step-num">02</div>
+            <div class="lp-step-icon">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 34l10-13 8 8 10-15 8 10"/>
+                <path d="M36 16h8v8"/>
+              </svg>
+            </div>
+            <h3>Descubre</h3>
+            <p>Tu edad visible real, zona por zona. Tu percentil exacto vs mujeres de tu edad. Sin filtros. Con lo que realmente está pasando.</p>
+          </div>
+          <div class="lp-step-card lp-reveal" style="transition-delay:.16s">
+            <div class="lp-step-num">03</div>
+            <div class="lp-step-icon">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="8" y="10" width="32" height="32" rx="3"/>
+                <path d="M8 20h32M16 6v8M32 6v8M16 29h8M16 35h4"/>
+                <circle cx="33" cy="34" r="6" stroke="var(--green)"/>
+                <path d="M30 34l2 2 4-4" stroke="var(--green)"/>
+              </svg>
+            </div>
+            <h3>Transforma</h3>
+            <p>Un plan de 12 meses: qué aplicar, cuándo y en qué orden. Cada 90 días mides cuánto rejuveneciste en números reales.</p>
+          </div>
+        </div>
+        <div class="center" style="margin-top:40px">
+          <button class="btn lp-cta-btn" style="max-width:380px;margin:0 auto;display:block;padding:17px 24px;font-size:16px" onclick="go('onboarding')">Comenzar mi análisis gratis →</button>
+          <p style="font-size:12px;color:var(--muted);margin-top:10px">Sin tarjeta de crédito. Sin compromiso. 100% gratis.</p>
+        </div>
+      </div>
     </div>
+
+    <!-- WHAT YOU DISCOVER -->
+    <div class="lp-section lp-dark-section lp-reveal">
+      <div class="lp-section-inner">
+        <div class="eyebrow center">Lo que obtienes</div>
+        <h2 class="lp-section-title center">Un diagnóstico que ningún espejo<br>puede darte.</h2>
+        <div class="lp-benefits-grid">
+          <div class="lp-benefit lp-reveal" style="transition-delay:.03s">
+            <div class="lp-benefit-num">01</div>
+            <h4>Edad visible real</h4>
+            <p>No la que crees tener. La que realmente muestra tu piel, calculada en 478 puntos geométricos y biomarcadores.</p>
+          </div>
+          <div class="lp-benefit lp-reveal" style="transition-delay:.08s">
+            <div class="lp-benefit-num">02</div>
+            <h4>Tu percentil exacto</h4>
+            <p>Cómo aparentas comparado con otras mujeres de tu edad. Honesto, sin suavizar — información que realmente importa.</p>
+          </div>
+          <div class="lp-benefit lp-reveal" style="transition-delay:.13s">
+            <div class="lp-benefit-num">03</div>
+            <h4>9 zonas analizadas</h4>
+            <p>Frente, ojos, nariz, labios, mejillas, mandíbula, cuello, piel global y cabello. Cada una con su diagnóstico individual.</p>
+          </div>
+          <div class="lp-benefit lp-reveal" style="transition-delay:.18s">
+            <div class="lp-benefit-num">04</div>
+            <h4>7 biomarcadores</h4>
+            <p>Luminosidad, hidratación, uniformidad de tono, glicación, inflamación, daño solar y vascularidad. En lenguaje humano.</p>
+          </div>
+          <div class="lp-benefit lp-reveal" style="transition-delay:.23s">
+            <div class="lp-benefit-num">05</div>
+            <h4>Plan de 12 meses</h4>
+            <p>Skincare, hábitos, suplementos y tratamientos. Ordenados por impacto real en tu cara específica, no en la cara promedio.</p>
+          </div>
+          <div class="lp-benefit lp-reveal" style="transition-delay:.28s">
+            <div class="lp-benefit-num">06</div>
+            <h4>Proyección a 12 meses</h4>
+            <p>Qué ocurriría si sigues el plan — cuántos años podrías recuperar visualmente — proyectado en números concretos.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TESTIMONIALS -->
+    <div class="lp-section lp-reveal">
+      <div class="lp-section-inner">
+        <div class="eyebrow center">Resultados reales</div>
+        <h2 class="lp-section-title center">Lo que dicen quienes<br>ya lo hicieron.</h2>
+        <div class="lp-testimonials">
+          <div class="lp-testi lp-reveal" style="transition-delay:.04s">
+            <div class="lp-testi-stars">★★★★★</div>
+            <p class="lp-testi-quote">"Me dijo que aparentaba 4 años más. Fue un shock — y la mejor cosa que me pasó. Después de 3 meses siguiendo el plan, el re-escaneo me dio 2 años menos. La diferencia es visible."</p>
+            <div class="lp-testi-author">
+              <div class="lp-testi-avatar" style="background:linear-gradient(135deg,#d4af88,#c4956a)">V</div>
+              <div><div class="lp-testi-name">Valentina M.</div><div class="lp-testi-meta">38 años · Ciudad de México</div></div>
+            </div>
+          </div>
+          <div class="lp-testi lp-reveal" style="transition-delay:.1s">
+            <div class="lp-testi-stars">★★★★★</div>
+            <p class="lp-testi-quote">"Llevaba 5 años gastando en cremas caras sin saber qué me hacía falta. InsideOutMed me mostró que mi zona periocular era la prioridad. En 6 semanas mi entorno lo notó."</p>
+            <div class="lp-testi-author">
+              <div class="lp-testi-avatar" style="background:linear-gradient(135deg,#e8a4b0,#c97e8e)">C</div>
+              <div><div class="lp-testi-name">Carolina R.</div><div class="lp-testi-meta">44 años · Bogotá</div></div>
+            </div>
+          </div>
+          <div class="lp-testi lp-reveal" style="transition-delay:.16s">
+            <div class="lp-testi-stars">★★★★★</div>
+            <p class="lp-testi-quote">"Lo que más me sorprendió fue el plan. No es genérico — está basado en mis zonas débiles reales. Y es completamente gratis. No entiendo por qué no está en todos los teléfonos."</p>
+            <div class="lp-testi-author">
+              <div class="lp-testi-avatar" style="background:linear-gradient(135deg,#7ecba1,#5ab082)">A</div>
+              <div><div class="lp-testi-name">Andrea L.</div><div class="lp-testi-meta">31 años · Lima</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TECHNOLOGY SECTION -->
+    <div class="lp-section lp-tech-section lp-reveal">
+      <div class="lp-section-inner lp-tech-grid">
+        <div class="lp-tech-text">
+          <div class="eyebrow">La tecnología</div>
+          <h2 style="font-family:'Fraunces',serif;font-size:30px;line-height:1.2;margin:10px 0 18px;letter-spacing:-.02em">No es un filtro.<br>Es ciencia aplicada<br>a tu cara.</h2>
+          <p style="color:var(--ink2);line-height:1.75;font-size:15px">Usamos <b style="color:var(--ink)">MediaPipe FaceLandmarker</b> — la misma tecnología de reconocimiento facial de Google — para mapear 478 puntos exactos de tu rostro.</p>
+          <p style="color:var(--ink2);line-height:1.75;font-size:15px;margin-top:14px">El análisis ocurre <b style="color:var(--ink)">completamente en tu dispositivo</b>. Tu imagen nunca sale de tu teléfono. Sin servidores. Sin base de datos de fotos.</p>
+          <div class="lp-tech-facts">
+            <div class="lp-tech-fact"><div class="lp-tech-fact-num">478</div><div>puntos faciales</div></div>
+            <div class="lp-tech-fact"><div class="lp-tech-fact-num">9</div><div>zonas analizadas</div></div>
+            <div class="lp-tech-fact"><div class="lp-tech-fact-num">7</div><div>biomarcadores</div></div>
+            <div class="lp-tech-fact"><div class="lp-tech-fact-num">0</div><div>datos a servidores</div></div>
+          </div>
+        </div>
+        <div class="lp-tech-visual">
+          <div class="lp-face-demo">
+            <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+              <ellipse cx="100" cy="120" rx="75" ry="95" fill="none" stroke="rgba(212,175,136,0.2)" stroke-width="1"/>
+              <line x1="25" y1="80" x2="175" y2="80" stroke="rgba(212,175,136,0.5)" stroke-width="0.6" class="lp-scanline"/>
+              <g fill="rgba(212,175,136,0.65)" class="lp-dots">
+                <circle cx="100" cy="40" r="1.5"/><circle cx="80" cy="48" r="1.2"/><circle cx="120" cy="48" r="1.2"/>
+                <circle cx="65" cy="58" r="1.2"/><circle cx="135" cy="58" r="1.2"/>
+                <circle cx="72" cy="100" r="1.5"/><circle cx="82" cy="96" r="1.2"/><circle cx="92" cy="98" r="1.2"/><circle cx="82" cy="104" r="1.2"/>
+                <circle cx="128" cy="100" r="1.5"/><circle cx="118" cy="96" r="1.2"/><circle cx="108" cy="98" r="1.2"/><circle cx="118" cy="104" r="1.2"/>
+                <circle cx="68" cy="88" r="1.2"/><circle cx="78" cy="84" r="1.2"/><circle cx="88" cy="84" r="1.2"/>
+                <circle cx="132" cy="88" r="1.2"/><circle cx="122" cy="84" r="1.2"/><circle cx="112" cy="84" r="1.2"/>
+                <circle cx="100" cy="120" r="1.5"/><circle cx="90" cy="130" r="1.2"/><circle cx="110" cy="130" r="1.2"/>
+                <circle cx="100" cy="136" r="1.2"/><circle cx="88" cy="134" r="1"/><circle cx="112" cy="134" r="1"/>
+                <circle cx="100" cy="152" r="1.5"/><circle cx="88" cy="148" r="1.2"/><circle cx="112" cy="148" r="1.2"/>
+                <circle cx="84" cy="155" r="1.2"/><circle cx="116" cy="155" r="1.2"/><circle cx="100" cy="162" r="1.2"/>
+                <circle cx="40" cy="140" r="1.2"/><circle cx="45" cy="160" r="1.2"/><circle cx="55" cy="178" r="1.2"/>
+                <circle cx="70" cy="196" r="1.2"/><circle cx="85" cy="208" r="1.2"/><circle cx="100" cy="212" r="1.5"/>
+                <circle cx="115" cy="208" r="1.2"/><circle cx="130" cy="196" r="1.2"/>
+                <circle cx="145" cy="178" r="1.2"/><circle cx="155" cy="160" r="1.2"/><circle cx="160" cy="140" r="1.2"/>
+                <circle cx="55" cy="128" r="1.2"/><circle cx="50" cy="115" r="1"/><circle cx="60" cy="118" r="1"/>
+                <circle cx="145" cy="128" r="1.2"/><circle cx="150" cy="115" r="1"/><circle cx="140" cy="118" r="1"/>
+              </g>
+              <ellipse cx="100" cy="58" rx="35" ry="18" fill="rgba(126,203,161,0.07)" stroke="rgba(126,203,161,0.22)" stroke-width="0.6"/>
+              <text x="100" y="35" text-anchor="middle" fill="rgba(126,203,161,0.7)" font-size="7" font-family="Inter,sans-serif">Frente · 94</text>
+            </svg>
+            <div class="lp-face-caption">478 puntos · Tiempo real · En tu dispositivo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINAL CTA -->
+    <div class="lp-cta-section lp-reveal">
+      <div class="lp-cta-inner">
+        <div class="eyebrow center" style="color:rgba(245,237,232,0.45)">Empieza ahora</div>
+        <h2 class="lp-cta-headline">Tu cara tiene información<br>que todavía no has leído.</h2>
+        <p class="lp-cta-sub">90 segundos. Sin registro. Sin costo. Sin filtros.</p>
+        <button class="btn lp-cta-btn" onclick="go('onboarding')" style="max-width:400px;margin:0 auto;display:block;padding:19px 24px;font-size:17px">Descubrir mi edad visible →</button>
+        <p style="font-size:12px;color:rgba(245,237,232,0.3);margin-top:16px">Tu foto nunca sale de tu teléfono · Sin base de datos de rostros · 100% privado</p>
+        <button class="btn ghost sm" style="margin-top:20px;max-width:300px;display:block;margin-left:auto;margin-right:auto" onclick="go('returning')">Ya lo hice — ver mi evolución</button>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="lp-section lp-reveal">
+      <div class="lp-section-inner" style="max-width:680px">
+        <div class="eyebrow center">Preguntas frecuentes</div>
+        <h2 class="lp-section-title center">Lo que más nos preguntan.</h2>
+        <div class="lp-faqs">
+          <div class="lp-faq" onclick="this.classList.toggle('open')">
+            <div class="lp-faq-q">¿Es realmente gratis?<span class="lp-faq-arrow">›</span></div>
+            <div class="lp-faq-a">Sí, el análisis completo es gratis. No pedimos tarjeta de crédito, no hay período de prueba oculto. El análisis facial, el diagnóstico por zonas, el plan de 12 meses y el seguimiento son 100% gratuitos.</div>
+          </div>
+          <div class="lp-faq" onclick="this.classList.toggle('open')">
+            <div class="lp-faq-q">¿Qué hace con mi foto?<span class="lp-faq-arrow">›</span></div>
+            <div class="lp-faq-a">Absolutamente nada — porque nunca la recibimos. Todo el procesamiento ocurre en tu dispositivo usando IA local (MediaPipe). Tu imagen nunca sale de tu teléfono ni toca ningún servidor externo.</div>
+          </div>
+          <div class="lp-faq" onclick="this.classList.toggle('open')">
+            <div class="lp-faq-q">¿Qué tan preciso es el análisis?<span class="lp-faq-arrow">›</span></div>
+            <div class="lp-faq-a">El análisis usa 478 puntos faciales y acumula cientos de muestras de píxeles por zona. Es una estimación educativa basada en geometría facial y biomarcadores visuales — no reemplaza una valoración dermatológica, pero te da información real y accionable que ningún espejo puede darte.</div>
+          </div>
+          <div class="lp-faq" onclick="this.classList.toggle('open')">
+            <div class="lp-faq-q">¿Necesito crear una cuenta?<span class="lp-faq-arrow">›</span></div>
+            <div class="lp-faq-a">No. El análisis completo funciona sin registro. Si quieres guardar tu historial y comparar resultados con el tiempo, puedes crear una cuenta solo con tu email — sin contraseña, sin datos extras.</div>
+          </div>
+          <div class="lp-faq" onclick="this.classList.toggle('open')">
+            <div class="lp-faq-q">¿Funciona en cualquier dispositivo?<span class="lp-faq-arrow">›</span></div>
+            <div class="lp-faq-a">Sí, en cualquier smartphone o computadora con cámara. Recomendamos buena luz natural y sin lentes. No requiere instalar ninguna aplicación — funciona directo desde el navegador.</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:32px">
+          <p style="font-size:13px;color:var(--muted)"><a onclick="go('admin')" style="font-size:10px;color:rgba(245,237,232,0.1);cursor:pointer">·</a></p>
+        </div>
+      </div>
+    </div>
+
   </section>
 
   <!-- ============ ONBOARDING ============ -->
@@ -3434,6 +4114,64 @@ window.addEventListener('hashchange',()=>{ if(location.hash==='#admin') go('admi
 renderOb();
 loadProducts();
 if(location.hash==='#admin') go('admin');
+
+/* ===== LANDING PAGE SCROLL ANIMATIONS ===== */
+(function(){
+  function initLP(){
+    var els = document.querySelectorAll('#s-welcome .lp-reveal');
+    if(!els.length) return;
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          var delay = parseFloat(e.target.style.transitionDelay||e.target.style.animationDelay||'0')*1000;
+          setTimeout(function(){ e.target.classList.add('lp-in'); }, delay||0);
+          obs.unobserve(e.target);
+        }
+      });
+    },{threshold:0.1,rootMargin:'0px 0px -30px 0px'});
+    els.forEach(function(el){ obs.observe(el); });
+  }
+
+  function animateCount(el,target,dur){
+    var start=performance.now();
+    var isBig=target>=1000;
+    function step(now){
+      var p=Math.min((now-start)/dur,1);
+      var ease=1-Math.pow(1-p,3);
+      var val=Math.floor(target*ease);
+      el.textContent=isBig?(val.toLocaleString()+'+'):val;
+      if(p<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function initCounters(){
+    var obs=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          var t=parseInt(e.target.dataset.target);
+          if(t) animateCount(e.target,t,1800);
+          obs.unobserve(e.target);
+        }
+      });
+    },{threshold:0.6});
+    document.querySelectorAll('[data-target]').forEach(function(el){obs.observe(el);});
+  }
+
+  // Patch go() to re-init when returning to welcome
+  var _go=window.go;
+  window.go=function(id){
+    _go(id);
+    if(id==='welcome') setTimeout(function(){initLP();initCounters();},150);
+  };
+
+  // Init on load
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){initLP();initCounters();},250);});
+  } else {
+    setTimeout(function(){initLP();initCounters();},250);
+  }
+})();
 </script>
 </body>
 </html>

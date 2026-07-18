@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 
-type Stage = "choose" | "camera" | "scanning" | "results" | "error"
+type Stage = "choose" | "upload-guide" | "camera" | "scanning" | "results" | "error"
 
 interface Scores {
   overall: number
@@ -455,7 +455,7 @@ export default function AnalyzePage() {
               </button>
 
               <button
-                onClick={() => fileRef.current?.click()}
+                onClick={() => setStage("upload-guide")}
                 style={{
                   background: "rgba(245,237,232,0.03)",
                   border: "1.5px solid rgba(245,237,232,0.1)",
@@ -529,6 +529,83 @@ export default function AnalyzePage() {
             <p style={{ fontSize: 10, color: "rgba(245,237,232,0.18)", letterSpacing: "0.07em" }}>
               TU FOTO NO SE ALMACENA · PROCESAMIENTO LOCAL · 100% PRIVADO
             </p>
+          </div>
+        )}
+
+        {/* ── UPLOAD GUIDE ── */}
+        {stage === "upload-guide" && (
+          <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
+            <p style={{ fontSize: 10, letterSpacing: "0.16em", color: "#d4af88", textTransform: "uppercase", fontWeight: 700, marginBottom: 14 }}>
+              Antes de subir tu foto
+            </p>
+            <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(22px, 4vw, 32px)", fontWeight: 400, marginBottom: 10, letterSpacing: "-0.03em", lineHeight: 1.15 }}>
+              La foto correcta marca<br />
+              <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>la diferencia en los resultados</em>
+            </h2>
+            <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", marginBottom: 32, lineHeight: 1.65 }}>
+              El análisis mide canales de color y textura de tu piel. Una foto mal tomada produce resultados incorrectos.
+            </p>
+
+            {/* Do's */}
+            <div style={{ textAlign: "left", marginBottom: 16 }}>
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "#7ecba1", fontWeight: 700, marginBottom: 12 }}>
+                ✓ Así sí funciona
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[
+                  { icon: "☀", text: "Luz natural frontal — ventana o lámpara apuntando a tu cara, sin contraluz" },
+                  { icon: "👤", text: "Rostro centrado y completo — frente, mejillas, nariz y mentón visibles" },
+                  { icon: "🚫", text: "Sin maquillaje, filtros, gafas ni cabello tapando la cara" },
+                  { icon: "📐", text: "Cámara al nivel de los ojos, a 30–50 cm de distancia" },
+                  { icon: "🔆", text: "Imagen nítida y bien expuesta — ni sobreexpuesta ni oscura" },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, padding: "12px 14px", background: "rgba(126,203,161,0.04)", border: "1px solid rgba(126,203,161,0.1)", borderRadius: 12 }}>
+                    <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
+                    <span style={{ fontSize: 13, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Don'ts */}
+            <div style={{ textAlign: "left", marginBottom: 28 }}>
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "#e8a4b0", fontWeight: 700, marginBottom: 12 }}>
+                ✗ Así no funciona
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {[
+                  "Foto con poca luz o en habitación oscura",
+                  "Selfie de espejo con flash — altera los canales de color",
+                  "Foto con filtros de Instagram o Snapchat",
+                  "Cara de perfil, en ángulo pronunciado o muy alejada",
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "flex", gap: 10, padding: "10px 14px", background: "rgba(232,164,176,0.03)", border: "1px solid rgba(232,164,176,0.08)", borderRadius: 10 }}>
+                    <span style={{ fontSize: 10, color: "#e8a4b0", flexShrink: 0, paddingTop: 2, fontWeight: 700 }}>✕</span>
+                    <span style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", lineHeight: 1.5 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setStage("choose")}
+                style={{ flex: 1, padding: "13px", background: "rgba(245,237,232,0.05)", border: "1px solid rgba(245,237,232,0.1)", borderRadius: 12, color: "rgba(245,237,232,0.5)", fontSize: 13, cursor: "pointer" }}
+              >
+                Volver
+              </button>
+              <button
+                onClick={() => fileRef.current?.click()}
+                style={{ flex: 2, padding: "13px", background: "linear-gradient(135deg, #d4af88, #b8936a)", border: "none", borderRadius: 12, color: "#0e0c12", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                  <path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Elegir foto
+              </button>
+            </div>
           </div>
         )}
 

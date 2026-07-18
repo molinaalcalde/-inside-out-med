@@ -478,70 +478,189 @@ export default function AnalyzePage() {
 
         {/* ── RESULTS ── */}
         {stage === "results" && (
-          <div style={{ maxWidth: 800, width: "100%" }}>
+          <div style={{ maxWidth: 860, width: "100%" }}>
+
+            {/* ── Header reveal ── */}
             <div style={{ textAlign: "center", marginBottom: 48 }}>
-              <span style={{ fontSize: 11, letterSpacing: "0.14em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 600 }}>
-                Análisis completado
-              </span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 16 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 8px rgba(126,203,161,0.8)" }} />
+                <span style={{ fontSize: 11, letterSpacing: "0.16em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>
+                  Análisis completado
+                </span>
+              </div>
               <h1 style={{
                 fontFamily: "var(--font-fraunces)",
-                fontSize: "clamp(24px, 4vw, 38px)",
-                fontWeight: 500,
-                marginTop: 12,
+                fontSize: "clamp(26px, 4vw, 40px)",
+                fontWeight: 400,
+                marginBottom: 12,
                 letterSpacing: "-0.03em",
+                lineHeight: 1.1,
               }}>
-                Tu piel habla. Esto es lo que dice.
+                Tu piel habla.
+                <em style={{ color: "#e8a4b0", fontStyle: "italic" }}> Esto es lo que dice.</em>
               </h1>
+              <p style={{ fontSize: 14, color: "rgba(245,237,232,0.4)", maxWidth: 400, margin: "0 auto" }}>
+                Basado en 12 biomarcadores analizados en tiempo real con tu imagen.
+              </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 40 }}>
-              {/* Score */}
+            {/* ── Score + Biomarkers grid ── */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 20 }}>
+
+              {/* Score card */}
               <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: 32 }}>
-                <p style={{ fontSize: 11, letterSpacing: "0.12em", color: "rgba(245,237,232,0.4)", textTransform: "uppercase", marginBottom: 24 }}>
+                <p style={{ fontSize: 10, letterSpacing: "0.14em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>
                   Score Global
                 </p>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 24 }}>
-                  <span style={{ fontSize: 72, fontFamily: "var(--font-fraunces)", fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>84</span>
-                  <span style={{ fontSize: 20, color: "rgba(245,237,232,0.3)" }}>/100</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 16 }}>
+                  <span style={{ fontSize: 76, fontFamily: "var(--font-fraunces)", fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>84</span>
+                  <div>
+                    <span style={{ fontSize: 18, color: "rgba(245,237,232,0.28)" }}>/100</span>
+                    <p style={{ fontSize: 10, color: "#7ecba1", fontWeight: 700, letterSpacing: "0.06em", marginTop: 2 }}>TOP 18%</p>
+                  </div>
                 </div>
-                <div style={{ height: 4, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 20 }}>
+                <div style={{ height: 3, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 16 }}>
                   <div style={{ height: "100%", width: "84%", background: "linear-gradient(90deg, #e8a4b0, #d4af88)", borderRadius: 2 }} />
                 </div>
-                <p style={{ fontSize: 13, color: "rgba(245,237,232,0.5)", lineHeight: 1.7 }}>
-                  Tu piel está en excelente estado. Hidratación superior a la media, bajo nivel de inflamación.
+                <p style={{ fontSize: 13, color: "rgba(245,237,232,0.45)", lineHeight: 1.7 }}>
+                  Hidratación superior a la media. Inflamación bajo control.
+                  El plan de productos puede mejorar tu score en 8–12 puntos en 6 semanas.
                 </p>
+                <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid rgba(245,237,232,0.06)" }}>
+                  <p style={{ fontSize: 10, color: "rgba(245,237,232,0.28)", letterSpacing: "0.08em" }}>EDAD APARENTE</p>
+                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, color: "#7ecba1", fontWeight: 300, marginTop: 2 }}>
+                    27 años <span style={{ fontSize: 11, color: "rgba(126,203,161,0.6)" }}>— 4 años menos que tu edad real</span>
+                  </p>
+                </div>
               </div>
 
-              {/* Biomarkers */}
+              {/* Biomarkers card */}
               <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: 32 }}>
-                <p style={{ fontSize: 11, letterSpacing: "0.12em", color: "rgba(245,237,232,0.4)", textTransform: "uppercase", marginBottom: 24 }}>
-                  Biomarcadores
+                <p style={{ fontSize: 10, letterSpacing: "0.14em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>
+                  Biomarcadores detectados
                 </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                  {BIOMARKERS.map((b) => (
-                    <div key={b.label}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, color: "rgba(245,237,232,0.7)" }}>{b.label}</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: b.color }}>{b.value}%</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {BIOMARKERS.map((b) => {
+                    const isAlert = b.label === "Oxidación" && b.value > 30
+                    return (
+                      <div key={b.label}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
+                          <span style={{ fontSize: 13, color: "rgba(245,237,232,0.65)" }}>{b.label}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            {isAlert && (
+                              <span style={{ fontSize: 9, color: "#d4af88", background: "rgba(212,175,136,0.12)", border: "1px solid rgba(212,175,136,0.25)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>
+                                ATENCIÓN
+                              </span>
+                            )}
+                            <span style={{ fontSize: 13, fontWeight: 700, color: b.color }}>{b.value}%</span>
+                          </div>
+                        </div>
+                        <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1, overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${b.value}%`, background: b.color, borderRadius: 1 }} />
+                        </div>
                       </div>
-                      <div style={{ height: 3, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${b.value}%`, background: b.color, borderRadius: 2 }} />
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             </div>
 
-            <div style={{ textAlign: "center", display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            {/* ── Business model: Consultation CTA ── */}
+            <div style={{
+              background: "linear-gradient(135deg, rgba(232,164,176,0.07) 0%, rgba(212,175,136,0.04) 100%)",
+              border: "1px solid rgba(232,164,176,0.15)",
+              borderRadius: 18,
+              padding: "28px 32px",
+              marginBottom: 16,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 24,
+              flexWrap: "wrap",
+            }}>
+              <div>
+                <p style={{ fontSize: 10, letterSpacing: "0.14em", color: "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>
+                  Gratis · Solo hoy
+                </p>
+                <h3 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(17px, 2vw, 22px)", fontWeight: 400, letterSpacing: "-0.02em", marginBottom: 6, lineHeight: 1.2 }}>
+                  ¿Quieres que analicemos tus resultados juntos?
+                </h3>
+                <p style={{ fontSize: 13, color: "rgba(245,237,232,0.45)", lineHeight: 1.6 }}>
+                  20 minutos con un especialista. Te explicamos cada número y qué hacer exactamente.
+                </p>
+              </div>
+              <a
+                href={`https://wa.me/TUTELEFONO?text=${encodeURIComponent("Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue 84/100. Me gustaría el asesoramiento gratuito.")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "linear-gradient(135deg, #e8a4b0 0%, #c97e8e 100%)",
+                  color: "#fff", borderRadius: 12, padding: "14px 28px",
+                  fontSize: 14, fontWeight: 700, textDecoration: "none",
+                  whiteSpace: "nowrap", boxShadow: "0 6px 24px rgba(232,164,176,0.3)",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Agendar gratis
+              </a>
+            </div>
+
+            {/* ── Product plan CTA ── */}
+            <div style={{ marginBottom: 32 }}>
+              <button
+                onClick={() => {
+                  try {
+                    localStorage.setItem("insideoutmed_scores", JSON.stringify({
+                      overall: 84, hydration: 87, inflammation: 22,
+                      elasticity: 79, melanin: 61, oxidation: 34,
+                    }))
+                  } catch {}
+                  window.location.href = "/plan"
+                }}
+                style={{
+                  width: "100%",
+                  padding: "18px 32px",
+                  background: "rgba(245,237,232,0.05)",
+                  border: "1px solid rgba(245,237,232,0.12)",
+                  borderRadius: 14,
+                  color: "#f5ede8",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  transition: "background 0.2s, border-color 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(245,237,232,0.08)"
+                  e.currentTarget.style.borderColor = "rgba(245,237,232,0.2)"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(245,237,232,0.05)"
+                  e.currentTarget.style.borderColor = "rgba(245,237,232,0.12)"
+                }}
+              >
+                <div style={{ textAlign: "left" }}>
+                  <p style={{ fontSize: 13, color: "rgba(245,237,232,0.45)", marginBottom: 2 }}>Basado en tus biomarcadores</p>
+                  <span>Ver mis productos recomendados →</span>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+
+            {/* ── Reset ── */}
+            <div style={{ textAlign: "center" }}>
               <button
                 onClick={reset}
-                style={{ background: "none", border: "1px solid rgba(245,237,232,0.15)", borderRadius: 12, padding: "12px 28px", color: "rgba(245,237,232,0.5)", fontSize: 13, cursor: "pointer" }}
+                style={{ background: "none", border: "none", color: "rgba(245,237,232,0.3)", fontSize: 13, cursor: "pointer", padding: "8px 16px" }}
               >
-                Nuevo análisis
-              </button>
-              <button style={{ background: "#e8a4b0", border: "none", borderRadius: 12, padding: "12px 28px", color: "#0e0c12", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                Ver protocolo completo
+                Hacer nuevo análisis
               </button>
             </div>
           </div>

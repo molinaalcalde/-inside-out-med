@@ -328,17 +328,17 @@ export function Hero() {
             style={{
               fontSize: "clamp(15px, 1.6vw, 18px)",
               color: "rgba(245,237,232,0.55)",
-              maxWidth: 440,
+              maxWidth: 480,
               marginBottom: 36,
-              lineHeight: 1.7,
+              lineHeight: 1.75,
               opacity: 0,
             }}
           >
-            Detectamos 12 biomarcadores de tu piel en tiempo real.
-            Sin agujas. Sin cita médica.{" "}
-            <strong style={{ color: "rgba(245,237,232,0.82)", fontWeight: 500 }}>
-              Tu protocolo personalizado en 60 segundos.
-            </strong>
+            La mayoría de mujeres compra skincare al azar.{" "}
+            <strong style={{ color: "rgba(245,237,232,0.85)", fontWeight: 500 }}>
+              Nosotros te decimos exactamente qué está pasando en tu piel — y por qué.
+            </strong>{" "}
+            12 biomarcadores. 60 segundos. Sin agujas.
           </p>
 
           {/* CTAs */}

@@ -139,6 +139,7 @@ export function CTA() {
             ref={btnRef}
             className="btn-rose"
             style={{ fontSize: 16, padding: "18px 48px", minWidth: 240 }}
+            onClick={() => window.location.href = '/analyze'}
           >
             Analizar mi piel ahora
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">

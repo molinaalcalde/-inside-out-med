@@ -18,11 +18,6 @@ export function Hero() {
       const tl = gsap.timeline({ delay: 0.2 })
 
       tl.fromTo(
-        pillRef.current,
-        { opacity: 0, y: 20, scale: 0.9 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "back.out(1.7)" }
-      )
-        .fromTo(
           headlineRef.current,
           { opacity: 0, y: 40 },
           { opacity: 1, y: 0, duration: 1.0, ease: "power3.out" },
@@ -126,16 +121,6 @@ export function Hero() {
 
       {/* Content */}
       <div style={{ position: "relative", zIndex: 2, maxWidth: 820 }}>
-        {/* Pill */}
-        <div ref={pillRef} style={{ marginBottom: 28 }}>
-          <span className="pill">
-            <svg width="6" height="6" viewBox="0 0 6 6" fill="none">
-              <circle cx="3" cy="3" r="3" fill="#e8a4b0" />
-            </svg>
-            Análisis facial con IA médica
-          </span>
-        </div>
-
         {/* Headline */}
         <h1
           ref={headlineRef}

@@ -1,0 +1,8 @@
+node_modules
+.next
+.DS_Store
+legacy
+InsideOutMed.html
+index.html
+push.sh
+supabase_schema.sql

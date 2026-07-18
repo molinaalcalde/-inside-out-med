@@ -116,7 +116,7 @@ export function HowItWorks() {
                 inset: 0,
                 background: "linear-gradient(to bottom, rgba(232,164,176,0.4), rgba(212,175,136,0.25), rgba(126,203,161,0.2), transparent)",
                 transformOrigin: "top center",
-                scaleY: 0,
+                transform: "scaleY(0)",
               }}
             />
           </div>

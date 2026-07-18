@@ -44,10 +44,10 @@ export function Nav() {
         alignItems: "center",
         justifyContent: "space-between",
         transition: "background 0.4s, backdrop-filter 0.4s, border-color 0.4s",
-        background: scrolled ? "rgba(14,12,18,0.90)" : "rgba(14,12,18,0.35)",
-        backdropFilter: scrolled ? "blur(24px)" : "blur(8px)",
-        WebkitBackdropFilter: scrolled ? "blur(24px)" : "blur(8px)",
-        borderBottom: scrolled ? "1px solid rgba(245,237,232,0.08)" : "1px solid rgba(245,237,232,0.04)",
+        background: scrolled ? "rgba(14,12,18,0.92)" : "rgba(14,12,18,0.72)",
+        backdropFilter: scrolled ? "blur(24px)" : "blur(20px)",
+        WebkitBackdropFilter: scrolled ? "blur(24px)" : "blur(20px)",
+        borderBottom: scrolled ? "1px solid rgba(245,237,232,0.08)" : "1px solid rgba(245,237,232,0.05)",
       }}
     >
       {/* Logo */}

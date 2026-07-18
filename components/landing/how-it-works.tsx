@@ -19,8 +19,8 @@ const STEPS = [
   },
   {
     n: "02",
-    title: "IA analiza 12 zonas",
-    body: "Nuestro modelo detecta hidratación, inflamación, melanina, elasticidad y más biomarcadores.",
+    title: "IA analiza 12 biomarcadores",
+    body: "Nuestro modelo detecta hidratación, inflamación, melanina, elasticidad y 8 biomarcadores más en tiempo real.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
         <path d="M14 2 L26 8 L26 20 L14 26 L2 20 L2 8 Z" stroke="#d4af88" strokeWidth="1.4" strokeLinejoin="round" />
@@ -31,8 +31,8 @@ const STEPS = [
   },
   {
     n: "03",
-    title: "Recibe tu diagnóstico",
-    body: "Un reporte claro con puntuaciones por zona, causas probables y comparativa con tu edad.",
+    title: "Tu informe detallado",
+    body: "Puntuaciones por zona facial, causas probables y comparativa con tu grupo de edad. Visual y concreto.",
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
         <rect x="5" y="2" width="18" height="24" rx="3" stroke="#7ecba1" strokeWidth="1.4" />

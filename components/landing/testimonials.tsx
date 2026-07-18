@@ -1,74 +1,184 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { gsap } from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
-
-const TESTIMONIALS = [
+const ROW_1 = [
   {
-    quote: "Nunca pensé que una app me iba a decir exactamente qué estaba mal con mi piel. El informe fue más claro que el del dermatólogo.",
+    quote: "El informe fue más claro que el de mi dermatóloga. Zonas específicas, causas probables, sin tecnicismos.",
     name: "Valentina M.",
     role: "Médica, 34 años",
-    score: "91/100",
+    score: "91",
     avatar: "VM",
     color: "#e8a4b0",
   },
   {
-    quote: "Seguí el plan 6 semanas. Mis manchas bajaron notablemente. Nunca había entendido tan bien mi rutina de skincare.",
+    quote: "Seguí el plan 6 semanas. Mis manchas bajaron notablemente. Por primera vez entiendo mi rutina de skincare.",
     name: "Camila R.",
     role: "Nutricionista, 29 años",
-    score: "88/100",
+    score: "88",
     avatar: "CR",
     color: "#d4af88",
   },
   {
-    quote: "Lo que más me sorprendió fue la precisión por zonas. Exactamente donde yo notaba los problemas, el análisis lo marcó.",
+    quote: "La precisión por zonas me sorprendió. Exactamente donde yo notaba los problemas, el análisis lo marcó.",
     name: "Sofía L.",
     role: "Arquitecta, 41 años",
-    score: "76/100",
+    score: "76",
     avatar: "SL",
     color: "#7ecba1",
   },
   {
-    quote: "En mi clínica usamos esto como pre-screening. Ahorra tiempo y los pacientes llegan con información real.",
+    quote: "En mi clínica lo usamos como pre-screening. Los pacientes llegan con información real y ahorramos tiempo.",
     name: "Dra. Andrea P.",
     role: "Dermatóloga",
-    score: "94/100",
+    score: "94",
     avatar: "AP",
+    color: "#e8a4b0",
+  },
+  {
+    quote: "Gastaba una fortuna en productos que no hacían nada. Ahora sé exactamente qué necesita mi piel y qué no.",
+    name: "Isabel F.",
+    role: "Diseñadora, 37 años",
+    score: "82",
+    avatar: "IF",
+    color: "#d4af88",
+  },
+]
+
+const ROW_2 = [
+  {
+    quote: "Me daba miedo que fuera marketing vacío. Fue todo lo contrario: datos reales que no esperaba ver.",
+    name: "Lucía V.",
+    role: "Abogada, 32 años",
+    score: "85",
+    avatar: "LV",
+    color: "#7ecba1",
+  },
+  {
+    quote: "El protocolo personalizado cambió mi piel en 8 semanas. Nunca pensé que era tan sencillo si sabes el qué.",
+    name: "Mariana T.",
+    role: "Empresaria, 45 años",
+    score: "79",
+    avatar: "MT",
+    color: "#e8a4b0",
+  },
+  {
+    quote: "Le recomendé a mi hermana y a mis amigas. Todas quedamos con el análisis de inflamación — ni sospechábamos.",
+    name: "Daniela A.",
+    role: "Profesora, 38 años",
+    score: "87",
+    avatar: "DA",
+    color: "#d4af88",
+  },
+  {
+    quote: "Llevo años con acné hormonal sin entender por qué. El análisis me dio un mapa claro para empezar a tratarlo.",
+    name: "Paula M.",
+    role: "Farmacéutica, 26 años",
+    score: "71",
+    avatar: "PM",
+    color: "#7ecba1",
+  },
+  {
+    quote: "Lo que me convenció fue la comparativa de edad aparente. 4 años menos que mi edad real. Una motivación brutal.",
+    name: "Renata G.",
+    role: "Consultora, 43 años",
+    score: "93",
+    avatar: "RG",
     color: "#e8a4b0",
   },
 ]
 
+function TestimonialCard({
+  t,
+}: {
+  t: (typeof ROW_1)[number]
+}) {
+  return (
+    <div
+      style={{
+        flexShrink: 0,
+        width: "clamp(280px, 32vw, 360px)",
+        marginRight: 16,
+        padding: "24px 24px 20px",
+        background: "rgba(245,237,232,0.03)",
+        border: "1px solid rgba(245,237,232,0.08)",
+        borderRadius: 16,
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+      }}
+    >
+      {/* Stars */}
+      <div style={{ display: "flex", gap: 3, marginBottom: 16 }}>
+        {[...Array(5)].map((_, i) => (
+          <svg key={i} width="11" height="11" viewBox="0 0 12 12" fill="#d4af88" opacity={0.85}>
+            <path d="M6 1l1.5 3 3.2.5-2.3 2.2.5 3.3L6 8.5l-2.9 1.5.5-3.3L1.3 4.5l3.2-.5L6 1z" />
+          </svg>
+        ))}
+      </div>
+
+      {/* Quote */}
+      <p
+        style={{
+          fontSize: 14,
+          color: "rgba(245,237,232,0.72)",
+          lineHeight: 1.7,
+          fontStyle: "italic",
+          marginBottom: 20,
+        }}
+      >
+        &ldquo;{t.quote}&rdquo;
+      </p>
+
+      {/* Author */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: `${t.color}1e`,
+            border: `1px solid ${t.color}35`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 10,
+            fontWeight: 700,
+            color: t.color,
+            flexShrink: 0,
+          }}
+        >
+          {t.avatar}
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontWeight: 600, fontSize: 12.5, color: "#f5ede8", marginBottom: 1 }}>{t.name}</p>
+          <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.35)" }}>{t.role}</p>
+        </div>
+        <div
+          style={{
+            padding: "3px 10px",
+            borderRadius: 99,
+            background: `${t.color}12`,
+            border: `1px solid ${t.color}28`,
+            fontSize: 10.5,
+            fontWeight: 700,
+            color: t.color,
+            flexShrink: 0,
+          }}
+        >
+          {t.score}/100
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function Testimonials() {
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const trackRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger)
-
-    const cards = sectionRef.current?.querySelectorAll(".t-card")
-    if (!cards) return
-
-    gsap.fromTo(
-      cards,
-      { opacity: 0, y: 50, scale: 0.95 },
-      {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.9,
-        stagger: 0.12,
-        ease: "power3.out",
-        scrollTrigger: { trigger: sectionRef.current, start: "top 80%" },
-      }
-    )
-  }, [])
+  const doubled1 = [...ROW_1, ...ROW_1]
+  const doubled2 = [...ROW_2, ...ROW_2]
 
   return (
-    <section id="testimonials" ref={sectionRef} className="section">
-      <div className="container">
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 64 }}>
+    <section id="testimonials" className="section" style={{ overflow: "hidden" }}>
+      {/* Header */}
+      <div className="container" style={{ marginBottom: 64 }}>
+        <div style={{ textAlign: "center" }}>
           <p className="pill" style={{ marginBottom: 20 }}>Testimonios</p>
           <h2 className="display-lg">
             Lo que dicen
@@ -76,141 +186,94 @@ export function Testimonials() {
             <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>las que ya lo probaron</em>
           </h2>
         </div>
+      </div>
 
-        {/* Cards */}
-        <div
-          ref={trackRef}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: 16,
-          }}
-        >
-          {TESTIMONIALS.map((t, i) => (
-            <div
-              key={i}
-              className="t-card glass-card"
-              style={{
-                padding: "32px 28px",
-                opacity: 0,
-                display: "flex",
-                flexDirection: "column",
-                gap: 0,
-                transition: "border-color 0.2s",
-                cursor: "default",
-              }}
-              onMouseEnter={(e) => {
-                ;(e.currentTarget as HTMLElement).style.borderColor = "rgba(232,164,176,0.2)"
-              }}
-              onMouseLeave={(e) => {
-                ;(e.currentTarget as HTMLElement).style.borderColor = "rgba(245,237,232,0.10)"
-              }}
-            >
-              {/* Stars */}
-              <div style={{ display: "flex", gap: 3, marginBottom: 20 }}>
-                {[...Array(5)].map((_, si) => (
-                  <svg key={si} width="12" height="12" viewBox="0 0 12 12" fill="#d4af88">
-                    <path d="M6 1l1.5 3 3.2.5-2.3 2.2.5 3.3L6 8.5l-2.9 1.5.5-3.3L1.3 4.5l3.2-.5L6 1z" />
-                  </svg>
-                ))}
-              </div>
-
-              {/* Quote */}
-              <p
-                style={{
-                  fontSize: 15,
-                  color: "rgba(245,237,232,0.8)",
-                  lineHeight: 1.7,
-                  flex: 1,
-                  marginBottom: 28,
-                  fontStyle: "italic",
-                }}
-              >
-                &ldquo;{t.quote}&rdquo;
-              </p>
-
-              {/* Author */}
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    background: `${t.color}22`,
-                    border: `1px solid ${t.color}40`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: t.color,
-                    flexShrink: 0,
-                  }}
-                >
-                  {t.avatar}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 600, fontSize: 13, color: "#f5ede8", marginBottom: 2 }}>
-                    {t.name}
-                  </p>
-                  <p style={{ fontSize: 11, color: "rgba(245,237,232,0.4)" }}>{t.role}</p>
-                </div>
-                <div
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 99,
-                    background: `${t.color}15`,
-                    border: `1px solid ${t.color}30`,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: t.color,
-                  }}
-                >
-                  {t.score}
-                </div>
-              </div>
-            </div>
+      {/* Marquee rows */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+          maskImage:
+            "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+        }}
+      >
+        {/* Row 1 — left */}
+        <div className="marquee-track marquee-left" style={{ display: "flex" }}>
+          {doubled1.map((t, i) => (
+            <TestimonialCard key={i} t={t} />
           ))}
         </div>
 
-        {/* Press logos */}
-        <div
-          style={{
-            marginTop: 80,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "clamp(24px, 4vw, 60px)",
-            flexWrap: "wrap",
-          }}
-        >
-          <p
-            style={{
-              fontSize: 10,
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: "rgba(245,237,232,0.25)",
-              fontWeight: 700,
-            }}
-          >
-            Mencionado en
-          </p>
-          {["Forbes Health", "MIT Review", "Vogue Méx", "W Salud", "TechCrunch"].map((p) => (
-            <span
-              key={p}
-              style={{
-                fontFamily: "var(--font-fraunces)",
-                fontSize: "clamp(13px, 1.8vw, 18px)",
-                color: "rgba(245,237,232,0.18)",
-                fontWeight: 400,
-                letterSpacing: "-0.01em",
-              }}
-            >
-              {p}
-            </span>
+        {/* Row 2 — right */}
+        <div className="marquee-track marquee-right" style={{ display: "flex" }}>
+          {doubled2.map((t, i) => (
+            <TestimonialCard key={i} t={t} />
           ))}
         </div>
       </div>
+
+      {/* Trust strip */}
+      <div
+        className="container"
+        style={{
+          marginTop: 72,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "clamp(32px, 5vw, 72px)",
+          flexWrap: "wrap",
+        }}
+      >
+        {[
+          { icon: "⬡", text: "Datos privados" },
+          { icon: "◈", text: "Sin almacenamiento de fotos" },
+          { icon: "◇", text: "Análisis en dispositivo" },
+          { icon: "△", text: "Protocolo médico revisado" },
+        ].map((item, i) => (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              opacity: 0.32,
+            }}
+          >
+            <span style={{ fontSize: 12, color: "rgba(245,237,232,0.6)" }}>{item.icon}</span>
+            <span
+              style={{
+                fontSize: 11,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "rgba(245,237,232,0.6)",
+                fontWeight: 600,
+              }}
+            >
+              {item.text}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes marquee-left {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        @keyframes marquee-right {
+          from { transform: translateX(-50%); }
+          to   { transform: translateX(0); }
+        }
+        .marquee-left  { animation: marquee-left  34s linear infinite; }
+        .marquee-right { animation: marquee-right 40s linear infinite; }
+        .marquee-track { will-change: transform; }
+        @media (prefers-reduced-motion: reduce) {
+          .marquee-left, .marquee-right { animation: none; }
+        }
+      `}</style>
     </section>
   )
 }

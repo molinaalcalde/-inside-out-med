@@ -911,17 +911,32 @@ export default function AnalyzePage() {
                   {scores.overall >= 80 ? "Tu piel está en un estado superior a la media. Mantén la rutina." : scores.overall >= 65 ? "Hay margen de mejora claro. Con el plan correcto puedes subir 10–15 puntos en 6 semanas." : "Tu piel necesita atención prioritaria. El plan de productos es el primer paso."}
                 </p>
                 <div style={{ paddingTop: 16, borderTop: "1px solid rgba(245,237,232,0.06)", marginBottom: 16 }}>
-                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.25)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Por zona</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {[{label:"Frente",value:scores.zoneScores.forehead},{label:"Mejilla izq",value:scores.zoneScores.leftCheek},{label:"Mejilla der",value:scores.zoneScores.rightCheek},{label:"Nariz",value:scores.zoneScores.nose},{label:"Mentón",value:scores.zoneScores.chin}].map(z=>(
-                      <div key={z.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 11, color: "rgba(245,237,232,0.38)", minWidth: 72 }}>{z.label}</span>
-                        <div style={{ flex: 1, height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1, overflow: "hidden" }}>
-                          <div style={{ height: "100%", width: `${z.value}%`, background: z.value >= 70 ? "#7ecba1" : z.value >= 50 ? "#d4af88" : "#e8a4b0", borderRadius: 1 }} />
+                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.25)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, fontWeight: 700 }}>Estado por zona</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {([
+                      { key: "forehead",   label: "Frente",       value: scores.zoneScores.forehead,   insights: ["Zona T controlada, equilibrio sebáceo bueno", "Zona T con algo de actividad — hidratación media", "Alta actividad en zona T — brillo y poros dilatados"] },
+                      { key: "leftCheek",  label: "Mejilla izq",  value: scores.zoneScores.leftCheek,  insights: ["Sin inflamación activa, tono uniforme", "Leve irritación — puede ser sensibilidad", "Inflamación activa detectada en esta mejilla"] },
+                      { key: "rightCheek", label: "Mejilla der",  value: scores.zoneScores.rightCheek, insights: ["Sin inflamación activa, tono uniforme", "Leve irritación — puede ser sensibilidad", "Inflamación activa detectada en esta mejilla"] },
+                      { key: "nose",       label: "Nariz",        value: scores.zoneScores.nose,        insights: ["Poros regulados, buen control sebáceo", "Algo de actividad sebácea en la nariz", "Poros dilatados y exceso de sebo visible"] },
+                      { key: "chin",       label: "Mentón",       value: scores.zoneScores.chin,        insights: ["Mentón estable, sin signos de estrés", "Algo de irregularidad en el mentón", "Actividad hormonal detectable en el mentón"] },
+                    ] as const).map(z => {
+                      const color = z.value >= 70 ? "#7ecba1" : z.value >= 50 ? "#d4af88" : "#e8a4b0"
+                      const status = z.value >= 70 ? "Óptima" : z.value >= 50 ? "Normal" : "Atención"
+                      const insightIdx = z.value >= 70 ? 0 : z.value >= 50 ? 1 : 2
+                      const insight = z.insights[insightIdx]
+                      return (
+                        <div key={z.key} style={{ display: "grid", gridTemplateColumns: "70px 1fr", gap: "4px 10px", alignItems: "start" }}>
+                          <span style={{ fontSize: 11, color: "rgba(245,237,232,0.42)", paddingTop: 2 }}>{z.label}</span>
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                              <div style={{ width: 5, height: 5, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                              <span style={{ fontSize: 10, color, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{status}</span>
+                            </div>
+                            <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.35)", lineHeight: 1.4 }}>{insight}</p>
+                          </div>
                         </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(245,237,232,0.5)", minWidth: 28, textAlign: "right" }}>{z.value}</span>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
                 <div style={{ paddingTop: 14, borderTop: "1px solid rgba(245,237,232,0.06)" }}>

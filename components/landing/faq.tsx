@@ -14,7 +14,7 @@ const QUESTIONS = [
   },
   {
     q: "¿Necesito tener conocimiento de skincare para entender mi informe?",
-    a: "Para nada. El informe está diseñado en lenguaje directo: qué está pasando en tu piel, por qué ocurre y qué hacer al respecto. Si algo no queda claro, la consulta de asesoramiento gratuita existe exactamente para eso.",
+    a: "Para nada. El informe está diseñado en lenguaje directo: qué está pasando en tu piel, por qué ocurre y qué hacer al respecto. Si algo no queda claro, la consulta de asesoramiento existe exactamente para eso.",
   },
   {
     q: "¿Qué diferencia hay entre esto y un dermatólogo?",
@@ -34,7 +34,7 @@ const QUESTIONS = [
   },
   {
     q: "¿La consulta de asesoramiento tiene algún coste?",
-    a: "No. La primera consulta de asesoramiento es completamente gratuita. Un especialista revisa tus resultados contigo, responde dudas y te ayuda a priorizar. Sin agenda oculta y sin obligación de comprar nada.",
+    a: "La primera sesión de asesoramiento por WhatsApp o videollamada no tiene coste. Un especialista revisa tus resultados contigo y te ayuda a priorizar. Sin agenda oculta, sin obligación de comprar nada.",
   },
 ]
 

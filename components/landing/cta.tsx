@@ -104,7 +104,7 @@ export function CTA() {
 
       <div className="container" style={{ position: "relative", zIndex: 2 }}>
         <div className="cta-anim" style={{ marginBottom: 24, opacity: 0 }}>
-          <span className="pill">Gratis · Sin tarjeta</span>
+          <span className="pill">Sin cuenta · Sin tarjeta</span>
         </div>
 
         <h2
@@ -158,7 +158,7 @@ export function CTA() {
             opacity: 0,
           }}
         >
-          +50.000 análisis realizados · Privacidad garantizada · Sin cuenta requerida
+          +50.000 análisis realizados · Procesamiento local · Sin datos personales
         </p>
       </div>
     </section>

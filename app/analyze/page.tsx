@@ -619,14 +619,49 @@ export default function AnalyzePage() {
     setStage("results")
   }
 
+  function getBiomarkerInsight(label: string, value: number): string {
+    switch (label) {
+      case "Hidratación":
+        if (value >= 75) return "Tu barrera cutánea retiene bien la humedad. Mantén tu hidratante actual."
+        if (value >= 55) return "Tu piel pierde agua más rápido de lo que la repone. Refuerza la hidratación."
+        return "Deshidratación crítica — tu piel está bajo estrés constante y eso amplifica todos los demás daños."
+      case "Inflamación":
+        if (value <= 20) return "Piel calmada, sin signos de estrés visible. Buen punto de partida."
+        if (value <= 35) return "Inflamación silenciosa activa. Se puede expresar como rojez, sensibilidad o poros dilatados."
+        return "Inflamación elevada — es el factor que amplifica el envejecimiento y daña la barrera cutánea."
+      case "Elasticidad":
+        if (value >= 75) return "Buen tono y firmeza. El colágeno está respondiendo bien a tu rutina actual."
+        if (value >= 55) return "Algo de laxitud en el contorno. El retinol puede estimular el colágeno de forma visible."
+        return "Pérdida notable de firmeza. Se necesita estimulación activa del colágeno para revertirlo."
+      case "Oxidación":
+        if (value <= 20) return "Daño por radicales libres bajo control. Tu piel está protegida del estrés ambiental."
+        if (value <= 35) return "Estrés oxidativo moderado — la vitamina C puede revertir este daño de forma clínica."
+        return "Daño oxidativo acumulado. Sin antioxidantes potentes, este daño escala rápidamente."
+      case "Melanina":
+        if (value >= 65) return "Alta concentración de pigmento activo. Hay riesgo de manchas visibles o hiperpigmentación."
+        if (value >= 40) return "Pigmentación dentro del rango normal para tu fototipo. Sin hiperpigmentación activa."
+        return "Índice de melanina bajo. Sin señales de hiperpigmentación activa detectable."
+      case "Textura":
+        if (value >= 75) return "Superficie cutánea uniforme. Poros bien regulados y reflejo de luz consistente."
+        if (value >= 55) return "Textura algo irregular, posiblemente por deshidratación o acumulación de células muertas."
+        return "Textura notablemente irregular. La exfoliación química puede hacer una diferencia visible en semanas."
+      case "Luminosidad":
+        if (value >= 70) return "Tu piel refleja bien la luz. Luce descansada, nutrida y con buen tono."
+        if (value >= 50) return "Piel algo apagada. La vitamina C y una buena exfoliación pueden recuperar el brillo."
+        return "Piel opaca. El daño acumulado está afectando directamente la reflexión de la luz."
+      default:
+        return ""
+    }
+  }
+
   const biomarkers = scores ? [
-    { label: "Hidratación",  value: scores.hydration,    color: scores.hydration >= 70    ? "#7ecba1" : scores.hydration >= 50    ? "#d4af88" : "#e8a4b0", note: scores.hydration >= 75    ? "Excelente" : scores.hydration >= 55    ? "Mejorable" : "Baja",      alert: scores.hydration < 55 },
-    { label: "Inflamación",  value: scores.inflammation, color: scores.inflammation <= 20 ? "#7ecba1" : scores.inflammation <= 35 ? "#d4af88" : "#e8a4b0", note: scores.inflammation <= 20 ? "Controlada" : scores.inflammation <= 35 ? "Moderada"  : "Elevada",    alert: scores.inflammation > 35 },
-    { label: "Elasticidad",  value: scores.elasticity,   color: scores.elasticity >= 70   ? "#7ecba1" : scores.elasticity >= 55   ? "#d4af88" : "#e8a4b0", note: scores.elasticity >= 75   ? "Óptima"     : scores.elasticity >= 55   ? "Aceptable" : "Baja",      alert: scores.elasticity < 55 },
-    { label: "Oxidación",    value: scores.oxidation,    color: scores.oxidation <= 20    ? "#7ecba1" : scores.oxidation <= 35    ? "#d4af88" : "#e8a4b0", note: scores.oxidation <= 20    ? "Bajo"       : scores.oxidation <= 35    ? "Moderado"  : "Elevado",   alert: scores.oxidation > 35 },
-    { label: "Melanina",     value: scores.melanin,      color: "#d4af88",                                                                                  note: scores.melanin >= 65      ? "Alta"       : scores.melanin >= 40      ? "Media"     : "Baja",      alert: scores.melanin > 65 },
-    { label: "Textura",      value: scores.texture,      color: scores.texture >= 70      ? "#7ecba1" : scores.texture >= 55      ? "#d4af88" : "#e8a4b0", note: scores.texture >= 75      ? "Fina"       : scores.texture >= 55      ? "Normal"    : "Irregular", alert: scores.texture < 55 },
-    { label: "Luminosidad",  value: scores.luminosity,   color: scores.luminosity >= 65   ? "#7ecba1" : scores.luminosity >= 50   ? "#d4af88" : "#e8a4b0", note: scores.luminosity >= 70   ? "Radiante"   : scores.luminosity >= 50   ? "Normal"    : "Opaca",     alert: scores.luminosity < 50 },
+    { label: "Hidratación",  value: scores.hydration,    color: scores.hydration >= 70    ? "#7ecba1" : scores.hydration >= 50    ? "#d4af88" : "#e8a4b0", note: scores.hydration >= 75    ? "Excelente" : scores.hydration >= 55    ? "Mejorable" : "Baja",      alert: scores.hydration < 55,    insight: getBiomarkerInsight("Hidratación",  scores.hydration) },
+    { label: "Inflamación",  value: scores.inflammation, color: scores.inflammation <= 20 ? "#7ecba1" : scores.inflammation <= 35 ? "#d4af88" : "#e8a4b0", note: scores.inflammation <= 20 ? "Controlada" : scores.inflammation <= 35 ? "Moderada"  : "Elevada",    alert: scores.inflammation > 35, insight: getBiomarkerInsight("Inflamación",  scores.inflammation) },
+    { label: "Elasticidad",  value: scores.elasticity,   color: scores.elasticity >= 70   ? "#7ecba1" : scores.elasticity >= 55   ? "#d4af88" : "#e8a4b0", note: scores.elasticity >= 75   ? "Óptima"     : scores.elasticity >= 55   ? "Aceptable" : "Baja",      alert: scores.elasticity < 55,   insight: getBiomarkerInsight("Elasticidad",  scores.elasticity) },
+    { label: "Oxidación",    value: scores.oxidation,    color: scores.oxidation <= 20    ? "#7ecba1" : scores.oxidation <= 35    ? "#d4af88" : "#e8a4b0", note: scores.oxidation <= 20    ? "Bajo"       : scores.oxidation <= 35    ? "Moderado"  : "Elevado",   alert: scores.oxidation > 35,    insight: getBiomarkerInsight("Oxidación",    scores.oxidation) },
+    { label: "Melanina",     value: scores.melanin,      color: "#d4af88",                                                                                  note: scores.melanin >= 65      ? "Alta"       : scores.melanin >= 40      ? "Media"     : "Baja",      alert: scores.melanin > 65,      insight: getBiomarkerInsight("Melanina",     scores.melanin) },
+    { label: "Textura",      value: scores.texture,      color: scores.texture >= 70      ? "#7ecba1" : scores.texture >= 55      ? "#d4af88" : "#e8a4b0", note: scores.texture >= 75      ? "Fina"       : scores.texture >= 55      ? "Normal"    : "Irregular", alert: scores.texture < 55,      insight: getBiomarkerInsight("Textura",      scores.texture) },
+    { label: "Luminosidad",  value: scores.luminosity,   color: scores.luminosity >= 65   ? "#7ecba1" : scores.luminosity >= 50   ? "#d4af88" : "#e8a4b0", note: scores.luminosity >= 70   ? "Radiante"   : scores.luminosity >= 50   ? "Normal"    : "Opaca",     alert: scores.luminosity < 50,   insight: getBiomarkerInsight("Luminosidad",  scores.luminosity) },
   ] : []
 
   const percentile = scores ? Math.round(100 - scores.overall * 0.82) : 18
@@ -905,22 +940,25 @@ export default function AnalyzePage() {
               {/* Biomarkers card */}
               <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px 28px 24px" }}>
                 <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>Biomarcadores · Medición por zona</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
                   {biomarkers.map(b => (
                     <div key={b.label}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 13, color: "rgba(245,237,232,0.65)" }}>{b.label}</span>
+                          <span style={{ fontSize: 13, color: "rgba(245,237,232,0.7)", fontWeight: 500 }}>{b.label}</span>
                           {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>ATENCIÓN</span>}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 9, color: "rgba(245,237,232,0.28)", letterSpacing: "0.06em" }}>{b.note}</span>
+                          <span style={{ fontSize: 9, color: "rgba(245,237,232,0.28)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{b.note}</span>
                           <span style={{ fontSize: 13, fontWeight: 700, color: b.color, minWidth: 36, textAlign: "right" }}>{b.value}%</span>
                         </div>
                       </div>
-                      <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1, overflow: "hidden" }}>
+                      <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1, overflow: "hidden", marginBottom: 6 }}>
                         <div style={{ height: "100%", width: `${b.value}%`, background: b.color, borderRadius: 1 }} />
                       </div>
+                      <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.36)", lineHeight: 1.55, paddingLeft: 0 }}>
+                        {b.insight}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -930,13 +968,13 @@ export default function AnalyzePage() {
             {/* WhatsApp CTA */}
             <div style={{ background: "linear-gradient(135deg,rgba(232,164,176,0.07) 0%,rgba(212,175,136,0.04) 100%)", border: "1px solid rgba(232,164,176,0.14)", borderRadius: 18, padding: "26px 28px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
               <div>
-                <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 7 }}>Gratis · Sin compromiso</p>
+                <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 7 }}>Sin compromiso</p>
                 <h3 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(16px,2vw,21px)", fontWeight: 400, letterSpacing: "-0.02em", marginBottom: 5, lineHeight: 1.25 }}>¿Quieres que analicemos tus resultados juntos?</h3>
                 <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.42)", lineHeight: 1.6 }}>20 minutos con un especialista. Te explicamos cada número y qué hacer exactamente.</p>
               </div>
               <a href={`https://wa.me/TUTELEFONO?text=${encodeURIComponent(`Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100.`)}`} target="_blank" rel="noopener noreferrer"
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#e8a4b0 0%,#c97e8e 100%)", color: "#fff", borderRadius: 12, padding: "13px 24px", fontSize: 13, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 6px 20px rgba(232,164,176,0.28)", flexShrink: 0 }}>
-                Agendar gratis
+                Agendar consulta
               </a>
             </div>
 

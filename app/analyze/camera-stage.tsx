@@ -481,16 +481,27 @@ async function getVideoLandmarker(): Promise<VideoLandmarker> {
     const resolver = await vision.FilesetResolver.forVisionTasks(
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
     )
-    _mpVideoLandmarker = await vision.FaceLandmarker.createFromOptions(resolver, {
-      baseOptions: {
-        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-        delegate: "GPU",
-      },
-      runningMode: "VIDEO",
-      numFaces: 1,
-    })
-    return _mpVideoLandmarker!
+    const modelAssetPath = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+
+    // Try GPU first, fall back to CPU (some browsers/devices don't support GPU delegate)
+    for (const delegate of ["GPU", "CPU"] as const) {
+      try {
+        _mpVideoLandmarker = await vision.FaceLandmarker.createFromOptions(resolver, {
+          baseOptions: { modelAssetPath, delegate },
+          runningMode: "VIDEO",
+          numFaces: 1,
+        })
+        return _mpVideoLandmarker!
+      } catch {
+        if (delegate === "CPU") throw new Error("MediaPipe failed on GPU and CPU")
+        // else try CPU next
+      }
+    }
+    throw new Error("unreachable")
   })()
+
+  // Reset promise on failure so retry works
+  _mpVideoPromise.catch(() => { _mpVideoPromise = null })
 
   return _mpVideoPromise
 }
@@ -804,7 +815,17 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
           </div>
         )}
         {(mpStatus === "error" || camError) && (
-          <span style={{ fontSize: 12, color: "#e8a4b0" }}>{camError || "Error al cargar el sistema de análisis"}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 12, color: "#e8a4b0" }}>{camError || "Error al cargar detección"}</span>
+            {mpStatus === "error" && !camError && (
+              <button
+                onClick={() => { _mpVideoPromise = null; setMpStatus("loading"); getVideoLandmarker().then(() => setMpStatus("ready")).catch(() => setMpStatus("error")) }}
+                style={{ fontSize: 11, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.25)", borderRadius: 8, padding: "3px 10px", cursor: "pointer" }}
+              >
+                Reintentar
+              </button>
+            )}
+          </div>
         )}
       </div>
 

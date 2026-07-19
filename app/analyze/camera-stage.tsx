@@ -392,26 +392,34 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
         updateGuidance("Centra tu rostro en el óvalo", "Mantén la cámara estable", "neutral")
 
         if (now - phaseStartRef.current > STABILIZE_MS) {
-          // Brightness check on oval center
-          const { cx, cy } = ovalParams(W, H)
+          // Brightness check — sample the entire oval region, not just center
+          const { cx, cy, rx, ry } = ovalParams(W, H)
           const tmpC = document.createElement("canvas")
-          tmpC.width = 80; tmpC.height = 80
+          tmpC.width = 120; tmpC.height = 160
           const tc = tmpC.getContext("2d")!
-          // Sample from center of video mapped to oval center
           const sx = (video.videoWidth || 640) / W
           const sy = (video.videoHeight || 480) / H
-          const vx = cx * sx, vy = cy * sy
-          tc.drawImage(video, vx - 40, vy - 40, 80, 80, 0, 0, 80, 80)
-          const pd = tc.getImageData(0, 0, 80, 80).data
+          // Sample a larger area covering the face oval
+          const vx = (cx - rx * 0.6) * sx, vy = (cy - ry * 0.5) * sy
+          const vw = rx * 1.2 * sx, vh = ry * 1.0 * sy
+          tc.drawImage(video, vx, vy, vw, vh, 0, 0, 120, 160)
+          const pd = tc.getImageData(0, 0, 120, 160).data
           let sum = 0
           for (let i = 0; i < pd.length; i += 4)
             sum += 0.299 * pd[i] + 0.587 * pd[i+1] + 0.114 * pd[i+2]
-          const avgLum = sum / (80 * 80)
+          const avgLum = sum / (120 * 160)
 
-          if (avgLum < 35) {
+          // Needs meaningful light: at least lum 65/255 (~25% brightness)
+          // Also reject overexposed (> 230) as blown out
+          if (avgLum < 65) {
             updateGuidance("Necesitas más luz", "Busca una ventana o enciende una lámpara", "warning")
             drawOval(ctx, W, H, "warning", 0)
-            // reset timer so it keeps checking
+            phaseStartRef.current = now - 1200
+            return
+          }
+          if (avgLum > 230) {
+            updateGuidance("Demasiada luz directa", "Aléjate de la fuente de luz", "warning")
+            drawOval(ctx, W, H, "warning", 0)
             phaseStartRef.current = now - 1200
             return
           }
@@ -434,6 +442,26 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
         const elapsed   = now - countdownStart
         const remaining = Math.max(0, COUNTDOWN_MS - elapsed)
         const secLeft   = Math.ceil(remaining / 1000)
+
+        // Brightness sanity check every 18 frames during countdown
+        if (frameRef.current % 18 === 0 && !capturedRef.current) {
+          const { cx: bCx, cy: bCy, rx: bRx, ry: bRy } = ovalParams(W, H)
+          const bC = document.createElement("canvas"); bC.width = 60; bC.height = 80
+          const bc = bC.getContext("2d")!
+          const bSx = (video.videoWidth || 640) / W, bSy = (video.videoHeight || 480) / H
+          bc.drawImage(video, (bCx - bRx * 0.5) * bSx, (bCy - bRy * 0.4) * bSy, bRx * 1.0 * bSx, bRy * 0.8 * bSy, 0, 0, 60, 80)
+          const bd = bc.getImageData(0, 0, 60, 80).data
+          let bSum = 0
+          for (let i = 0; i < bd.length; i += 4) bSum += 0.299 * bd[i] + 0.587 * bd[i+1] + 0.114 * bd[i+2]
+          if (bSum / (60 * 80) < 55) {
+            // Too dark mid-scan → restart stabilizing
+            capturedRef.current = false
+            accumRef.current = { forehead: freshAccum(), leftCheek: freshAccum(), rightCheek: freshAccum(), nose: freshAccum(), chin: freshAccum() }
+            phaseStartRef.current = Date.now()
+            setPhase("stabilizing")
+            return
+          }
+        }
 
         // Sample pixels every 6 frames
         if (frameRef.current % 6 === 0 && !capturedRef.current) {

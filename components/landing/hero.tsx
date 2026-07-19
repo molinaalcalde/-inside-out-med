@@ -56,7 +56,11 @@ export function Hero() {
   }, [])
 
   const handleStart = () => {
-    const el = document.querySelector("#face-scroll")
+    window.location.href = "/analyze"
+  }
+
+  const handleHowItWorks = () => {
+    const el = document.querySelector("#how")
     const lenis = (window as typeof window & { lenis?: { scrollTo: (t: Element, o: object) => void } }).lenis
     if (el && lenis) lenis.scrollTo(el, { duration: 1.6 })
     else el?.scrollIntoView({ behavior: "smooth" })
@@ -201,7 +205,7 @@ export function Hero() {
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          <button className="btn-ghost">Ver cómo funciona</button>
+          <button className="btn-ghost" onClick={handleHowItWorks}>Ver cómo funciona</button>
         </div>
 
         {/* Social proof */}

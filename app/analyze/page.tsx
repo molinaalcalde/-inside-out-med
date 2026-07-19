@@ -1,28 +1,9 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import { CameraStage } from "./camera-stage"
+import { CameraStage, type Scores } from "./camera-stage"
 
 type Stage = "choose" | "upload-guide" | "camera" | "scanning" | "profile" | "results" | "error"
-
-interface Scores {
-  overall: number
-  hydration: number
-  inflammation: number
-  elasticity: number
-  melanin: number
-  oxidation: number
-  texture: number
-  luminosity: number
-  ageApparent: number
-  zoneScores: {
-    forehead: number
-    leftCheek: number
-    rightCheek: number
-    nose: number
-    chin: number
-  }
-}
 
 interface UserProfile {
   age: string
@@ -32,7 +13,7 @@ interface UserProfile {
   phone: string
 }
 
-// ── MediaPipe landmark indices per zone ──────────────────────────
+// ── MediaPipe landmark indices per zone (for upload path) ────────
 const ZONES = {
   forehead:   [10, 67, 69, 104, 108, 109, 151, 337, 338, 297, 299, 333],
   leftCheek:  [116, 111, 117, 118, 119, 120, 121, 128, 36, 205, 207],
@@ -106,7 +87,7 @@ const QUIZ_STEPS = [
   },
 ]
 
-// ── Load MediaPipe IMAGE mode from CDN ────────────────────────────
+// ── Load MediaPipe IMAGE mode from CDN (for upload path only) ─────
 let _landmarkerPromise: Promise<unknown> | null = null
 
 async function getMediaPipeLandmarker() {
@@ -145,7 +126,7 @@ async function getMediaPipeLandmarker() {
   return _landmarkerPromise
 }
 
-// ── Pixel analysis on a region ───────────────────────────────────
+// ── Pixel analysis on a region (for upload path) ─────────────────
 function analyzeRegion(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
   if (w < 4 || h < 4) return null
   const { data } = ctx.getImageData(x, y, w, h)
@@ -189,11 +170,8 @@ function zoneBBox(landmarks: Array<{ x: number; y: number }>, indices: number[],
 
 function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)) }
 
-// ── Main analysis — accepts optional pre-computed landmarks from CameraStage
-async function runAnalysis(
-  dataUrl: string,
-  preLandmarks?: Array<{ x: number; y: number; z: number }> | null
-): Promise<Scores | null> {
+// ── Upload analysis — IMAGE mode MediaPipe (no coordinate issues) ─
+async function runUploadAnalysis(dataUrl: string): Promise<Scores | null> {
   const img = await new Promise<HTMLImageElement>((res, rej) => {
     const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl
   })
@@ -215,23 +193,15 @@ async function runAnalysis(
 
   let landmarks: Array<{ x: number; y: number; z: number }>
 
-  if (preLandmarks && preLandmarks.length > 0) {
-    // Landmarks from CameraStage VIDEO mode are in the raw (un-mirrored) video space.
-    // The captured image is mirrored back (ctx.scale(-1,1) in doCapture).
-    // So we flip x to align landmarks with the captured image.
-    landmarks = preLandmarks.map(lm => ({ ...lm, x: 1 - lm.x }))
-  } else {
-    // Fall back to IMAGE mode detection
-    try {
-      const landmarker = await getMediaPipeLandmarker() as {
-        detect: (el: HTMLCanvasElement) => { faceLandmarks: Array<Array<{ x: number; y: number; z: number }>> }
-      }
-      const result = landmarker.detect(canvas)
-      if (!result.faceLandmarks?.length) return null
-      landmarks = result.faceLandmarks[0]
-    } catch {
-      return null
+  try {
+    const landmarker = await getMediaPipeLandmarker() as {
+      detect: (el: HTMLCanvasElement) => { faceLandmarks: Array<Array<{ x: number; y: number; z: number }>> }
     }
+    const result = landmarker.detect(canvas)
+    if (!result.faceLandmarks?.length) return null
+    landmarks = result.faceLandmarks[0]
+  } catch {
+    return null
   }
 
   // Pixel analysis per zone
@@ -286,7 +256,6 @@ function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => v
   const [animating, setAnimating] = useState(false)
 
   const current = QUIZ_STEPS[step]
-  const progress = step / (QUIZ_STEPS.length - 1)
 
   const advance = (update: Partial<UserProfile>) => {
     const next = { ...data, ...update }
@@ -524,22 +493,45 @@ export default function AnalyzePage() {
   const [scanProgress, setScanProgress] = useState(0)
   const [activeZoneIdx, setActiveZoneIdx] = useState(-1)
   const [completedZones, setCompletedZones] = useState<number[]>([])
-  const [cameraError, setCameraError] = useState<string | null>(null)
   const [qualityError, setQualityError] = useState<string | null>(null)
   const [scores, setScores]           = useState<Scores | null>(null)
-  const [mpLoading, setMpLoading]     = useState(false)
 
   const fileRef        = useRef<HTMLInputElement>(null)
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const preLandmarksRef = useRef<Array<{ x: number; y: number; z: number }> | null>(null)
 
-  // Pre-warm IMAGE mode MediaPipe in background (for uploads)
-  useEffect(() => {
-    setMpLoading(true)
-    getMediaPipeLandmarker().finally(() => setMpLoading(false))
+  // ── Camera path: scores arrive pre-computed ────────────────────
+  const beginScanWithScores = useCallback((dataUrl: string, preScores: Scores) => {
+    setStage("scanning")
+    setScanProgress(0)
+    setActiveZoneIdx(-1)
+    setCompletedZones([])
+    let progress = 0
+
+    scanIntervalRef.current = setInterval(() => {
+      progress += Math.random() * 1.4 + 0.4
+      if (progress >= 100) {
+        progress = 100
+        clearInterval(scanIntervalRef.current!)
+        setTimeout(() => {
+          setScores(preScores)
+          setStage("profile")
+        }, 500)
+      }
+      setScanProgress(Math.min(progress, 100))
+
+      const zoneIdx = Math.min(Math.floor((Math.min(progress, 100) / 100) * SCAN_ZONES_ANIM.length), SCAN_ZONES_ANIM.length - 1)
+      setActiveZoneIdx(prev => {
+        if (zoneIdx > prev) {
+          setCompletedZones(c => prev >= 0 ? [...c, prev] : c)
+          return zoneIdx
+        }
+        return prev
+      })
+    }, 80)
   }, [])
 
-  const beginScan = useCallback((dataUrl: string) => {
+  // ── Upload path: run analysis after capture ────────────────────
+  const beginScanWithUpload = useCallback((dataUrl: string) => {
     setStage("scanning")
     setScanProgress(0)
     setActiveZoneIdx(-1)
@@ -547,7 +539,7 @@ export default function AnalyzePage() {
     let progress = 0
     let analysisResult: Scores | null | undefined = undefined
 
-    runAnalysis(dataUrl, preLandmarksRef.current).then(r => { analysisResult = r }).catch(() => { analysisResult = null })
+    runUploadAnalysis(dataUrl).then(r => { analysisResult = r }).catch(() => { analysisResult = null })
 
     scanIntervalRef.current = setInterval(() => {
       progress += Math.random() * 1.4 + 0.4
@@ -561,14 +553,13 @@ export default function AnalyzePage() {
             setStage("error")
           } else {
             setScores(analysisResult)
-            setStage("profile")  // → gamified quiz before results
+            setStage("profile")
           }
         }
         setTimeout(finish, 500)
       }
       setScanProgress(Math.min(progress, 100))
 
-      // Advance active zone
       const zoneIdx = Math.min(Math.floor((Math.min(progress, 100) / 100) * SCAN_ZONES_ANIM.length), SCAN_ZONES_ANIM.length - 1)
       setActiveZoneIdx(prev => {
         if (zoneIdx > prev) {
@@ -580,35 +571,36 @@ export default function AnalyzePage() {
     }, 80)
   }, [])
 
-  const handleCameraCapture = useCallback((dataUrl: string, landmarks: Array<{ x: number; y: number; z: number }> | null) => {
-    preLandmarksRef.current = landmarks
+  const handleCameraCapture = useCallback((dataUrl: string, preScores: Scores) => {
     setCapturedUrl(dataUrl)
-    beginScan(dataUrl)
-  }, [beginScan])
+    beginScanWithScores(dataUrl, preScores)
+  }, [beginScanWithScores])
+
+  const handleScanError = useCallback((reason: string) => {
+    setQualityError(reason)
+    setStage("error")
+  }, [])
 
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) return
-    preLandmarksRef.current = null  // No pre-computed landmarks for uploads
     const reader = new FileReader()
     reader.onload = e => {
       const url = e.target?.result as string
       setCapturedUrl(url)
-      beginScan(url)
+      beginScanWithUpload(url)
     }
     reader.readAsDataURL(file)
-  }, [beginScan])
+  }, [beginScanWithUpload])
 
   useEffect(() => {
     return () => { if (scanIntervalRef.current) clearInterval(scanIntervalRef.current) }
   }, [])
 
   const reset = () => {
-    preLandmarksRef.current = null
     setCapturedUrl(null)
     setScanProgress(0)
     setActiveZoneIdx(-1)
     setCompletedZones([])
-    setCameraError(null)
     setQualityError(null)
     setScores(null)
     setStage("choose")
@@ -649,7 +641,6 @@ export default function AnalyzePage() {
           <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 500, color: "#f5ede8" }}>InsideOutMed</span>
         </a>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {mpLoading && <span style={{ fontSize: 9, color: "rgba(245,237,232,0.25)", letterSpacing: "0.1em" }}>Cargando motor…</span>}
           <span style={{ fontSize: 10, color: "rgba(245,237,232,0.28)", letterSpacing: "0.14em", textTransform: "uppercase" }}>Análisis Facial</span>
         </div>
       </nav>
@@ -736,6 +727,7 @@ export default function AnalyzePage() {
           <CameraStage
             onCapture={handleCameraCapture}
             onCancel={reset}
+            onScanError={handleScanError}
           />
         )}
 

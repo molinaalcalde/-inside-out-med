@@ -2,6 +2,140 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 
+// ── Shared Scores type (exported for page.tsx) ─────────────────────
+export interface Scores {
+  overall: number
+  hydration: number
+  inflammation: number
+  elasticity: number
+  melanin: number
+  oxidation: number
+  texture: number
+  luminosity: number
+  ageApparent: number
+  zoneScores: {
+    forehead: number
+    leftCheek: number
+    rightCheek: number
+    nose: number
+    chin: number
+  }
+}
+
+// ── Analysis zone landmark indices ─────────────────────────────────
+const ANALYSIS_ZONES = {
+  forehead:   [10, 67, 69, 104, 108, 109, 151, 337, 338, 297, 299, 333],
+  leftCheek:  [116, 111, 117, 118, 119, 120, 121, 128, 36, 205, 207],
+  rightCheek: [345, 340, 346, 347, 348, 349, 350, 357, 266, 425, 427],
+  nose:       [1, 2, 4, 5, 6, 19, 20, 94, 168, 195, 197],
+  chin:       [152, 175, 176, 177, 148, 149, 150, 136, 365, 379, 394, 395, 396, 397, 400],
+} as const
+
+interface ZoneMetrics {
+  avgLum: number; avgR: number; avgG: number; avgB: number
+  redPixels: number; total: number; localContrast: number; stdDev: number
+}
+
+interface ZoneAccum {
+  sumLum: number; sumR: number; sumG: number; sumB: number
+  sumContrast: number; sumStdDev: number; redPix: number; totalPix: number
+  n: number
+}
+
+function freshAccum(): ZoneAccum {
+  return { sumLum: 0, sumR: 0, sumG: 0, sumB: 0, sumContrast: 0, sumStdDev: 0, redPix: 0, totalPix: 0, n: 0 }
+}
+
+function sampleZone(
+  ctx: CanvasRenderingContext2D,
+  lm: Array<{ x: number; y: number }>,
+  indices: readonly number[],
+  W: number, H: number
+): ZoneMetrics | null {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  for (const idx of indices) {
+    const p = lm[idx]; if (!p) continue
+    const px = p.x * W, py = p.y * H
+    if (px < minX) minX = px; if (px > maxX) maxX = px
+    if (py < minY) minY = py; if (py > maxY) maxY = py
+  }
+  if (!isFinite(minX)) return null
+  const pad = 6
+  const x = Math.max(0, Math.floor(minX - pad))
+  const y = Math.max(0, Math.floor(minY - pad))
+  const w = Math.min(W - x, Math.ceil(maxX - minX + pad * 2))
+  const h = Math.min(H - y, Math.ceil(maxY - minY + pad * 2))
+  if (w < 4 || h < 4) return null
+  const { data } = ctx.getImageData(x, y, w, h)
+  const total = w * h
+  let sumLum = 0, sumR = 0, sumG = 0, sumB = 0, redPixels = 0
+  const lums: number[] = []
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i + 1], b = data[i + 2]
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b
+    sumLum += lum; sumR += r; sumG += g; sumB += b; lums.push(lum)
+    if (r > g + 16 && r > b + 16 && r > 70) redPixels++
+  }
+  const avgLum = sumLum / total
+  let localContrast = 0
+  for (let row = 1; row < h - 1; row++) {
+    for (let col = 1; col < w - 1; col++) {
+      const idx = row * w + col
+      const nb = (lums[(row-1)*w+col] + lums[(row+1)*w+col] + lums[row*w+col-1] + lums[row*w+col+1]) / 4
+      localContrast += Math.abs(lums[idx] - nb)
+    }
+  }
+  localContrast /= total
+  let variance = 0
+  for (const v of lums) variance += (v - avgLum) ** 2
+  return { avgLum, avgR: sumR/total, avgG: sumG/total, avgB: sumB/total, redPixels, total, localContrast, stdDev: Math.sqrt(variance/total) }
+}
+
+function accumulate(a: ZoneAccum, m: ZoneMetrics) {
+  a.sumLum += m.avgLum; a.sumR += m.avgR; a.sumG += m.avgG; a.sumB += m.avgB
+  a.sumContrast += m.localContrast; a.sumStdDev += m.stdDev
+  a.redPix += m.redPixels; a.totalPix += m.total; a.n++
+}
+
+function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)) }
+
+function computeScores(acc: Record<string, ZoneAccum>): Scores | null {
+  const { forehead, leftCheek, rightCheek, nose, chin } = acc
+  if (!forehead.n || !leftCheek.n || !rightCheek.n || !nose.n || !chin.n) return null
+
+  const avg = (a: ZoneAccum, f: 'sumLum'|'sumR'|'sumG'|'sumB'|'sumContrast'|'sumStdDev') => a[f] / a.n
+
+  const avgLumSkin  = (avg(forehead,'sumLum')  + avg(leftCheek,'sumLum')  + avg(rightCheek,'sumLum')  + avg(nose,'sumLum')  + avg(chin,'sumLum'))  / 5
+  const avgRSkin    = (avg(forehead,'sumR')     + avg(leftCheek,'sumR')    + avg(rightCheek,'sumR')    + avg(nose,'sumR')    + avg(chin,'sumR'))    / 5
+  const avgGSkin    = (avg(forehead,'sumG')     + avg(leftCheek,'sumG')    + avg(rightCheek,'sumG')    + avg(nose,'sumG')    + avg(chin,'sumG'))    / 5
+  const avgBSkin    = (avg(forehead,'sumB')     + avg(leftCheek,'sumB')    + avg(rightCheek,'sumB')    + avg(nose,'sumB')    + avg(chin,'sumB'))    / 5
+  const avgContrast = (avg(forehead,'sumContrast') + avg(leftCheek,'sumContrast') + avg(rightCheek,'sumContrast')) / 3
+  const avgStdDev   = (avg(forehead,'sumStdDev')   + avg(leftCheek,'sumStdDev')   + avg(rightCheek,'sumStdDev'))   / 3
+  const redRatio    = (forehead.redPix + leftCheek.redPix + rightCheek.redPix + nose.redPix + chin.redPix) /
+                      (forehead.totalPix + leftCheek.totalPix + rightCheek.totalPix + nose.totalPix + chin.totalPix)
+
+  const hydration    = clamp(Math.round((avgLumSkin/210)*100 - avgStdDev*0.1 + (Math.random()-0.5)*5), 40, 98)
+  const inflammation = clamp(Math.round(redRatio*350 + (avgRSkin-avgGSkin)*0.15 + (Math.random()-0.5)*6), 5, 62)
+  const elasticity   = clamp(Math.round(100 - avgContrast*1.6 - avgStdDev*0.12 + (Math.random()-0.5)*6), 40, 97)
+  const melanin      = clamp(Math.round(((avgRSkin-avgGSkin)/(avgGSkin+1))*110 + 35 + (Math.random()-0.5)*8), 25, 82)
+  const oxidation    = clamp(Math.round((avgRSkin-avgBSkin)*0.2 + (40-avgLumSkin*0.1) + (Math.random()-0.5)*6), 5, 60)
+  const texture      = clamp(Math.round(100 - avg(forehead,'sumContrast')*2.0 + (Math.random()-0.5)*5), 35, 96)
+  const luminosity   = clamp(Math.round((avgLumSkin/195)*100 + (Math.random()-0.5)*4), 38, 96)
+  const overall      = clamp(Math.round(hydration*0.20 + (100-inflammation)*0.20 + elasticity*0.18 + (100-oxidation)*0.14 + texture*0.14 + luminosity*0.14), 35, 96)
+
+  const zoneScore = (a: ZoneAccum) =>
+    Math.round((clamp(Math.round(avg(a,'sumLum')/200*100), 20, 100) + clamp(Math.round(100-(a.redPix/a.totalPix)*400), 30, 100)) / 2)
+
+  return {
+    overall, hydration, inflammation, elasticity, melanin, oxidation, texture, luminosity,
+    ageApparent: clamp(26 + Math.round((100-overall)*0.2 + (100-elasticity)*0.1), 17, 60),
+    zoneScores: {
+      forehead: zoneScore(forehead), leftCheek: zoneScore(leftCheek),
+      rightCheek: zoneScore(rightCheek), nose: zoneScore(nose), chin: zoneScore(chin),
+    }
+  }
+}
+
 // ── MediaPipe landmark indices ─────────────────────────────────
 const FACE_OVAL   = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109]
 const LEFT_EYE    = [33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246]
@@ -363,11 +497,12 @@ async function getVideoLandmarker(): Promise<VideoLandmarker> {
 
 // ── Props ─────────────────────────────────────────────────────────
 interface CameraStageProps {
-  onCapture: (dataUrl: string, landmarks: Array<{x:number;y:number;z:number}> | null) => void
+  onCapture: (dataUrl: string, scores: Scores) => void
   onCancel: () => void
+  onScanError?: (reason: string) => void
 }
 
-export function CameraStage({ onCapture, onCancel }: CameraStageProps) {
+export function CameraStage({ onCapture, onCancel, onScanError }: CameraStageProps) {
   const videoRef    = useRef<HTMLVideoElement>(null)
   const canvasRef   = useRef<HTMLCanvasElement>(null)
   const streamRef   = useRef<MediaStream | null>(null)
@@ -377,6 +512,14 @@ export function CameraStage({ onCapture, onCancel }: CameraStageProps) {
   const lastLmRef   = useRef<Array<{x:number;y:number;z:number}> | null>(null)
   const pulseRef    = useRef(0)
   const capturedRef = useRef(false)
+
+  // Live analysis refs
+  const offscreenRef   = useRef<HTMLCanvasElement | null>(null)
+  const accumRef       = useRef<Record<string, ZoneAccum>>({
+    forehead: freshAccum(), leftCheek: freshAccum(), rightCheek: freshAccum(),
+    nose: freshAccum(), chin: freshAccum(),
+  })
+  const sampleFrameRef = useRef(0)
 
   const [mpStatus,   setMpStatus]   = useState<"loading" | "ready" | "error">("loading")
   const [guidance,   setGuidance]   = useState({ msg: "Iniciando cámara…", sub: "", type: "neutral" as const })
@@ -529,6 +672,12 @@ export function CameraStage({ onCapture, onCancel }: CameraStageProps) {
         countdownActive = true
         countdownStart  = now
         lastZoneChange  = now
+        // Reset accumulators at countdown start
+        accumRef.current = {
+          forehead: freshAccum(), leftCheek: freshAccum(), rightCheek: freshAccum(),
+          nose: freshAccum(), chin: freshAccum(),
+        }
+        sampleFrameRef.current = 0
       }
 
       const elapsed      = now - countdownStart
@@ -536,6 +685,24 @@ export function CameraStage({ onCapture, onCancel }: CameraStageProps) {
       const remaining    = Math.max(0, totalMs - elapsed)
       const secondsLeft  = Math.ceil(remaining / 1000)
       const zoneProgress = elapsed / totalMs  // 0-1
+
+      // ── Sample pixels every 6 frames for live analysis ─────
+      if (frameRef.current % 6 === 0 && lm) {
+        if (!offscreenRef.current) {
+          offscreenRef.current = document.createElement('canvas')
+        }
+        const off = offscreenRef.current
+        off.width  = video.videoWidth  || 640
+        off.height = video.videoHeight || 480
+        const oc = off.getContext('2d')!
+        oc.drawImage(video, 0, 0)  // RAW, no flip — landmarks are in raw video space
+
+        for (const [zoneName, indices] of Object.entries(ANALYSIS_ZONES)) {
+          const m = sampleZone(oc, lm, indices, off.width, off.height)
+          if (m) accumulate(accumRef.current[zoneName], m)
+        }
+        sampleFrameRef.current++
+      }
 
       // Progress through scan zones (5 zones over 3s)
       const zoneIdx = Math.min(Math.floor(zoneProgress * SCAN_ZONES.length), SCAN_ZONES.length - 1)
@@ -583,6 +750,11 @@ export function CameraStage({ onCapture, onCancel }: CameraStageProps) {
   const doCapture = useCallback(() => {
     const video = videoRef.current
     if (!video) return
+
+    // Compute scores from accumulated live samples
+    const scores = computeScores(accumRef.current)
+
+    // Capture mirrored image for display
     const canvas = document.createElement("canvas")
     canvas.width  = video.videoWidth  || 640
     canvas.height = video.videoHeight || 480
@@ -590,9 +762,16 @@ export function CameraStage({ onCapture, onCancel }: CameraStageProps) {
     ctx.scale(-1, 1)
     ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height)
     const url = canvas.toDataURL("image/jpeg", 0.92)
+
     streamRef.current?.getTracks().forEach(t => t.stop())
-    onCapture(url, lastLmRef.current)
-  }, [onCapture])
+
+    if (!scores) {
+      onScanError?.("No pudimos analizar tu piel. Asegúrate de tener buena luz y el rostro visible.")
+      return
+    }
+
+    onCapture(url, scores)
+  }, [onCapture, onScanError])
 
   const manualCapture = () => {
     if (capturedRef.current) return

@@ -22,15 +22,16 @@ export interface Scores {
   }
 }
 
-// ── Analysis zone landmark indices ─────────────────────────────────
-const ANALYSIS_ZONES = {
-  forehead:   [10, 67, 69, 104, 108, 109, 151, 337, 338, 297, 299, 333],
-  leftCheek:  [116, 111, 117, 118, 119, 120, 121, 128, 36, 205, 207],
-  rightCheek: [345, 340, 346, 347, 348, 349, 350, 357, 266, 425, 427],
-  nose:       [1, 2, 4, 5, 6, 19, 20, 94, 168, 195, 197],
-  chin:       [152, 175, 176, 177, 148, 149, 150, 136, 365, 379, 394, 395, 396, 397, 400],
+// ── Oval zone definitions (proportional to oval ellipse) ──────────
+const OVAL_ZONES = {
+  forehead:   { y1: -0.85, y2: -0.3,  x1: -0.5,  x2:  0.5  },
+  leftCheek:  { y1: -0.05, y2:  0.45, x1:  0.15, x2:  0.88 },
+  rightCheek: { y1: -0.05, y2:  0.45, x1: -0.88, x2: -0.15 },
+  nose:       { y1: -0.15, y2:  0.35, x1: -0.2,  x2:  0.2  },
+  chin:       { y1:  0.35, y2:  0.78, x1: -0.42, x2:  0.42 },
 } as const
 
+// ── Zone metrics & accumulator ────────────────────────────────────
 interface ZoneMetrics {
   avgLum: number; avgR: number; avgG: number; avgB: number
   redPixels: number; total: number; localContrast: number; stdDev: number
@@ -44,51 +45,6 @@ interface ZoneAccum {
 
 function freshAccum(): ZoneAccum {
   return { sumLum: 0, sumR: 0, sumG: 0, sumB: 0, sumContrast: 0, sumStdDev: 0, redPix: 0, totalPix: 0, n: 0 }
-}
-
-function sampleZone(
-  ctx: CanvasRenderingContext2D,
-  lm: Array<{ x: number; y: number }>,
-  indices: readonly number[],
-  W: number, H: number
-): ZoneMetrics | null {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-  for (const idx of indices) {
-    const p = lm[idx]; if (!p) continue
-    const px = p.x * W, py = p.y * H
-    if (px < minX) minX = px; if (px > maxX) maxX = px
-    if (py < minY) minY = py; if (py > maxY) maxY = py
-  }
-  if (!isFinite(minX)) return null
-  const pad = 6
-  const x = Math.max(0, Math.floor(minX - pad))
-  const y = Math.max(0, Math.floor(minY - pad))
-  const w = Math.min(W - x, Math.ceil(maxX - minX + pad * 2))
-  const h = Math.min(H - y, Math.ceil(maxY - minY + pad * 2))
-  if (w < 4 || h < 4) return null
-  const { data } = ctx.getImageData(x, y, w, h)
-  const total = w * h
-  let sumLum = 0, sumR = 0, sumG = 0, sumB = 0, redPixels = 0
-  const lums: number[] = []
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i], g = data[i + 1], b = data[i + 2]
-    const lum = 0.299 * r + 0.587 * g + 0.114 * b
-    sumLum += lum; sumR += r; sumG += g; sumB += b; lums.push(lum)
-    if (r > g + 16 && r > b + 16 && r > 70) redPixels++
-  }
-  const avgLum = sumLum / total
-  let localContrast = 0
-  for (let row = 1; row < h - 1; row++) {
-    for (let col = 1; col < w - 1; col++) {
-      const idx = row * w + col
-      const nb = (lums[(row-1)*w+col] + lums[(row+1)*w+col] + lums[row*w+col-1] + lums[row*w+col+1]) / 4
-      localContrast += Math.abs(lums[idx] - nb)
-    }
-  }
-  localContrast /= total
-  let variance = 0
-  for (const v of lums) variance += (v - avgLum) ** 2
-  return { avgLum, avgR: sumR/total, avgG: sumG/total, avgB: sumB/total, redPixels, total, localContrast, stdDev: Math.sqrt(variance/total) }
 }
 
 function accumulate(a: ZoneAccum, m: ZoneMetrics) {
@@ -136,59 +92,40 @@ function computeScores(acc: Record<string, ZoneAccum>): Scores | null {
   }
 }
 
-// ── MediaPipe landmark indices ─────────────────────────────────
-const FACE_OVAL   = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109]
-const LEFT_EYE    = [33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246]
-const RIGHT_EYE   = [362,382,381,380,374,373,390,249,263,466,388,387,386,385,384,398]
-const NOSE_BRIDGE = [1,2,4,5,6,195,197,168,8,9,18,200,199,175]
-const LIPS        = [61,84,17,314,405,321,375,291,308,324,318,402,317,14,87,178,88,95]
-const LEFT_BROW   = [70,63,105,66,107,55,65,52,53,46]
-const RIGHT_BROW  = [300,293,334,296,336,285,295,282,283,276]
-
-// Scan zones in order (indices → label)
-const SCAN_ZONES = [
-  { label: "Frente",   indices: [10,109,67,103,54,21,162,127,234,93,132,58,172,136,150,149,176,148,152], color: "#e8a4b0" },
-  { label: "Ojos",     indices: [...LEFT_EYE, ...RIGHT_EYE, ...LEFT_BROW, ...RIGHT_BROW], color: "#d4af88" },
-  { label: "Nariz",    indices: NOSE_BRIDGE, color: "#7ecba1" },
-  { label: "Mejillas", indices: [234,93,132,58,172,136,150,149,152,379,378,400,377,397,365,288,361,323,454,356,389,251,284,332], color: "#e8a4b0" },
-  { label: "Boca",     indices: LIPS, color: "#7ecba1" },
-]
-
-interface FaceCheck {
-  ok: boolean
-  message: string
-  sub: string
-  type: "neutral" | "warning" | "success"
-  quality: number
-  dir: { up: boolean; down: boolean; left: boolean; right: boolean; closer: boolean; farther: boolean }
-}
-
-function checkFace(lm: Array<{ x: number; y: number; z: number }>): FaceCheck {
-  const nose     = lm[4]
-  const leftEye  = lm[33]
-  const rightEye = lm[263]
-  const noDir    = { up: false, down: false, left: false, right: false, closer: false, farther: false }
-
-  const eyeSpan = Math.abs(rightEye.x - leftEye.x)
-  if (eyeSpan < 0.17) return { ok: false, message: "Acércate un poco", sub: "Estás demasiado lejos", type: "warning", quality: 20, dir: { ...noDir, closer: true } }
-  if (eyeSpan > 0.52) return { ok: false, message: "Aléjate un poco",  sub: "Estás demasiado cerca", type: "warning", quality: 20, dir: { ...noDir, farther: true } }
-
-  if (nose.x < 0.35) return { ok: false, message: "Mueve a la derecha", sub: "Centra tu rostro", type: "warning", quality: 40, dir: { ...noDir, right: true } }
-  if (nose.x > 0.65) return { ok: false, message: "Mueve a la izquierda", sub: "Centra tu rostro", type: "warning", quality: 40, dir: { ...noDir, left: true } }
-  if (nose.y < 0.28) return { ok: false, message: "Baja el dispositivo", sub: "Tu frente no se ve",  type: "warning", quality: 40, dir: { ...noDir, down: true } }
-  if (nose.y > 0.68) return { ok: false, message: "Sube el dispositivo", sub: "Tu mentón no se ve",  type: "warning", quality: 40, dir: { ...noDir, up: true } }
-
-  const ls  = Math.abs(nose.x - leftEye.x)
-  const rs  = Math.abs(rightEye.x - nose.x)
-  const yaw = ls / (rs + 0.001)
-  if (yaw < 0.55 || yaw > 1.8) return { ok: false, message: "Mira a la cámara", sub: "Gira tu rostro al frente", type: "warning", quality: 30, dir: noDir }
-
-  const quality = Math.round(
-    Math.min(eyeSpan / 0.28, 1) * 40 +
-    Math.max(0, 1 - Math.abs(nose.x - 0.5) * 8) * 30 +
-    Math.max(0, 1 - Math.abs(yaw - 1) * 2) * 30
-  )
-  return { ok: true, message: "Perfecto · No te muevas", sub: "Analizando…", type: "success", quality: Math.min(100, quality), dir: noDir }
+// ── Pixel sampling from oval zone ─────────────────────────────────
+function sampleOvalZone(
+  ctx: CanvasRenderingContext2D,
+  vCx: number, vCy: number, vRx: number, vRy: number,
+  zone: { x1: number; x2: number; y1: number; y2: number }
+): ZoneMetrics | null {
+  const x = Math.max(0, Math.round(vCx + vRx * zone.x1))
+  const y = Math.max(0, Math.round(vCy + vRy * zone.y1))
+  const w = Math.round(vRx * (zone.x2 - zone.x1))
+  const h = Math.round(vRy * (zone.y2 - zone.y1))
+  if (w < 4 || h < 4) return null
+  const { data } = ctx.getImageData(x, y, w, h)
+  const total = w * h
+  let sumLum = 0, sumR = 0, sumG = 0, sumB = 0, redPixels = 0
+  const lums: number[] = []
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i + 1], b = data[i + 2]
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b
+    sumLum += lum; sumR += r; sumG += g; sumB += b; lums.push(lum)
+    if (r > g + 16 && r > b + 16 && r > 70) redPixels++
+  }
+  const avgLum = sumLum / total
+  let localContrast = 0
+  for (let row = 1; row < h - 1; row++) {
+    for (let col = 1; col < w - 1; col++) {
+      const idx = row * w + col
+      const nb = (lums[(row-1)*w+col] + lums[(row+1)*w+col] + lums[row*w+col-1] + lums[row*w+col+1]) / 4
+      localContrast += Math.abs(lums[idx] - nb)
+    }
+  }
+  localContrast /= total
+  let variance = 0
+  for (const v of lums) variance += (v - avgLum) ** 2
+  return { avgLum, avgR: sumR/total, avgG: sumG/total, avgB: sumB/total, redPixels, total, localContrast, stdDev: Math.sqrt(variance/total) }
 }
 
 // ── Canvas helpers ────────────────────────────────────────────────
@@ -300,136 +237,6 @@ function drawScanLine(
   ctx.restore()
 }
 
-// Zone highlight (regions light up as scanned)
-function drawZoneHighlight(
-  ctx: CanvasRenderingContext2D,
-  lm: Array<{ x: number; y: number }>,
-  W: number,
-  H: number,
-  zoneIdx: number,
-  progress: number  // 0-1
-) {
-  if (zoneIdx >= SCAN_ZONES.length) return
-  const zone = SCAN_ZONES[zoneIdx]
-
-  function pt(i: number) {
-    return { x: (1 - lm[i].x) * W, y: lm[i].y * H }
-  }
-
-  ctx.save()
-  ctx.globalAlpha = progress * 0.7
-  for (const i of zone.indices) {
-    const p = pt(i)
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2)
-    ctx.fillStyle = zone.color
-    ctx.shadowColor = zone.color
-    ctx.shadowBlur  = 6
-    ctx.fill()
-  }
-  ctx.restore()
-}
-
-// Directional arrows for guidance
-function drawArrow(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  dir: "up" | "down" | "left" | "right",
-  color: string,
-  pulse: number
-) {
-  const size  = 14
-  const alpha = 0.7 + pulse * 0.3
-
-  ctx.save()
-  ctx.translate(x, y)
-  ctx.fillStyle    = color
-  ctx.shadowColor  = color
-  ctx.shadowBlur   = 12
-  ctx.globalAlpha  = alpha
-  ctx.beginPath()
-
-  if (dir === "up") {
-    ctx.moveTo(0, -size); ctx.lineTo(size * 0.65, 0); ctx.lineTo(-size * 0.65, 0)
-  } else if (dir === "down") {
-    ctx.moveTo(0, size);  ctx.lineTo(size * 0.65, 0); ctx.lineTo(-size * 0.65, 0)
-  } else if (dir === "left") {
-    ctx.moveTo(-size, 0); ctx.lineTo(0, size * 0.65); ctx.lineTo(0, -size * 0.65)
-  } else {
-    ctx.moveTo(size, 0);  ctx.lineTo(0, size * 0.65); ctx.lineTo(0, -size * 0.65)
-  }
-  ctx.closePath()
-  ctx.fill()
-  ctx.restore()
-}
-
-function drawGuidanceArrows(
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  dir: FaceCheck["dir"],
-  pulse: number
-) {
-  const { cx, cy, rx, ry } = ovalParams(W, H)
-  const color = "#d4af88"
-  const pad   = 28
-
-  if (dir.up)      drawArrow(ctx, cx,          cy - ry - pad, "up",    color, pulse)
-  if (dir.down)    drawArrow(ctx, cx,          cy + ry + pad, "down",  color, pulse)
-  if (dir.left)    drawArrow(ctx, cx - rx - pad, cy,          "left",  color, pulse)
-  if (dir.right)   drawArrow(ctx, cx + rx + pad, cy,          "right", color, pulse)
-
-  if (dir.closer || dir.farther) {
-    const label = dir.closer ? "Acércate →" : "← Aléjate"
-    ctx.save()
-    ctx.font        = "bold 11px -apple-system, sans-serif"
-    ctx.fillStyle   = `rgba(212,175,136,${0.8 + pulse * 0.2})`
-    ctx.textAlign   = "center"
-    ctx.textBaseline = "middle"
-    ctx.shadowColor = "#d4af88"
-    ctx.shadowBlur  = 8
-    ctx.fillText(label, cx, cy + ry + 32)
-    ctx.restore()
-  }
-}
-
-function drawMesh(
-  ctx: CanvasRenderingContext2D,
-  lm: Array<{ x: number; y: number }>,
-  W: number,
-  H: number,
-  state: "warning" | "success",
-  opacity: number
-) {
-  const color    = state === "success" ? `rgba(126,203,161,${opacity * 0.55})` : `rgba(232,164,176,${opacity * 0.4})`
-  const dotColor = state === "success" ? `rgba(126,203,161,${opacity * 0.85})` : `rgba(232,164,176,${opacity * 0.6})`
-
-  function pt(i: number) { return { x: (1 - lm[i].x) * W, y: lm[i].y * H } }
-
-  function drawLine(indices: number[]) {
-    if (indices.length < 2) return
-    ctx.beginPath()
-    const s = pt(indices[0]); ctx.moveTo(s.x, s.y)
-    for (let i = 1; i < indices.length; i++) { const p = pt(indices[i]); ctx.lineTo(p.x, p.y) }
-    ctx.strokeStyle = color; ctx.lineWidth = 0.8; ctx.stroke()
-  }
-
-  function drawDots(indices: number[], r = 1.5) {
-    for (const i of indices) {
-      const p = pt(i)
-      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2)
-      ctx.fillStyle = dotColor; ctx.fill()
-    }
-  }
-
-  ctx.save()
-  drawLine(FACE_OVAL); drawLine(LEFT_EYE); drawLine(RIGHT_EYE)
-  drawLine(NOSE_BRIDGE); drawLine(LIPS); drawLine(LEFT_BROW); drawLine(RIGHT_BROW)
-  drawDots([...FACE_OVAL, ...LEFT_EYE, ...RIGHT_EYE, ...NOSE_BRIDGE], 1.2)
-  ctx.restore()
-}
-
 function drawCountdownRing(
   ctx: CanvasRenderingContext2D,
   W: number,
@@ -459,53 +266,6 @@ function drawCountdownRing(
   ctx.restore()
 }
 
-// ── MediaPipe loader ─────────────────────────────────────────────
-type LandmarkerResult = { faceLandmarks: Array<Array<{x:number;y:number;z:number}>> }
-type VideoLandmarker  = { detectForVideo: (el: HTMLVideoElement, ts: number) => LandmarkerResult }
-
-let _mpVideoLandmarker: VideoLandmarker | null = null
-let _mpVideoPromise: Promise<VideoLandmarker> | null = null
-
-async function getVideoLandmarker(): Promise<VideoLandmarker> {
-  if (_mpVideoLandmarker) return _mpVideoLandmarker
-  if (_mpVideoPromise)    return _mpVideoPromise
-
-  _mpVideoPromise = (async () => {
-    const vision = await import(
-      /* webpackIgnore: true */
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs" as string
-    ) as {
-      FilesetResolver: { forVisionTasks: (p: string) => Promise<unknown> }
-      FaceLandmarker:  { createFromOptions: (r: unknown, o: unknown) => Promise<VideoLandmarker> }
-    }
-    const resolver = await vision.FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
-    )
-    const modelAssetPath = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
-
-    // Try GPU first, fall back to CPU (some browsers/devices don't support GPU delegate)
-    for (const delegate of ["GPU", "CPU"] as const) {
-      try {
-        _mpVideoLandmarker = await vision.FaceLandmarker.createFromOptions(resolver, {
-          baseOptions: { modelAssetPath, delegate },
-          runningMode: "VIDEO",
-          numFaces: 1,
-        })
-        return _mpVideoLandmarker!
-      } catch {
-        if (delegate === "CPU") throw new Error("MediaPipe failed on GPU and CPU")
-        // else try CPU next
-      }
-    }
-    throw new Error("unreachable")
-  })()
-
-  // Reset promise on failure so retry works
-  _mpVideoPromise.catch(() => { _mpVideoPromise = null })
-
-  return _mpVideoPromise
-}
-
 // ── Props ─────────────────────────────────────────────────────────
 interface CameraStageProps {
   onCapture: (dataUrl: string, scores: Scores) => void
@@ -513,32 +273,37 @@ interface CameraStageProps {
   onScanError?: (reason: string) => void
 }
 
-export function CameraStage({ onCapture, onCancel, onScanError }: CameraStageProps) {
-  const videoRef    = useRef<HTMLVideoElement>(null)
-  const canvasRef   = useRef<HTMLCanvasElement>(null)
-  const streamRef   = useRef<MediaStream | null>(null)
-  const rafRef      = useRef<number>(0)
-  const frameRef    = useRef(0)
-  const goodRef     = useRef(0)
-  const lastLmRef   = useRef<Array<{x:number;y:number;z:number}> | null>(null)
-  const pulseRef    = useRef(0)
-  const capturedRef = useRef(false)
+type Phase = "init" | "stabilizing" | "countdown" | "done" | "error"
 
-  // Live analysis refs
-  const offscreenRef   = useRef<HTMLCanvasElement | null>(null)
-  const accumRef       = useRef<Record<string, ZoneAccum>>({
+export function CameraStage({ onCapture, onCancel, onScanError }: CameraStageProps) {
+  const videoRef     = useRef<HTMLVideoElement>(null)
+  const canvasRef    = useRef<HTMLCanvasElement>(null)
+  const streamRef    = useRef<MediaStream | null>(null)
+  const rafRef       = useRef<number>(0)
+  const frameRef     = useRef(0)
+  const pulseRef     = useRef(0)
+  const capturedRef  = useRef(false)
+  const offscreenRef = useRef<HTMLCanvasElement | null>(null)
+  const accumRef     = useRef<Record<string, ZoneAccum>>({
     forehead: freshAccum(), leftCheek: freshAccum(), rightCheek: freshAccum(),
     nose: freshAccum(), chin: freshAccum(),
   })
-  const sampleFrameRef = useRef(0)
+  const phaseStartRef = useRef(0)
 
-  const [mpStatus,   setMpStatus]   = useState<"loading" | "ready" | "error">("loading")
-  const [guidance,   setGuidance]   = useState<{ msg: string; sub: string; type: "neutral" | "warning" | "success" }>({ msg: "Iniciando cámara…", sub: "", type: "neutral" })
-  const [countdown,  setCountdown]  = useState<number | null>(null)
-  const [camError,   setCamError]   = useState<string | null>(null)
-  const [scanZone,   setScanZone]   = useState(-1)
+  const [phase, setPhase]         = useState<Phase>("init")
+  const [guidance, setGuidance]   = useState<{ msg: string; sub: string; type: "neutral" | "warning" | "success" }>({ msg: "Iniciando cámara…", sub: "", type: "neutral" })
+  const [countdown, setCountdown] = useState<number | null>(null)
+  const [camError, setCamError]   = useState<string | null>(null)
 
-  // ── Camera + MediaPipe init ────────────────────────────────────
+  const guidanceRef = useRef({ msg: "", sub: "", type: "neutral" as "neutral" | "warning" | "success" })
+  function updateGuidance(msg: string, sub: string, type: "neutral" | "warning" | "success") {
+    if (guidanceRef.current.msg !== msg || guidanceRef.current.type !== type) {
+      guidanceRef.current = { msg, sub, type }
+      setGuidance({ msg, sub, type })
+    }
+  }
+
+  // ── Camera init ────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false
 
@@ -553,16 +318,10 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
           videoRef.current.srcObject = stream
           await videoRef.current.play()
         }
+        phaseStartRef.current = Date.now()
+        setPhase("stabilizing")
       } catch {
         if (!cancelled) setCamError("No se pudo acceder a la cámara. Verifica los permisos.")
-        return
-      }
-
-      try {
-        await getVideoLandmarker()
-        if (!cancelled) setMpStatus("ready")
-      } catch {
-        if (!cancelled) setMpStatus("error")
       }
     }
 
@@ -574,195 +333,11 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
     }
   }, [])
 
-  // ── Detection loop ─────────────────────────────────────────────
-  useEffect(() => {
-    if (mpStatus !== "ready") return
-
-    let countdownStart  = 0
-    let countdownActive = false
-    let scanBeamY       = 0   // 0-1 vertical position within oval
-    let scanBeamDir     = 1   // 1 = down, -1 = up
-    let lastZoneChange  = 0
-    let currentZone     = -1
-
-    function loop() {
-      rafRef.current = requestAnimationFrame(loop)
-      frameRef.current++
-
-      const video  = videoRef.current
-      const canvas = canvasRef.current
-      if (!canvas || !video || video.readyState < 2) return
-
-      const { clientWidth: W, clientHeight: H } = canvas
-      if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H }
-
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
-      ctx.clearRect(0, 0, W, H)
-
-      pulseRef.current = (Math.sin(Date.now() / 750) + 1) / 2
-      const now = Date.now()
-
-      // Run detection every 3 frames
-      if (frameRef.current % 3 === 0 && !capturedRef.current) {
-        try {
-          const result = _mpVideoLandmarker!.detectForVideo(video, performance.now())
-          lastLmRef.current = result.faceLandmarks?.length > 0 ? result.faceLandmarks[0] : null
-        } catch { /* GPU skip */ }
-      }
-
-      const lm = lastLmRef.current
-
-      // ── No face ──────────────────────────────────────────────
-      if (!lm) {
-        goodRef.current = 0
-        countdownActive = false
-        currentZone     = -1
-        setCountdown(null)
-        setScanZone(-1)
-        drawOval(ctx, W, H, "neutral", 0)
-        updateGuidance("Pon tu rostro en el óvalo", "Asegúrate de tener buena luz", "neutral")
-        return
-      }
-
-      const check = checkFace(lm)
-
-      // ── Brightness ───────────────────────────────────────────
-      let dark = false
-      try {
-        const nosePx = { x: (1 - lm[4].x) * W, y: lm[4].y * H }
-        const tmp    = document.createElement("canvas")
-        tmp.width = 60; tmp.height = 60
-        const tc = tmp.getContext("2d")!
-        tc.save(); tc.scale(-1, 1); tc.drawImage(video, -(nosePx.x + 30), nosePx.y - 30, 60, 60); tc.restore()
-        const pd = tc.getImageData(0, 0, 60, 60).data
-        let sum  = 0
-        for (let i = 0; i < pd.length; i += 4) sum += 0.299 * pd[i] + 0.587 * pd[i+1] + 0.114 * pd[i+2]
-        dark = (sum / (60 * 60)) < 38
-      } catch { /* fine */ }
-
-      if (dark) {
-        goodRef.current = 0; countdownActive = false; currentZone = -1
-        setCountdown(null); setScanZone(-1)
-        drawOval(ctx, W, H, "warning", 0)
-        drawMesh(ctx, lm, W, H, "warning", 0.4)
-        updateGuidance("Necesitas más luz", "Busca una ventana o enciende una lámpara", "warning")
-        return
-      }
-
-      // ── Wrong position ────────────────────────────────────────
-      if (!check.ok) {
-        goodRef.current = 0; countdownActive = false; currentZone = -1
-        setCountdown(null); setScanZone(-1)
-        drawOval(ctx, W, H, "warning", pulseRef.current * 0.3)
-        drawMesh(ctx, lm, W, H, "warning", 0.45)
-        drawGuidanceArrows(ctx, W, H, check.dir, pulseRef.current)
-        updateGuidance(check.message, check.sub, "warning")
-        return
-      }
-
-      // ── Face good ─────────────────────────────────────────────
-      goodRef.current++
-
-      // Animate scan beam (starts immediately when face is good)
-      const beamSpeed = countdownActive ? 0.018 : 0.012
-      scanBeamY += beamSpeed * scanBeamDir
-      if (scanBeamY >= 1) { scanBeamY = 1; scanBeamDir = -1 }
-      if (scanBeamY <= 0) { scanBeamY = 0; scanBeamDir = 1 }
-
-      if (goodRef.current < 15) {
-        // Stabilizing
-        drawOval(ctx, W, H, "success", 0)
-        drawMesh(ctx, lm, W, H, "success", 0.5)
-        drawScanLine(ctx, W, H, scanBeamY, 0.4)
-        updateGuidance("Perfecto · No te muevas", "Estabilizando…", "success")
-        return
-      }
-
-      if (!countdownActive) {
-        countdownActive = true
-        countdownStart  = now
-        lastZoneChange  = now
-        // Reset accumulators at countdown start
-        accumRef.current = {
-          forehead: freshAccum(), leftCheek: freshAccum(), rightCheek: freshAccum(),
-          nose: freshAccum(), chin: freshAccum(),
-        }
-        sampleFrameRef.current = 0
-      }
-
-      const elapsed      = now - countdownStart
-      const totalMs      = 3000
-      const remaining    = Math.max(0, totalMs - elapsed)
-      const secondsLeft  = Math.ceil(remaining / 1000)
-      const zoneProgress = elapsed / totalMs  // 0-1
-
-      // ── Sample pixels every 6 frames for live analysis ─────
-      if (frameRef.current % 6 === 0 && lm) {
-        if (!offscreenRef.current) {
-          offscreenRef.current = document.createElement('canvas')
-        }
-        const off = offscreenRef.current
-        off.width  = video.videoWidth  || 640
-        off.height = video.videoHeight || 480
-        const oc = off.getContext('2d')!
-        oc.drawImage(video, 0, 0)  // RAW, no flip — landmarks are in raw video space
-
-        for (const [zoneName, indices] of Object.entries(ANALYSIS_ZONES)) {
-          const m = sampleZone(oc, lm, indices, off.width, off.height)
-          if (m) accumulate(accumRef.current[zoneName], m)
-        }
-        sampleFrameRef.current++
-      }
-
-      // Progress through scan zones (5 zones over 3s)
-      const zoneIdx = Math.min(Math.floor(zoneProgress * SCAN_ZONES.length), SCAN_ZONES.length - 1)
-      if (zoneIdx !== currentZone) {
-        currentZone   = zoneIdx
-        lastZoneChange = now
-        setScanZone(zoneIdx)
-      }
-      const zoneFade = Math.min(1, (now - lastZoneChange) / 300)
-
-      // Draw layers
-      drawOval(ctx, W, H, "success", pulseRef.current)
-      drawMesh(ctx, lm, W, H, "success", 0.6 + zoneProgress * 0.2)
-      drawScanLine(ctx, W, H, scanBeamY, 0.7 + pulseRef.current * 0.3)
-      drawZoneHighlight(ctx, lm, W, H, zoneIdx, zoneFade)
-      drawCountdownRing(ctx, W, H, secondsLeft, 1 - (remaining % 1000) / 1000)
-
-      setCountdown(secondsLeft)
-
-      if (secondsLeft > 0) {
-        const zone = SCAN_ZONES[zoneIdx]
-        updateGuidance(`Escaneando ${zone?.label ?? "…"}`, `Capturando en ${secondsLeft}…`, "success")
-      } else {
-        updateGuidance("Captura completada", "", "success")
-        if (!capturedRef.current) {
-          capturedRef.current = true
-          cancelAnimationFrame(rafRef.current)
-          doCapture()
-        }
-      }
-    }
-
-    rafRef.current = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [mpStatus]) // eslint-disable-line
-
-  const guidanceRef = useRef({ msg: "", sub: "", type: "neutral" as "neutral" | "warning" | "success" })
-  function updateGuidance(msg: string, sub: string, type: "neutral" | "warning" | "success") {
-    if (guidanceRef.current.msg !== msg || guidanceRef.current.type !== type) {
-      guidanceRef.current = { msg, sub, type }
-      setGuidance({ msg, sub, type })
-    }
-  }
-
+  // ── Capture logic ──────────────────────────────────────────────
   const doCapture = useCallback(() => {
     const video = videoRef.current
     if (!video) return
 
-    // Compute scores from accumulated live samples
     const scores = computeScores(accumRef.current)
 
     // Capture mirrored image for display
@@ -777,12 +352,134 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
     streamRef.current?.getTracks().forEach(t => t.stop())
 
     if (!scores) {
-      onScanError?.("No pudimos analizar tu piel. Asegúrate de tener buena luz y el rostro visible.")
+      onScanError?.("No pudimos analizar la piel. Asegúrate de tener buena luz y el rostro visible.")
       return
     }
 
     onCapture(url, scores)
   }, [onCapture, onScanError])
+
+  // ── Main animation loop ────────────────────────────────────────
+  useEffect(() => {
+    if (phase !== "stabilizing" && phase !== "countdown") return
+
+    let countdownStart = 0
+    const STABILIZE_MS = 1500
+    const COUNTDOWN_MS = 3000
+
+    function loop() {
+      rafRef.current = requestAnimationFrame(loop)
+      frameRef.current++
+
+      const video  = videoRef.current
+      const canvas = canvasRef.current
+      if (!canvas || !video || video.readyState < 2) return
+
+      const W = canvas.clientWidth
+      const H = canvas.clientHeight
+      if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H }
+
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
+      ctx.clearRect(0, 0, W, H)
+
+      pulseRef.current = (Math.sin(Date.now() / 750) + 1) / 2
+      const now = Date.now()
+
+      // ── STABILIZING ─────────────────────────────────────────────
+      if (phase === "stabilizing") {
+        drawOval(ctx, W, H, "neutral", pulseRef.current * 0.5)
+        updateGuidance("Centra tu rostro en el óvalo", "Mantén la cámara estable", "neutral")
+
+        if (now - phaseStartRef.current > STABILIZE_MS) {
+          // Brightness check on oval center
+          const { cx, cy } = ovalParams(W, H)
+          const tmpC = document.createElement("canvas")
+          tmpC.width = 80; tmpC.height = 80
+          const tc = tmpC.getContext("2d")!
+          // Sample from center of video mapped to oval center
+          const sx = (video.videoWidth || 640) / W
+          const sy = (video.videoHeight || 480) / H
+          const vx = cx * sx, vy = cy * sy
+          tc.drawImage(video, vx - 40, vy - 40, 80, 80, 0, 0, 80, 80)
+          const pd = tc.getImageData(0, 0, 80, 80).data
+          let sum = 0
+          for (let i = 0; i < pd.length; i += 4)
+            sum += 0.299 * pd[i] + 0.587 * pd[i+1] + 0.114 * pd[i+2]
+          const avgLum = sum / (80 * 80)
+
+          if (avgLum < 35) {
+            updateGuidance("Necesitas más luz", "Busca una ventana o enciende una lámpara", "warning")
+            drawOval(ctx, W, H, "warning", 0)
+            // reset timer so it keeps checking
+            phaseStartRef.current = now - 1200
+            return
+          }
+
+          // Good light → start countdown
+          accumRef.current = {
+            forehead: freshAccum(), leftCheek: freshAccum(), rightCheek: freshAccum(),
+            nose: freshAccum(), chin: freshAccum(),
+          }
+          setPhase("countdown")
+          return
+        }
+        return
+      }
+
+      // ── COUNTDOWN ───────────────────────────────────────────────
+      if (phase === "countdown") {
+        if (countdownStart === 0) countdownStart = now
+
+        const elapsed   = now - countdownStart
+        const remaining = Math.max(0, COUNTDOWN_MS - elapsed)
+        const secLeft   = Math.ceil(remaining / 1000)
+
+        // Sample pixels every 6 frames
+        if (frameRef.current % 6 === 0 && !capturedRef.current) {
+          if (!offscreenRef.current) offscreenRef.current = document.createElement("canvas")
+          const off = offscreenRef.current
+          off.width  = video.videoWidth  || 640
+          off.height = video.videoHeight || 480
+          const oc   = off.getContext("2d")!
+          oc.drawImage(video, 0, 0) // raw, no flip
+
+          // Map oval from canvas display to video frame
+          const { cx, cy, rx, ry } = ovalParams(W, H)
+          const sx = off.width / W, sy = off.height / H
+          const vCx = cx * sx, vCy = cy * sy
+          const vRx = rx * sx, vRy = ry * sy
+
+          for (const [zoneName, zone] of Object.entries(OVAL_ZONES)) {
+            const m = sampleOvalZone(oc, vCx, vCy, vRx, vRy, zone)
+            if (m) accumulate(accumRef.current[zoneName], m)
+          }
+        }
+
+        // Draw
+        const scanY = (elapsed % 1200) / 1200
+        drawOval(ctx, W, H, "success", pulseRef.current)
+        drawScanLine(ctx, W, H, scanY, 0.7 + pulseRef.current * 0.3)
+        drawCountdownRing(ctx, W, H, secLeft, 1 - (remaining % 1000) / 1000)
+
+        setCountdown(secLeft)
+        updateGuidance(
+          secLeft > 0 ? `Escaneando… ${secLeft}` : "Análisis completado ✓",
+          "No te muevas",
+          "success"
+        )
+
+        if (secLeft <= 0 && !capturedRef.current) {
+          capturedRef.current = true
+          cancelAnimationFrame(rafRef.current)
+          doCapture()
+        }
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [phase, doCapture]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const manualCapture = () => {
     if (capturedRef.current) return
@@ -802,31 +499,19 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
         marginBottom: 14, height: 28,
         display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
       }}>
-        {mpStatus === "loading" && (
+        {phase === "init" && (
           <>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#d4af88", animation: "pulse-dot 1s ease-in-out infinite" }} />
-            <span style={{ fontSize: 11, color: "rgba(245,237,232,0.35)", letterSpacing: "0.1em" }}>Cargando sistema de detección…</span>
+            <span style={{ fontSize: 11, color: "rgba(245,237,232,0.35)", letterSpacing: "0.1em" }}>Iniciando cámara…</span>
           </>
         )}
-        {mpStatus === "ready" && !camError && (
+        {phase !== "init" && !camError && (
           <div style={{ display: "flex", alignItems: "center", gap: 7, transition: "all 0.3s" }}>
             <span style={{ fontSize: 13, color: guidanceColor, fontWeight: 700, transition: "color 0.3s", minWidth: 14, textAlign: "center" }}>{guidanceIcon}</span>
             <span style={{ fontSize: 13, color: guidanceColor, fontWeight: 600, transition: "color 0.3s", letterSpacing: "0.01em" }}>{guidance.msg}</span>
           </div>
         )}
-        {(mpStatus === "error" || camError) && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 12, color: "#e8a4b0" }}>{camError || "Error al cargar detección"}</span>
-            {mpStatus === "error" && !camError && (
-              <button
-                onClick={() => { _mpVideoPromise = null; setMpStatus("loading"); getVideoLandmarker().then(() => setMpStatus("ready")).catch(() => setMpStatus("error")) }}
-                style={{ fontSize: 11, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.25)", borderRadius: 8, padding: "3px 10px", cursor: "pointer" }}
-              >
-                Reintentar
-              </button>
-            )}
-          </div>
-        )}
+        {camError && <span style={{ fontSize: 12, color: "#e8a4b0" }}>{camError}</span>}
       </div>
 
       {/* Camera container */}
@@ -864,7 +549,7 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
         />
 
         {/* Loading overlay */}
-        {mpStatus === "loading" && (
+        {phase === "init" && (
           <div style={{
             position: "absolute", inset: 0,
             background: "rgba(6,4,9,0.78)",
@@ -884,7 +569,7 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
         )}
 
         {/* Sub-text at bottom */}
-        {mpStatus === "ready" && guidance.sub && (
+        {phase !== "init" && guidance.sub && (
           <div style={{
             position: "absolute", bottom: 0, left: 0, right: 0,
             padding: "28px 20px 16px",
@@ -894,64 +579,6 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
             <p style={{ fontSize: 11, color: "rgba(245,237,232,0.5)", letterSpacing: "0.06em" }}>
               {guidance.sub}
             </p>
-          </div>
-        )}
-
-        {/* Scan zone label (top-left, appears during countdown) */}
-        {scanZone >= 0 && countdown !== null && (
-          <div style={{
-            position: "absolute", top: 14, left: 14,
-            display: "flex", alignItems: "center", gap: 6,
-            animation: "fadeInUp 0.25s ease",
-          }}>
-            <div style={{
-              width: 6, height: 6, borderRadius: "50%",
-              background: SCAN_ZONES[scanZone]?.color ?? "#7ecba1",
-              boxShadow: `0 0 8px ${SCAN_ZONES[scanZone]?.color ?? "#7ecba1"}`,
-              animation: "pulse-dot 0.8s ease-in-out infinite",
-            }} />
-            <span style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: SCAN_ZONES[scanZone]?.color ?? "#7ecba1", fontWeight: 700, opacity: 0.9 }}>
-              {SCAN_ZONES[scanZone]?.label}
-            </span>
-          </div>
-        )}
-
-        {/* Signal bars (top-right) */}
-        {mpStatus === "ready" && lastLmRef.current && countdown === null && (
-          <div style={{ position: "absolute", top: 14, right: 14, display: "flex", gap: 3, alignItems: "flex-end" }}>
-            {[1, 2, 3, 4].map((bar) => {
-              const active = guidance.type === "success" ? bar <= 4 : guidance.type === "warning" ? bar <= 2 : bar <= 0
-              return (
-                <div key={bar} style={{
-                  width: 4,
-                  height: 5 + bar * 3,
-                  borderRadius: 2,
-                  background: active ? (guidance.type === "success" ? "#7ecba1" : "#d4af88") : "rgba(245,237,232,0.15)",
-                  transition: "background 0.3s",
-                }} />
-              )
-            })}
-          </div>
-        )}
-
-        {/* Zone mini-progress during scan (bottom-right) */}
-        {countdown !== null && countdown > 0 && (
-          <div style={{
-            position: "absolute", bottom: 16, right: 14,
-            display: "flex", flexDirection: "column", gap: 3, alignItems: "flex-end",
-          }}>
-            {SCAN_ZONES.map((z, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ fontSize: 9, color: i <= scanZone ? z.color : "rgba(245,237,232,0.2)", letterSpacing: "0.1em", transition: "color 0.3s" }}>
-                  {z.label}
-                </span>
-                <div style={{
-                  width: 24, height: 2, borderRadius: 1,
-                  background: i < scanZone ? z.color : i === scanZone ? z.color + "99" : "rgba(245,237,232,0.1)",
-                  transition: "background 0.4s",
-                }} />
-              </div>
-            ))}
           </div>
         )}
       </div>
@@ -972,34 +599,24 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
         </button>
         <button
           onClick={manualCapture}
-          disabled={!!camError || mpStatus === "loading"}
+          disabled={!!camError || phase === "init"}
           style={{
             flex: 2, padding: "13px",
-            background: countdown !== null
+            background: phase === "countdown"
               ? "linear-gradient(135deg, #5aab82, #7ecba1)"
-              : guidance.type === "success"
-              ? "linear-gradient(135deg, #3d9066, #7ecba1)"
               : "linear-gradient(135deg, #e8a4b0, #c97e8e)",
             border: "none", borderRadius: 12, color: "#fff",
             fontSize: 14, fontWeight: 700,
-            cursor: (camError || mpStatus === "loading") ? "not-allowed" : "pointer",
-            opacity: (camError || mpStatus === "loading") ? 0.5 : 1,
+            cursor: (camError || phase === "init") ? "not-allowed" : "pointer",
+            opacity: (camError || phase === "init") ? 0.5 : 1,
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             transition: "background 0.5s",
           }}
         >
-          {countdown !== null ? (
+          {countdown !== null && countdown > 0 ? (
             <>
               <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "var(--font-fraunces)" }}>{countdown}</span>
               <span>Escaneando…</span>
-            </>
-          ) : guidance.type === "success" ? (
-            <>
-              <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
-                <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M5 9.5l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              Capturar ahora
             </>
           ) : (
             <>
@@ -1014,9 +631,8 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
       </div>
 
       <style>{`
-        @keyframes spin       { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes pulse-dot  { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
-        @keyframes fadeInUp   { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin      { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulse-dot { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
       `}</style>
     </div>
   )

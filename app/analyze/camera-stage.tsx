@@ -522,7 +522,7 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
   const sampleFrameRef = useRef(0)
 
   const [mpStatus,   setMpStatus]   = useState<"loading" | "ready" | "error">("loading")
-  const [guidance,   setGuidance]   = useState({ msg: "Iniciando cámara…", sub: "", type: "neutral" as const })
+  const [guidance,   setGuidance]   = useState<{ msg: string; sub: string; type: "neutral" | "warning" | "success" }>({ msg: "Iniciando cámara…", sub: "", type: "neutral" })
   const [countdown,  setCountdown]  = useState<number | null>(null)
   const [camError,   setCamError]   = useState<string | null>(null)
   const [scanZone,   setScanZone]   = useState(-1)

@@ -32,10 +32,6 @@ const QUESTIONS = [
     q: "¿Cuánto tiempo duran los resultados del análisis?",
     a: "Tu informe queda guardado en tu sesión durante 30 días. Puedes volver a analizarte cuando quieras — de hecho, recomendamos hacerlo cada 4–6 semanas para ver cómo responde tu piel a los cambios de rutina.",
   },
-  {
-    q: "¿La consulta de asesoramiento tiene algún coste?",
-    a: "La primera sesión de asesoramiento por WhatsApp o videollamada no tiene coste. Un especialista revisa tus resultados contigo y te ayuda a priorizar. Sin agenda oculta, sin obligación de comprar nada.",
-  },
 ]
 
 function FAQItem({

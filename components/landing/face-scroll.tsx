@@ -213,72 +213,86 @@ export function FaceScrollSection() {
             </p>
           </div>
 
-          {/* Right: Biomarkers panel (appears at 65%+ scroll) */}
+          {/* Right: Slim vertical results card (appears at 65%+ scroll) */}
           <div
             ref={bioRef}
             style={{
               opacity: 0,
-              background: "rgba(14,12,18,0.75)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "1px solid rgba(245,237,232,0.10)",
-              borderRadius: 20,
-              padding: "28px 32px",
-              minWidth: 260,
+              background: "rgba(14,12,18,0.65)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              border: "1px solid rgba(245,237,232,0.08)",
+              borderRadius: 16,
+              padding: "22px 20px",
+              width: 210,
             }}
           >
-            {/* Hook */}
-            <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", marginBottom: 14, fontWeight: 600 }}>
-              Lo que no te dice el espejo
+            {/* Header */}
+            <p style={{ fontSize: 8, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 14, fontWeight: 600, textAlign: "center" }}>
+              Resultado del análisis
             </p>
-            <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 18, fontWeight: 400, color: "#f5ede8", lineHeight: 1.35, marginBottom: 4, letterSpacing: "-0.02em" }}>
-              Tu piel puede aparentar hasta{" "}
-              <span style={{ color: "#e8a4b0" }}>3–5 años más</span>{" "}
-              de los que tienes.
-            </p>
-            <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.32)", lineHeight: 1.5, marginBottom: 18 }}>
-              Sin que lo notes.
-            </p>
+
+            {/* Age comparison */}
+            <div style={{ textAlign: "center", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
+                <div>
+                  <p style={{ fontSize: 8, color: "rgba(245,237,232,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 }}>Edad real</p>
+                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "rgba(245,237,232,0.5)", lineHeight: 1 }}>42</p>
+                </div>
+                <span style={{ fontSize: 16, color: "rgba(245,237,232,0.2)", marginTop: 10 }}>→</span>
+                <div>
+                  <p style={{ fontSize: 8, color: "rgba(245,237,232,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 }}>Tu piel</p>
+                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>45</p>
+                </div>
+              </div>
+              <p style={{ fontSize: 10, color: "#e8a4b0", fontWeight: 600, letterSpacing: "0.02em" }}>+3 años por encima</p>
+            </div>
 
             {/* Divider */}
-            <div style={{ height: 1, background: "rgba(245,237,232,0.08)", marginBottom: 16 }} />
+            <div style={{ height: 1, background: "rgba(245,237,232,0.06)", marginBottom: 12 }} />
 
-            {/* Aging factors */}
-            <p style={{ fontSize: 9, letterSpacing: "0.12em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", marginBottom: 12, fontWeight: 600 }}>
-              Lo que más envejece tu piel
+            {/* What we found */}
+            <p style={{ fontSize: 8, letterSpacing: "0.1em", color: "rgba(245,237,232,0.28)", textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>
+              Detectamos
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               {[
-                { factor: "Falta de protección solar", impact: "hasta +2 años" },
-                { factor: "Inflamación silenciosa",    impact: "hasta +1.5 años" },
-                { factor: "Deshidratación crónica",    impact: "hasta +1 año" },
-              ].map((item) => (
-                <div key={item.factor} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 11, color: "rgba(245,237,232,0.55)" }}>{item.factor}</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#e8a4b0", letterSpacing: "0.02em", flexShrink: 0, marginLeft: 10 }}>{item.impact}</span>
+                { label: "Protección solar",     value: 54, color: "#e8a4b0" },
+                { label: "Hidratación",           value: 62, color: "#d4af88" },
+                { label: "Salud del colágeno",    value: 71, color: "#d4af88" },
+              ].map((b) => (
+                <div key={b.label}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                    <span style={{ fontSize: 10, color: "rgba(245,237,232,0.5)" }}>{b.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: b.color }}>{b.value}%</span>
+                  </div>
+                  <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1 }}>
+                    <div style={{ height: "100%", width: `${b.value}%`, background: b.color, borderRadius: 1 }} />
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Divider */}
-            <div style={{ height: 1, background: "rgba(245,237,232,0.08)", margin: "16px 0" }} />
+            <div style={{ height: 1, background: "rgba(245,237,232,0.06)", margin: "12px 0" }} />
 
-            {/* Recovery */}
-            <p style={{ fontSize: 11, color: "rgba(245,237,232,0.5)", lineHeight: 1.55, marginBottom: 16 }}>
-              Con una rutina personalizada puedes reducir tu edad facial{" "}
-              <span style={{ color: "#7ecba1", fontWeight: 600 }}>hasta 2 años en 12 semanas.</span>
+            {/* Recovery promise */}
+            <p style={{ fontSize: 10, color: "rgba(245,237,232,0.45)", lineHeight: 1.5, marginBottom: 12, textAlign: "center" }}>
+              Con su plan personalizado puede volver a{" "}
+              <span style={{ color: "#7ecba1", fontWeight: 600 }}>42 o menos</span>{" "}
+              en 12 semanas.
             </p>
 
             {/* CTA */}
             <a href="/analyze" style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
+              display: "block", textAlign: "center",
               background: "linear-gradient(135deg, #e8a4b0, #c97e8e)",
-              color: "#fff", fontSize: 12, fontWeight: 700, padding: "12px 18px",
-              borderRadius: 10, textDecoration: "none",
-              boxShadow: "0 4px 16px rgba(232,164,176,0.25)",
+              color: "#fff", fontSize: 10.5, fontWeight: 700, padding: "10px 14px",
+              borderRadius: 8, textDecoration: "none",
+              boxShadow: "0 4px 14px rgba(232,164,176,0.2)",
               letterSpacing: "0.01em",
             }}>
-              ¿Cuántos años aparenta tu piel?
+              ¿Y tu piel?
             </a>
           </div>
         </div>

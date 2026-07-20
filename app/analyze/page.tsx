@@ -217,10 +217,10 @@ const GATE_STEPS: QuizStep[] = [
     sub: "Para recomendarte productos dentro de tu rango",
     type: "grid4",
     options: [
-      { value: "<500",       label: "<$500 MXN",        sub: "Esencial" },
-      { value: "500-1500",   label: "$500–1,500 MXN",   sub: "Intermedio" },
-      { value: "1500-3000",  label: "$1,500–3,000 MXN", sub: "Premium" },
-      { value: "3000+",      label: "$3,000+ MXN",      sub: "Luxury" },
+      { value: "<30",        label: "<$30 USD",         sub: "Esencial" },
+      { value: "30-80",      label: "$30–80 USD",       sub: "Intermedio" },
+      { value: "80-200",     label: "$80–200 USD",      sub: "Premium" },
+      { value: "200+",       label: "$200+ USD",        sub: "Luxury" },
     ],
   },
 ]
@@ -481,11 +481,27 @@ function getBiomarkerInsight(label: string, value: number): string {
 }
 
 // ── Zone status helper ──────────────────────────────────────────
-function getZoneStatus(score: number): { label: string; color: string } {
-  if (score >= 80) return { label: "Óptimo", color: "#7ecba1" }
-  if (score >= 60) return { label: "Normal", color: "#d4af88" }
-  if (score >= 40) return { label: "Atención", color: "#e8a4b0" }
-  return { label: "Crítico", color: "#ef4444" }
+function getZoneStatus(score: number): { label: string; color: string; emoji: string } {
+  if (score >= 80) return { label: "Excelente", color: "#7ecba1", emoji: "✓" }
+  if (score >= 65) return { label: "Bien", color: "#d4af88", emoji: "~" }
+  if (score >= 45) return { label: "Mejorable", color: "#e8a4b0", emoji: "!" }
+  return { label: "Prioridad", color: "#ef4444", emoji: "!!" }
+}
+
+function getZoneInsight(key: string, score: number): string {
+  const insights: Record<string, Record<string, string>> = {
+    forehead:    { high: "Piel uniforme y bien hidratada", mid: "Algo de textura irregular — exfoliación suave ayudaría", low: "Textura marcada o deshidratación visible" },
+    periocularL: { high: "Sin signos de fatiga o líneas finas", mid: "Leve deshidratación periocular", low: "Líneas de expresión o ojeras visibles" },
+    periocularR: { high: "Sin signos de fatiga o líneas finas", mid: "Leve deshidratación periocular", low: "Líneas de expresión o ojeras visibles" },
+    nose:        { high: "Poros controlados, tono uniforme", mid: "Algo de brillo o poros visibles", low: "Poros dilatados o rojez en la zona T" },
+    lips:        { high: "Bien hidratados, sin resequedad", mid: "Algo de resequedad en el contorno", low: "Labios secos o pigmentación irregular" },
+    cheekL:      { high: "Tono uniforme, sin rojez", mid: "Leve irregularidad de tono", low: "Rojez o textura irregular notable" },
+    cheekR:      { high: "Tono uniforme, sin rojez", mid: "Leve irregularidad de tono", low: "Rojez o textura irregular notable" },
+    jaw:         { high: "Firmeza y tono uniformes", mid: "Algo de laxitud o textura", low: "Pérdida de firmeza o acné hormonal" },
+    neck:        { high: "Sin líneas ni manchas visibles", mid: "Algo de deshidratación", low: "Líneas horizontales o fotodaño" },
+  }
+  const zone = insights[key] || { high: "Zona en buen estado", mid: "Zona con margen de mejora", low: "Zona que necesita atención" }
+  return score >= 70 ? zone.high : score >= 50 ? zone.mid : zone.low
 }
 
 // ── ProfileQuiz — multi-mode gamified questionnaire ─────────────
@@ -985,27 +1001,24 @@ export default function AnalyzePage() {
   }
 
   // ── Build biomarker list ──────────────────────────────────────
+  // For "lower is better" metrics, we show a HEALTH score (100 - raw)
+  // so all bars read left-to-right = better, more intuitive for the user
   const biomarkers = scores ? [
-    { label: "Luminosidad",  value: scores.luminosity,    higherBetter: true },
-    { label: "Hidratación",  value: scores.hydration,     higherBetter: true },
-    { label: "Uniformidad",  value: scores.uniformity,    higherBetter: true },
-    { label: "Glicación",    value: scores.glycation,     higherBetter: false },
-    { label: "Inflamación",  value: scores.inflammation,  higherBetter: false },
-    { label: "Daño solar",   value: scores.sunDamage,     higherBetter: false },
-    { label: "Vascularidad", value: scores.vascularity,   higherBetter: false },
+    { label: "Luminosidad",      rawValue: scores.luminosity,    higherBetter: true,  friendlyLabel: "Luminosidad" },
+    { label: "Hidratación",      rawValue: scores.hydration,     higherBetter: true,  friendlyLabel: "Hidratación" },
+    { label: "Uniformidad",      rawValue: scores.uniformity,    higherBetter: true,  friendlyLabel: "Uniformidad de tono" },
+    { label: "Glicación",        rawValue: scores.glycation,     higherBetter: false, friendlyLabel: "Salud del colágeno" },
+    { label: "Inflamación",      rawValue: scores.inflammation,  higherBetter: false, friendlyLabel: "Control de inflamación" },
+    { label: "Daño solar",       rawValue: scores.sunDamage,     higherBetter: false, friendlyLabel: "Protección solar" },
+    { label: "Vascularidad",     rawValue: scores.vascularity,   higherBetter: false, friendlyLabel: "Salud vascular" },
   ].map(b => {
-    const severity = b.higherBetter ? (100 - b.value) : b.value
-    let color: string, note: string, alert: boolean
-    if (b.higherBetter) {
-      color = b.value >= 70 ? "#7ecba1" : b.value >= 50 ? "#d4af88" : "#e8a4b0"
-      note = b.value >= 75 ? "Excelente" : b.value >= 55 ? "Mejorable" : "Baja"
-      alert = b.value < 55
-    } else {
-      color = b.value <= 15 ? "#7ecba1" : b.value <= 30 ? "#d4af88" : "#e8a4b0"
-      note = b.value <= 15 ? "Controlado" : b.value <= 30 ? "Moderado" : "Elevado"
-      alert = b.value > 30
-    }
-    return { ...b, severity, color, note, alert, insight: getBiomarkerInsight(b.label, b.value) }
+    // Display value: always "higher = better" for intuitive reading
+    const displayValue = b.higherBetter ? b.rawValue : (100 - b.rawValue)
+    const severity = 100 - displayValue // higher severity = worse
+    const color = displayValue >= 75 ? "#7ecba1" : displayValue >= 55 ? "#d4af88" : "#e8a4b0"
+    const note = displayValue >= 75 ? "Excelente" : displayValue >= 55 ? "Aceptable" : displayValue >= 35 ? "Mejorable" : "Atención"
+    const alert = displayValue < 55
+    return { ...b, value: displayValue, severity, color, note, alert, insight: getBiomarkerInsight(b.label, b.rawValue) }
   }) : []
 
   // Top 3 critical findings (sorted by severity)
@@ -1366,19 +1379,28 @@ export default function AnalyzePage() {
 
                 {/* 9-zone analysis */}
                 <div style={{ paddingTop: 16, borderTop: "1px solid rgba(245,237,232,0.06)", marginBottom: 16 }}>
-                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.25)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, fontWeight: 700 }}>Estado por zona · 9 zonas</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.25)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>Análisis por zona · 9 zonas</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {(Object.entries(scores.zoneScores) as [string, number][]).map(([key, value]) => {
-                      const { label: statusLabel, color } = getZoneStatus(value)
+                      const { label: statusLabel, color, emoji } = getZoneStatus(value)
                       const zoneLabel = ZONE_LABELS[key] || key
+                      const insight = getZoneInsight(key, value)
                       return (
-                        <div key={key} style={{ display: "grid", gridTemplateColumns: "85px 1fr", gap: "4px 10px", alignItems: "center" }}>
-                          <span style={{ fontSize: 11, color: "rgba(245,237,232,0.42)" }}>{zoneLabel}</span>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <div style={{ width: 5, height: 5, borderRadius: "50%", background: color, flexShrink: 0 }} />
-                            <span style={{ fontSize: 10, color, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{statusLabel}</span>
-                            <span style={{ fontSize: 10, color: "rgba(245,237,232,0.28)", marginLeft: "auto" }}>{value}</span>
+                        <div key={key} style={{ background: "rgba(245,237,232,0.02)", borderRadius: 10, padding: "10px 12px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                              <span style={{ fontSize: 11, color, fontWeight: 700, width: 16, textAlign: "center" }}>{emoji}</span>
+                              <span style={{ fontSize: 12, color: "rgba(245,237,232,0.7)", fontWeight: 600 }}>{zoneLabel}</span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontSize: 9, color, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>{statusLabel}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, color, minWidth: 28, textAlign: "right" }}>{value}</span>
+                            </div>
                           </div>
+                          <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1, overflow: "hidden", marginBottom: 5 }}>
+                            <div style={{ height: "100%", width: `${value}%`, background: color, borderRadius: 1 }} />
+                          </div>
+                          <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.35)", lineHeight: 1.45, margin: 0 }}>{insight}</p>
                         </div>
                       )
                     })}
@@ -1403,24 +1425,25 @@ export default function AnalyzePage() {
 
               {/* Biomarkers card — all 7 */}
               <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px 28px 24px" }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>Biomarcadores · 7 métricas</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 6, fontWeight: 700 }}>Biomarcadores · 7 métricas</p>
+                <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.22)", marginBottom: 20, lineHeight: 1.5 }}>Todas las barras miden salud: más llena = mejor estado</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   {biomarkers.map(b => (
                     <div key={b.label}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 13, color: "rgba(245,237,232,0.7)", fontWeight: 500 }}>{b.label}</span>
-                          {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>ATENCIÓN</span>}
+                          <span style={{ fontSize: 13, color: "rgba(245,237,232,0.75)", fontWeight: 600 }}>{b.friendlyLabel}</span>
+                          {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>MEJORABLE</span>}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span style={{ fontSize: 9, color: "rgba(245,237,232,0.28)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{b.note}</span>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: b.color, minWidth: 36, textAlign: "right" }}>{b.value}%</span>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: b.color, minWidth: 36, textAlign: "right" }}>{b.value}%</span>
                         </div>
                       </div>
-                      <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1, overflow: "hidden", marginBottom: 6 }}>
-                        <div style={{ height: "100%", width: `${b.value}%`, background: b.color, borderRadius: 1 }} />
+                      <div style={{ height: 4, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 7 }}>
+                        <div style={{ height: "100%", width: `${b.value}%`, background: `linear-gradient(90deg, ${b.color}88, ${b.color})`, borderRadius: 2, transition: "width 0.8s ease" }} />
                       </div>
-                      <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.36)", lineHeight: 1.55 }}>
+                      <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.38)", lineHeight: 1.55 }}>
                         {b.insight}
                       </p>
                     </div>

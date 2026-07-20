@@ -6,11 +6,11 @@ import { motion, AnimatePresence } from "motion/react"
 const QUESTIONS = [
   {
     q: "¿Es realmente preciso o es solo marketing?",
-    a: "El análisis detecta 12 biomarcadores faciales mediante visión computacional aplicada a fotometría. No es un cuestionario ni una estimación genérica: es medición real de tu piel en zonas específicas. Los resultados varían según calidad de iluminación, pero en condiciones estándar la precisión supera el 94% en análisis de zona.",
+    a: "El análisis evalúa 7 biomarcadores faciales en 9 zonas distintas de tu rostro. No es un cuestionario ni una estimación genérica: es una medición real de tu piel basada en tecnología avanzada de imagen. Los resultados varían según la calidad de iluminación, pero en condiciones estándar la lectura de cada zona es consistente y fiable.",
   },
   {
     q: "¿Mis fotos se guardan en algún servidor?",
-    a: "No. El análisis se procesa completamente en tu dispositivo. No enviamos tus imágenes a ningún servidor externo, no las almacenamos y no las compartimos con terceros. Tu privacidad es no negociable para nosotros.",
+    a: "No. Tu imagen se procesa de forma segura y no se almacena en ningún servidor externo. No la compartimos con terceros. Tu privacidad es no negociable para nosotros.",
   },
   {
     q: "¿Necesito tener conocimiento de skincare para entender mi informe?",
@@ -18,7 +18,7 @@ const QUESTIONS = [
   },
   {
     q: "¿Qué diferencia hay entre esto y un dermatólogo?",
-    a: "Un dermatólogo puede diagnosticar enfermedades clínicas y recetar medicamentos. Nosotros hacemos algo diferente: análisis preventivo y optimización de tu rutina de skincare basado en el estado real de tu piel hoy. Son herramientas complementarias, no excluyentes. Si tienes sospecha de patología, visita a un profesional.",
+    a: "Un dermatólogo puede diagnosticar enfermedades clínicas y recetar medicamentos. Nosotros hacemos algo diferente: análisis preventivo y optimización de tu rutina de skincare basado en el estado real de tu piel hoy. Son complementarios, no excluyentes. Si tienes sospecha de patología, visita a un profesional.",
   },
   {
     q: "¿Por qué debería confiar en los productos que me recomiendan?",
@@ -26,7 +26,7 @@ const QUESTIONS = [
   },
   {
     q: "¿Funciona para todo tipo de piel y tono?",
-    a: "Sí. El modelo está entrenado con diversidad de fototipos (Fitzpatrick I–VI) y trabaja con análisis de textura, reflexión de luz y distribución zonal que son independientes del tono de piel. Si encuentras algún caso en que los resultados no sean representativos, queremos saberlo.",
+    a: "Sí. Nuestro análisis está diseñado para funcionar con todos los fototipos de piel (Fitzpatrick I–VI). Trabaja con análisis de textura, reflexión de luz y distribución zonal que son independientes del tono de piel. Si encuentras algún caso en que los resultados no sean representativos, queremos saberlo.",
   },
   {
     q: "¿Cuánto tiempo duran los resultados del análisis?",

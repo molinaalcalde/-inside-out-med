@@ -2,12 +2,20 @@
 
 const ROW_1 = [
   {
+    quote: "Mi edad facial salió 4 años menor que mi edad real. No me lo esperaba. Ahora sé qué hacer para mantenerla así.",
+    name: "Renata G.",
+    role: "Consultora, 43 años",
+    score: "93",
+    avatar: "RG",
+    color: "#e8a4b0",
+  },
+  {
     quote: "El informe fue más claro que el de mi dermatóloga. Zonas específicas, causas probables, sin tecnicismos.",
     name: "Valentina M.",
     role: "Médica, 34 años",
     score: "91",
     avatar: "VM",
-    color: "#e8a4b0",
+    color: "#d4af88",
   },
   {
     quote: "Seguí el plan 6 semanas. Mis manchas bajaron notablemente. Por primera vez entiendo mi rutina de skincare.",
@@ -15,14 +23,6 @@ const ROW_1 = [
     role: "Nutricionista, 29 años",
     score: "88",
     avatar: "CR",
-    color: "#d4af88",
-  },
-  {
-    quote: "La precisión por zonas me sorprendió. Exactamente donde yo notaba los problemas, el análisis lo marcó.",
-    name: "Sofía L.",
-    role: "Arquitecta, 41 años",
-    score: "76",
-    avatar: "SL",
     color: "#7ecba1",
   },
   {
@@ -77,11 +77,11 @@ const ROW_2 = [
     color: "#7ecba1",
   },
   {
-    quote: "Lo que me convenció fue la comparativa de edad aparente. 4 años menos que mi edad real. Una motivación brutal.",
-    name: "Renata G.",
-    role: "Consultora, 43 años",
-    score: "93",
-    avatar: "RG",
+    quote: "La precisión por zonas me sorprendió. Exactamente donde yo notaba los problemas, el análisis lo marcó.",
+    name: "Sofía L.",
+    role: "Arquitecta, 41 años",
+    score: "76",
+    avatar: "SL",
     color: "#e8a4b0",
   },
 ]
@@ -230,7 +230,7 @@ export function Testimonials() {
         {[
           { icon: "⬡", text: "Datos privados" },
           { icon: "◈", text: "Sin almacenamiento de fotos" },
-          { icon: "◇", text: "Análisis en dispositivo" },
+          { icon: "◇", text: "Resultados en 60 segundos" },
           { icon: "△", text: "Protocolo médico revisado" },
         ].map((item, i) => (
           <div

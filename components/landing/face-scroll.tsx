@@ -5,19 +5,19 @@ import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
 const STAGES = [
-  { from: 0,    to: 0.20, headline: "Tu piel tiene una historia.", sub: "Invisible a simple vista." },
-  { from: 0.20, to: 0.40, headline: "Visible desde afuera…", sub: "Cada zona cuenta algo diferente." },
-  { from: 0.40, to: 0.60, headline: "Analizada zona por zona.", sub: "12 biomarcadores. Un mapa completo." },
-  { from: 0.60, to: 0.80, headline: "Detectamos lo que no ves.", sub: "Inflamación, oxidación, deshidratación." },
-  { from: 0.80, to: 1.0,  headline: "Tu plan, listo en segundos.", sub: "Protocolos médicos personalizados." },
+  { from: 0,    to: 0.20, headline: "Tu piel envejece. ¿Pero cuánto?", sub: "A veces más rápido de lo que crees." },
+  { from: 0.20, to: 0.40, headline: "Lo que se ve por fuera…", sub: "…no siempre refleja lo que pasa por dentro." },
+  { from: 0.40, to: 0.60, headline: "9 zonas. 7 biomarcadores.", sub: "Un mapa completo de tu piel." },
+  { from: 0.60, to: 0.80, headline: "Tu edad facial, revelada.", sub: "Sin filtros. Sin adivinar." },
+  { from: 0.80, to: 1.0,  headline: "Tu plan para revertirlo.", sub: "Productos y rutinas que funcionan para TU piel." },
 ]
 
 const BIOMARKERS = [
-  { label: "Hidratación", value: 87, color: "#7ecba1" },
-  { label: "Oxidación",   value: 34, color: "#d4af88" },
-  { label: "Inflamación", value: 22, color: "#e8a4b0" },
-  { label: "Elasticidad", value: 79, color: "#7ecba1" },
-  { label: "Melanina",    value: 61, color: "#e8a4b0" },
+  { label: "Luminosidad",          value: 87, color: "#7ecba1" },
+  { label: "Hidratación",          value: 72, color: "#d4af88" },
+  { label: "Uniformidad",          value: 65, color: "#e8a4b0" },
+  { label: "Salud del colágeno",   value: 79, color: "#7ecba1" },
+  { label: "Protección solar",     value: 54, color: "#d4af88" },
 ]
 
 export function FaceScrollSection() {

@@ -5,9 +5,9 @@ import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
 const MARKERS = [
-  "Hidratación", "Elasticidad", "Inflamación", "Melanina",
-  "Oxidación", "Textura", "Poros", "Luminosidad",
-  "Zonas T", "Contorno ocular", "Descamación", "Barrera cutánea",
+  "Luminosidad", "Hidratación", "Uniformidad", "Salud del colágeno",
+  "Control de inflamación", "Protección solar", "Salud vascular",
+  "Frente", "Contorno ocular", "Mejillas", "Zona T", "Mandíbula",
 ]
 
 export function Hero() {
@@ -136,7 +136,7 @@ export function Hero() {
       >
         {/* Badge */}
         <div className="hero-anim" style={{ opacity: 0, marginBottom: 28 }}>
-          <span className="pill">Análisis Facial · 12 Biomarcadores</span>
+          <span className="pill">Descubre tu edad facial</span>
         </div>
 
         {/* Headline */}
@@ -149,11 +149,11 @@ export function Hero() {
             textAlign: "center",
           }}
         >
-          Tu piel tiene
+          ¿Cuántos años
           <br />
-          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>una historia.</em>
+          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>tiene tu piel?</em>
           <br />
-          Nosotros la leemos.
+          Descúbrelo en 60 segundos.
         </h1>
 
         {/* Divider */}
@@ -180,11 +180,11 @@ export function Hero() {
             opacity: 0,
           }}
         >
-          La mayoría de mujeres compra skincare al azar.{" "}
+          Tu piel envejece a su propio ritmo — y no siempre coincide con tu edad real.{" "}
           <strong style={{ color: "rgba(245,237,232,0.88)", fontWeight: 500 }}>
-            Nosotros te decimos exactamente qué está pasando en tu piel — y por qué.
+            Te revelamos tu edad facial y te mostramos cómo mejorarla o mantenerla.
           </strong>{" "}
-          12 biomarcadores. 60 segundos. Sin agujas.
+          7 biomarcadores. 9 zonas faciales. 60 segundos.
         </p>
 
         {/* CTAs */}
@@ -200,7 +200,7 @@ export function Hero() {
           }}
         >
           <button className="btn-rose" onClick={handleStart} style={{ minWidth: 220 }}>
-            Analizar mi piel gratis
+            Descubrir mi edad facial
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -246,11 +246,11 @@ export function Hero() {
               ))}
             </div>
             <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.42)" }}>
-              <span style={{ color: "rgba(245,237,232,0.8)", fontWeight: 600 }}>+50.000 pieles</span> ya analizadas
+              <span style={{ color: "rgba(245,237,232,0.8)", fontWeight: 600 }}>+50.000 personas</span> ya conocen su edad facial
             </p>
           </div>
           <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.22)", letterSpacing: "0.08em" }}>
-            Sin tarjeta · Resultados en 60 segundos · 100% privado
+            Sin tarjeta · Resultado en 60 segundos · 100% privado
           </p>
         </div>
       </div>

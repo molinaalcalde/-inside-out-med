@@ -13,19 +13,19 @@ const STEPS = [
   },
   {
     n: "02",
-    title: "Escaneamos 12 zonas clave",
-    body: "Hidratación, elasticidad, melanina, inflamación, poros, textura y 6 biomarcadores más. Zona por zona. Sin adivinar.",
+    title: "9 zonas. 7 biomarcadores.",
+    body: "Luminosidad, hidratación, uniformidad, colágeno, inflamación, protección solar y salud vascular. Cada zona analizada por separado.",
     accent: "#d4af88",
   },
   {
     n: "03",
-    title: "Tu informe, sin tecnicismos",
-    body: "Puntuaciones por área, causas probables y comparativa con tu grupo de edad. Visual, directo, accionable.",
+    title: "Tu edad facial vs tu edad real",
+    body: "Te mostramos cuántos años tiene tu piel comparado con tu edad real. Visual, directo, accionable.",
     accent: "#7ecba1",
   },
   {
     n: "04",
-    title: "Tu protocolo, solo tuyo",
+    title: "Tu plan, solo tuyo",
     body: "Ingredientes activos, rutinas y productos ordenados por urgencia. Adaptados a lo que encontramos en tu piel.",
     accent: "#e8a4b0",
   },
@@ -87,12 +87,12 @@ export function HowItWorks() {
           <h2 className="display-lg">
             De tu selfie
             <br />
-            <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>a tu protocolo</em>
+            <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>a tu edad facial</em>
             <br />
             en 60 segundos.
           </h2>
           <p style={{ fontSize: 15, color: "rgba(245,237,232,0.45)", lineHeight: 1.75, maxWidth: 420 }}>
-            Sin citas, sin laboratorios. Precisión clínica, ahora en tu bolsillo.
+            Cuatro pasos. Cero complicaciones. Tu piel, entendida de verdad.
           </p>
         </div>
 

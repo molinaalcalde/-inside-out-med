@@ -104,16 +104,16 @@ export function CTA() {
 
       <div className="container" style={{ position: "relative", zIndex: 2 }}>
         <div className="cta-anim" style={{ marginBottom: 24, opacity: 0 }}>
-          <span className="pill">Sin cuenta · Sin tarjeta</span>
+          <span className="pill">Gratis · Sin tarjeta · 60 segundos</span>
         </div>
 
         <h2
           className="display-xl cta-anim"
           style={{ marginBottom: 24, opacity: 0, maxWidth: 700, margin: "0 auto 24px" }}
         >
-          Descubre lo que
+          ¿Lista para saber
           <br />
-          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>tu piel intenta decirte</em>
+          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>cuántos años tiene tu piel?</em>
         </h2>
 
         <p
@@ -128,7 +128,7 @@ export function CTA() {
             opacity: 0,
           }}
         >
-          60 segundos. Una selfie. Un análisis que ninguna crema te va a dar.
+          Una selfie. Tu edad facial revelada. Y un plan para mejorarla o mantenerla.
         </p>
 
         <div
@@ -141,7 +141,7 @@ export function CTA() {
             style={{ fontSize: 16, padding: "18px 48px", minWidth: 240 }}
             onClick={() => window.location.href = '/analyze'}
           >
-            Analizar mi piel ahora
+            Descubrir mi edad facial
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M3.5 9h11M10 4.5l4.5 4.5L10 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -158,7 +158,7 @@ export function CTA() {
             opacity: 0,
           }}
         >
-          +50.000 análisis realizados · Procesamiento local · Sin datos personales
+          +50.000 personas ya conocen su edad facial · 100% privado
         </p>
       </div>
     </section>

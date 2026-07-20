@@ -38,7 +38,7 @@ export function Footer() {
             </span>
           </div>
           <p style={{ fontSize: 13, color: "rgba(245,237,232,0.3)", maxWidth: 280, lineHeight: 1.7 }}>
-            Análisis facial con inteligencia artificial médica. Tu piel, entendida desde adentro.
+            Análisis facial avanzado. Tu piel, entendida desde adentro.
           </p>
           <p style={{ fontSize: 11, color: "rgba(245,237,232,0.18)", marginTop: 24, letterSpacing: "0.04em" }}>
             © {new Date().getFullYear()} InsideOutMed. Todos los derechos reservados.
@@ -78,7 +78,7 @@ export function Footer() {
       {/* Disclaimer */}
       <div className="container" style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(245,237,232,0.04)" }}>
         <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.18)", lineHeight: 1.6, maxWidth: 700 }}>
-          InsideOutMed es una herramienta de análisis visual con fines informativos. No reemplaza el diagnóstico de un profesional de la salud. Los resultados son orientativos y deben interpretarse junto con un médico o dermatólogo.
+          InsideOutMed es un servicio de análisis facial con fines informativos. No reemplaza el diagnóstico de un profesional de la salud. Los resultados son orientativos y deben interpretarse junto con un médico o dermatólogo.
         </p>
       </div>
     </footer>

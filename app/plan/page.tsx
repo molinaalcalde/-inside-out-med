@@ -23,9 +23,11 @@ type Product = {
 function getProducts(scores: {
   hydration: number
   inflammation: number
-  elasticity: number
-  melanin: number
-  oxidation: number
+  luminosity: number
+  uniformity: number
+  glycation: number
+  sunDamage: number
+  vascularity: number
 }): Product[] {
   const products: Product[] = []
 
@@ -51,12 +53,12 @@ function getProducts(scores: {
     })
   }
 
-  if (scores.oxidation > 25) {
+  if (scores.sunDamage > 25) {
     products.push({
       name: "Vitamin C Brightening Serum",
       brand: "TruSkin",
-      why: `Tu índice de oxidación (${scores.oxidation}%) revela daño por radicales libres acumulado. La vitamina C es el antioxidante tópico con mayor evidencia clínica para revertirlo.`,
-      priority: scores.oxidation > 45 ? "Urgente" : "Importante",
+      why: `Tu daño solar (${scores.sunDamage}%) revela acumulación de fotodaño. La vitamina C es el antioxidante tópico con mayor evidencia clínica para revertirlo.`,
+      priority: scores.sunDamage > 45 ? "Urgente" : "Importante",
       category: "Sérum vitamina C",
       priceRange: "$18–28",
       searchQuery: "TruSkin Vitamin C Serum brightening",
@@ -75,27 +77,39 @@ function getProducts(scores: {
     })
   }
 
-  if (scores.elasticity < 80) {
+  if (scores.glycation > 30) {
     products.push({
       name: "Retinol Correxion Line Smoothing Serum",
       brand: "RoC",
-      why: `Tu elasticidad (${scores.elasticity}%) indica que el colágeno necesita estimulación activa. El retinol microencapsulado de RoC activa los fibroblastos con mínima irritación.`,
-      priority: scores.elasticity < 65 ? "Urgente" : "Importante",
+      why: `Tu glicación (${scores.glycation}%) indica degradación del colágeno por azúcares. El retinol estimula la renovación celular y contrarresta el amarillamiento.`,
+      priority: scores.glycation > 50 ? "Urgente" : "Importante",
       category: "Sérum antiedad",
       priceRange: "$18–30",
       searchQuery: "RoC Retinol Correxion serum",
     })
   }
 
-  if (scores.melanin > 55) {
+  if (scores.uniformity < 60) {
     products.push({
       name: "Alpha Arbutin 2% + HA",
       brand: "The Inkey List",
-      why: `Tu índice de melanina (${scores.melanin}%) sugiere hiperpigmentación activa. El alfa-arbutina inhibe la tirosinasa — la enzima que produce manchas — sin irritar la piel.`,
-      priority: scores.melanin > 70 ? "Urgente" : "Importante",
+      why: `Tu uniformidad de tono (${scores.uniformity}%) revela irregularidades visibles. El alfa-arbutina inhibe la tirosinasa — la enzima que produce manchas — sin irritar la piel.`,
+      priority: scores.uniformity < 45 ? "Urgente" : "Importante",
       category: "Sérum despigmentante",
       priceRange: "$10–16",
       searchQuery: "The Inkey List Alpha Arbutin serum",
+    })
+  }
+
+  if (scores.vascularity > 25) {
+    products.push({
+      name: "Anti-Redness Calming Cream",
+      brand: "Avène",
+      why: `Tu vascularidad (${scores.vascularity}%) muestra capilares activos. Avène con agua termal calma la reactividad y reduce la rojez visible.`,
+      priority: scores.vascularity > 40 ? "Urgente" : "Importante",
+      category: "Crema calmante",
+      priceRange: "$20–32",
+      searchQuery: "Avene anti redness calming cream",
     })
   }
 
@@ -126,11 +140,13 @@ const STEP_DURATIONS = [650, 900, 750, 650, 550, 400]
 
 type Scores = {
   overall: number
+  luminosity: number
   hydration: number
+  uniformity: number
+  glycation: number
   inflammation: number
-  elasticity: number
-  melanin: number
-  oxidation: number
+  sunDamage: number
+  vascularity: number
 }
 
 // ─── Analyzing screen ────────────────────────────────────────────────
@@ -407,7 +423,7 @@ function PlanContent({ scores }: { scores: Scores }) {
               { label: "Score global",  value: `${scores.overall}/100`,    color: "#e8a4b0" },
               { label: "Hidratación",   value: `${scores.hydration}%`,     color: "#7ecba1" },
               { label: "Inflamación",   value: `${scores.inflammation}%`,  color: "#d4af88" },
-              { label: "Elasticidad",   value: `${scores.elasticity}%`,    color: "#7ecba1" },
+              { label: "Luminosidad",   value: `${scores.luminosity}%`,    color: "#7ecba1" },
             ].map(s => (
               <div key={s.label} style={{ textAlign: "center" }}>
                 <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>{s.label}</p>
@@ -657,8 +673,8 @@ export default function PlanPage() {
     } catch {}
     // Fallback demo scores
     setScores({
-      overall: 84, hydration: 87, inflammation: 22,
-      elasticity: 79, melanin: 61, oxidation: 34,
+      overall: 84, luminosity: 78, hydration: 87, uniformity: 72,
+      glycation: 18, inflammation: 22, sunDamage: 28, vascularity: 15,
     })
   }, [])
 

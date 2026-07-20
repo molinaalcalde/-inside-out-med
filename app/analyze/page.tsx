@@ -3,42 +3,97 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import { CameraStage, type Scores } from "./camera-stage"
 
-type Stage = "choose" | "upload-guide" | "camera" | "scanning" | "profile" | "results" | "error"
+type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "gate-quiz" | "results-2" | "error"
 
-interface UserProfile {
-  age: string
-  concern: string
-  routine: string
-  email: string
-  phone: string
-}
-
-// ── MediaPipe landmark indices per zone (for upload path) ────────
+// ── MediaPipe landmark indices per zone (upload path — 9 zones) ──
 const ZONES = {
-  forehead:   [10, 67, 69, 104, 108, 109, 151, 337, 338, 297, 299, 333],
-  leftCheek:  [116, 111, 117, 118, 119, 120, 121, 128, 36, 205, 207],
-  rightCheek: [345, 340, 346, 347, 348, 349, 350, 357, 266, 425, 427],
-  nose:       [1, 2, 4, 5, 6, 19, 20, 94, 168, 195, 197],
-  chin:       [152, 175, 176, 177, 148, 149, 150, 136, 365, 379, 394, 395, 396, 397, 400],
+  forehead:    [10, 338, 297, 332, 284, 251, 389, 356, 109, 67, 103, 54, 21, 162, 127, 234, 93, 132],
+  periocularL: [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246],
+  periocularR: [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398],
+  nose:        [1, 2, 98, 327, 168, 6, 197, 195, 5, 4, 240, 97, 370],
+  lips:        [61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146],
+  cheekL:      [116, 117, 118, 119, 120, 121, 128, 126, 142, 36, 205, 207, 216],
+  cheekR:      [345, 346, 347, 348, 349, 350, 357, 425, 427, 437, 436, 432, 352],
+  jaw:         [172, 136, 150, 149, 176, 148, 152, 377, 400, 378, 379, 365, 397, 288, 361, 323],
+  neck:        [152, 377, 400, 378, 379, 365, 397, 288, 361],
 }
 
-// Zones for the scanning animation
+// Zones for the scanning animation (9 zones)
 const SCAN_ZONES_ANIM = [
-  { label: "Frente",   yPct: 18, color: "#e8a4b0", icon: "◈" },
-  { label: "Ojos",     yPct: 35, color: "#d4af88", icon: "◉" },
-  { label: "Nariz",    yPct: 52, color: "#7ecba1", icon: "◎" },
-  { label: "Mejillas", yPct: 58, color: "#e8a4b0", icon: "◈" },
-  { label: "Boca",     yPct: 68, color: "#d4af88", icon: "◉" },
-  { label: "Mentón",   yPct: 78, color: "#7ecba1", icon: "◎" },
+  { label: "Frente",       yPct: 15, color: "#e8a4b0", icon: "◈" },
+  { label: "Ojo izq.",     yPct: 28, color: "#d4af88", icon: "◉" },
+  { label: "Ojo der.",     yPct: 28, color: "#d4af88", icon: "◉" },
+  { label: "Nariz",        yPct: 42, color: "#7ecba1", icon: "◎" },
+  { label: "Mejilla izq.", yPct: 48, color: "#e8a4b0", icon: "◈" },
+  { label: "Mejilla der.", yPct: 48, color: "#e8a4b0", icon: "◈" },
+  { label: "Labios",       yPct: 58, color: "#d4af88", icon: "◉" },
+  { label: "Mandíbula",    yPct: 70, color: "#7ecba1", icon: "◎" },
+  { label: "Cuello",       yPct: 82, color: "#d4af88", icon: "◉" },
 ]
 
-// Gamified questionnaire steps
-const QUIZ_STEPS = [
+// ── Fitzpatrick calibration (matching camera-stage.tsx) ──────────
+const FITZ_CALIBRATION: Record<number, { lumBaseline: number; redThreshold: number; inflammationSensitivity: number }> = {
+  1: { lumBaseline: 195, redThreshold: 14, inflammationSensitivity: 1.3 },
+  2: { lumBaseline: 185, redThreshold: 15, inflammationSensitivity: 1.15 },
+  3: { lumBaseline: 170, redThreshold: 16, inflammationSensitivity: 1.0 },
+  4: { lumBaseline: 150, redThreshold: 18, inflammationSensitivity: 0.85 },
+  5: { lumBaseline: 130, redThreshold: 22, inflammationSensitivity: 0.7 },
+  6: { lumBaseline: 110, redThreshold: 28, inflammationSensitivity: 0.55 },
+}
+
+const AGE_BASELINE: Record<string, { glycationOffset: number; ageMid: number }> = {
+  "18-25": { glycationOffset: -5, ageMid: 22 },
+  "26-35": { glycationOffset: 0,  ageMid: 30 },
+  "36-45": { glycationOffset: 5,  ageMid: 40 },
+  "46+":   { glycationOffset: 10, ageMid: 52 },
+}
+
+// ── Fitzpatrick tile config ─────────────────────────────────────
+const FITZ_TILES = [
+  { value: "1", color: "#FDEBD0", label: "Muy clara" },
+  { value: "2", color: "#F5CBA7", label: "Clara" },
+  { value: "3", color: "#E0B07A", label: "Media" },
+  { value: "4", color: "#C49A6C", label: "Morena" },
+  { value: "5", color: "#8B6914", label: "Oscura" },
+  { value: "6", color: "#5C4033", label: "Muy oscura" },
+]
+
+// ── Zone label map ──────────────────────────────────────────────
+const ZONE_LABELS: Record<string, string> = {
+  forehead:    "Frente",
+  periocularL: "Ojo izq.",
+  periocularR: "Ojo der.",
+  nose:        "Nariz",
+  lips:        "Labios",
+  cheekL:      "Mejilla izq.",
+  cheekR:      "Mejilla der.",
+  jaw:         "Mandíbula",
+  neck:        "Cuello",
+}
+
+// ── Quiz step types ─────────────────────────────────────────────
+interface QuizOption {
+  value: string
+  label: string
+  sub?: string
+  icon?: string
+}
+
+interface QuizStep {
+  id: string
+  headline: string
+  sub: string
+  type: "grid4" | "grid6" | "list3" | "fitz6" | "email" | "phone"
+  options: QuizOption[]
+}
+
+// ── Pre-scan steps (4 questions before scan) ────────────────────
+const PRE_SCAN_STEPS: QuizStep[] = [
   {
     id: "age",
     headline: "¿Cuántos años tienes?",
     sub: "La edad transforma completamente lo que necesita tu piel",
-    type: "grid4" as const,
+    type: "grid4",
     options: [
       { value: "18-25", label: "18–25", sub: "Piel joven" },
       { value: "26-35", label: "26–35", sub: "Primeros cambios" },
@@ -47,43 +102,126 @@ const QUIZ_STEPS = [
     ],
   },
   {
+    id: "fitzpatrick",
+    headline: "¿Cuál es tu tono de piel?",
+    sub: "Calibramos el análisis según tu fototipo para resultados precisos",
+    type: "fitz6",
+    options: FITZ_TILES,
+  },
+  {
     id: "concern",
     headline: "¿Qué te preocupa más?",
     sub: "Elige tu prioridad ahora — puedes cambiarla después",
-    type: "grid6" as const,
+    type: "grid6",
     options: [
-      { value: "manchas",    label: "Manchas",     icon: "🌑" },
-      { value: "arrugas",    label: "Arrugas",     icon: "〰️" },
-      { value: "poros",      label: "Poros",       icon: "⊙" },
-      { value: "acne",       label: "Acné",        icon: "●" },
-      { value: "hidratacion",label: "Hidratación", icon: "💧" },
-      { value: "luminosidad",label: "Luminosidad", icon: "✦" },
+      { value: "manchas",     label: "Manchas",     icon: "🌑" },
+      { value: "arrugas",     label: "Arrugas",     icon: "〰️" },
+      { value: "poros",       label: "Poros",       icon: "⊙" },
+      { value: "acne",        label: "Acné",        icon: "●" },
+      { value: "hidratacion", label: "Hidratación", icon: "💧" },
+      { value: "luminosidad", label: "Luminosidad", icon: "✦" },
     ],
   },
   {
     id: "routine",
     headline: "¿Qué usas en tu cara ahora mismo?",
     sub: "Sin juicios — cada punto de partida es válido",
-    type: "list3" as const,
+    type: "list3",
     options: [
-      { value: "ninguna",   label: "Nada todavía",           sub: "Empezamos desde cero" },
-      { value: "basica",    label: "Limpiador + hidratante",  sub: "Base sólida" },
-      { value: "completa",  label: "Rutina completa",         sub: "Serum, SPF y más" },
+      { value: "ninguna",  label: "Nada todavía",          sub: "Empezamos desde cero" },
+      { value: "basica",   label: "Limpiador + hidratante", sub: "Base sólida" },
+      { value: "completa", label: "Rutina completa",        sub: "Serum, SPF y más" },
     ],
   },
+]
+
+// ── Contact steps (2 obligatory after scan) ─────────────────────
+const CONTACT_STEPS: QuizStep[] = [
   {
     id: "email",
     headline: "¿A dónde enviamos tu informe?",
     sub: "Tu análisis completo + plan de productos personalizado",
-    type: "email" as const,
+    type: "email",
     options: [],
   },
   {
     id: "phone",
-    headline: "¿Recomendaciones por WhatsApp?",
+    headline: "Tu WhatsApp para recomendaciones",
     sub: "Te avisamos cuando encontremos productos para tu perfil exacto",
-    type: "phone" as const,
+    type: "phone",
     options: [],
+  },
+]
+
+// ── Gate steps (6 questions to unlock full report) ──────────────
+const GATE_STEPS: QuizStep[] = [
+  {
+    id: "sleep",
+    headline: "¿Cuántas horas duermes?",
+    sub: "El sueño es el reparador #1 de tu piel",
+    type: "grid4",
+    options: [
+      { value: "<5h",  label: "<5h",  sub: "Poco descanso" },
+      { value: "5-6h", label: "5–6h", sub: "Por debajo" },
+      { value: "7-8h", label: "7–8h", sub: "Recomendado" },
+      { value: "9+h",  label: "9+h",  sub: "Buen descanso" },
+    ],
+  },
+  {
+    id: "stress",
+    headline: "¿Cómo describes tu nivel de estrés?",
+    sub: "El cortisol impacta directamente la salud de tu piel",
+    type: "list3",
+    options: [
+      { value: "bajo",  label: "Bajo",  sub: "Relajado la mayor parte del tiempo" },
+      { value: "medio", label: "Medio", sub: "Picos ocasionales de estrés" },
+      { value: "alto",  label: "Alto",  sub: "Estrés constante o crónico" },
+    ],
+  },
+  {
+    id: "sun",
+    headline: "¿Cuánta exposición solar tienes?",
+    sub: "El sol es el factor #1 de envejecimiento prematuro",
+    type: "list3",
+    options: [
+      { value: "baja",  label: "Baja",  sub: "Mayormente en interiores" },
+      { value: "media", label: "Media", sub: "Algo de sol diario" },
+      { value: "alta",  label: "Alta",  sub: "Exposición frecuente o prolongada" },
+    ],
+  },
+  {
+    id: "exercise",
+    headline: "¿Con qué frecuencia haces ejercicio?",
+    sub: "La circulación impacta la oxigenación y el brillo de tu piel",
+    type: "list3",
+    options: [
+      { value: "nunca",  label: "Nunca / casi nunca", sub: "Sedentario" },
+      { value: "2-3",    label: "2–3 días",           sub: "Actividad moderada" },
+      { value: "4+",     label: "4+ días",            sub: "Muy activo" },
+    ],
+  },
+  {
+    id: "diet",
+    headline: "¿Cómo es tu alimentación?",
+    sub: "Lo que comes se refleja en tu piel",
+    type: "list3",
+    options: [
+      { value: "omnivora",         label: "Omnívora",           sub: "Dieta variada" },
+      { value: "vegetariana",      label: "Vegetariana / vegana", sub: "Sin carne o productos animales" },
+      { value: "keto",             label: "Keto / otra",        sub: "Dieta específica o restrictiva" },
+    ],
+  },
+  {
+    id: "budget",
+    headline: "¿Cuánto inviertes en skincare al mes?",
+    sub: "Para recomendarte productos dentro de tu rango",
+    type: "grid4",
+    options: [
+      { value: "<500",       label: "<$500",        sub: "Esencial" },
+      { value: "500-1500",   label: "$500–1,500",   sub: "Intermedio" },
+      { value: "1500-3000",  label: "$1,500–3,000", sub: "Premium" },
+      { value: "3000+",      label: "$3,000+",      sub: "Luxury" },
+    ],
   },
 ]
 
@@ -169,8 +307,8 @@ function zoneBBox(landmarks: Array<{ x: number; y: number }>, indices: number[],
 
 function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)) }
 
-// ── Upload analysis — IMAGE mode MediaPipe (no coordinate issues) ─
-async function runUploadAnalysis(dataUrl: string): Promise<Scores | null> {
+// ── Upload analysis — IMAGE mode MediaPipe (9 zones, calibrated) ─
+async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, ageRange: string): Promise<Scores | null> {
   const img = await new Promise<HTMLImageElement>((res, rej) => {
     const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl
   })
@@ -203,7 +341,7 @@ async function runUploadAnalysis(dataUrl: string): Promise<Scores | null> {
     return null
   }
 
-  // Pixel analysis per zone
+  // Pixel analysis per zone (9 zones)
   const zoneData: Record<string, ReturnType<typeof analyzeRegion>> = {}
   for (const [zone, indices] of Object.entries(ZONES)) {
     const bbox = zoneBBox(landmarks, indices, W, H)
@@ -211,83 +349,197 @@ async function runUploadAnalysis(dataUrl: string): Promise<Scores | null> {
   }
 
   const z = zoneData
-  if (!z.forehead || !z.leftCheek || !z.rightCheek || !z.nose || !z.chin) return null
+  // Require minimum 4 zones
+  if (!z.forehead || !z.cheekL || !z.cheekR || !z.nose) return null
 
-  const avgLumSkin  = (z.forehead.avgLum + z.leftCheek.avgLum + z.rightCheek.avgLum + z.nose.avgLum + z.chin.avgLum) / 5
-  const avgRSkin    = (z.forehead.avgR   + z.leftCheek.avgR   + z.rightCheek.avgR   + z.nose.avgR   + z.chin.avgR)   / 5
-  const avgGSkin    = (z.forehead.avgG   + z.leftCheek.avgG   + z.rightCheek.avgG   + z.nose.avgG   + z.chin.avgG)   / 5
-  const avgBSkin    = (z.forehead.avgB   + z.leftCheek.avgB   + z.rightCheek.avgB   + z.nose.avgB   + z.chin.avgB)   / 5
-  const avgContrast = (z.forehead.localContrast + z.leftCheek.localContrast + z.rightCheek.localContrast) / 3
-  const avgStdDev   = (z.forehead.stdDev + z.leftCheek.stdDev + z.rightCheek.stdDev) / 3
-  const totalRed    = z.forehead.redPixels + z.leftCheek.redPixels + z.rightCheek.redPixels + z.nose.redPixels + z.chin.redPixels
-  const totalPix    = z.forehead.total + z.leftCheek.total + z.rightCheek.total + z.nose.total + z.chin.total
-  const redRatio    = totalRed / totalPix
+  const fitz = FITZ_CALIBRATION[fitzpatrick] || FITZ_CALIBRATION[3]
+  const ageCfg = AGE_BASELINE[ageRange] || AGE_BASELINE["26-35"]
 
-  const hydration    = clamp(Math.round((avgLumSkin / 210) * 100 - avgStdDev * 0.1 + (Math.random() - 0.5) * 5), 40, 98)
-  const inflammation = clamp(Math.round(redRatio * 350 + (avgRSkin - avgGSkin) * 0.15 + (Math.random() - 0.5) * 6), 5, 62)
-  const elasticity   = clamp(Math.round(100 - avgContrast * 1.6 - avgStdDev * 0.12 + (Math.random() - 0.5) * 6), 40, 97)
-  const melanin      = clamp(Math.round(((avgRSkin - avgGSkin) / (avgGSkin + 1)) * 110 + 35 + (Math.random() - 0.5) * 8), 25, 82)
-  const oxidation    = clamp(Math.round((avgRSkin - avgBSkin) * 0.2 + (40 - avgLumSkin * 0.1) + (Math.random() - 0.5) * 6), 5, 60)
-  const texture      = clamp(Math.round(100 - z.forehead.localContrast * 2.0 + (Math.random() - 0.5) * 5), 35, 96)
-  const luminosity   = clamp(Math.round((avgLumSkin / 195) * 100 + (Math.random() - 0.5) * 4), 38, 96)
-  const overall      = clamp(Math.round(hydration * 0.20 + (100 - inflammation) * 0.20 + elasticity * 0.18 + (100 - oxidation) * 0.14 + texture * 0.14 + luminosity * 0.14), 35, 96)
-
-  const zoneScore = (d: ReturnType<typeof analyzeRegion>) => {
-    if (!d) return 50
-    return Math.round((clamp(Math.round(d.avgLum / 200 * 100), 20, 100) + clamp(Math.round(100 - (d.redPixels / d.total) * 400), 30, 100)) / 2)
+  // Collect zone averages
+  const ZONE_NAMES = Object.keys(ZONES)
+  const zoneLums: number[] = []
+  const zoneAvgs: Record<string, { lum: number; r: number; g: number; b: number; contrast: number; stdDev: number; redRatio: number }> = {}
+  for (const zn of ZONE_NAMES) {
+    const d = z[zn]
+    if (!d) continue
+    zoneLums.push(d.avgLum)
+    zoneAvgs[zn] = {
+      lum: d.avgLum, r: d.avgR, g: d.avgG, b: d.avgB,
+      contrast: d.localContrast, stdDev: d.stdDev,
+      redRatio: d.total > 0 ? d.redPixels / d.total : 0,
+    }
   }
 
+  const activeZones = Object.keys(zoneAvgs)
+  if (activeZones.length < 4) return null
+
+  // Global averages
+  const avgLumSkin = zoneLums.reduce((s, v) => s + v, 0) / zoneLums.length
+  const avgR = activeZones.reduce((s, zn) => s + zoneAvgs[zn].r, 0) / activeZones.length
+  const avgG = activeZones.reduce((s, zn) => s + zoneAvgs[zn].g, 0) / activeZones.length
+  const avgB = activeZones.reduce((s, zn) => s + zoneAvgs[zn].b, 0) / activeZones.length
+  const avgContrast = activeZones.reduce((s, zn) => s + zoneAvgs[zn].contrast, 0) / activeZones.length
+  const avgStdDev = activeZones.reduce((s, zn) => s + zoneAvgs[zn].stdDev, 0) / activeZones.length
+  const totalRedPix = activeZones.reduce((s, zn) => s + (z[zn]?.redPixels ?? 0), 0)
+  const totalPix = activeZones.reduce((s, zn) => s + (z[zn]?.total ?? 0), 0)
+  const redRatio = totalPix > 0 ? totalRedPix / totalPix : 0
+
+  // Cross-zone luminance std dev (uniformity)
+  const lumMean = zoneLums.reduce((s, v) => s + v, 0) / zoneLums.length
+  const crossZoneStdDev = Math.sqrt(zoneLums.reduce((s, v) => s + (v - lumMean) ** 2, 0) / zoneLums.length)
+
+  // Cheek + nose red ratio (vascularity)
+  let vascRedPix = 0, vascTotalPix = 0
+  for (const zn of ["cheekL", "cheekR", "nose"]) {
+    if (z[zn]) { vascRedPix += z[zn]!.redPixels; vascTotalPix += z[zn]!.total }
+  }
+  const cheekNoseRedRatio = vascTotalPix > 0 ? vascRedPix / vascTotalPix : 0
+
+  // 7 Biomarkers (deterministic, calibrated)
+  const luminosity   = clamp(Math.round((avgLumSkin / fitz.lumBaseline) * 100), 25, 98)
+  const hydration    = clamp(Math.round((avgLumSkin / fitz.lumBaseline) * 90 - avgStdDev * 0.15), 30, 98)
+  const uniformity   = clamp(Math.round(100 - crossZoneStdDev * 2.5 - avgContrast * 1.2), 25, 96)
+  const glycation    = clamp(Math.round(((avgR - avgB) / (avgB + 1)) * 45 + ageCfg.glycationOffset + 15), 5, 75)
+  const inflammation = clamp(Math.round((redRatio * 300 + (avgR - avgG) * 0.12) * fitz.inflammationSensitivity), 3, 65)
+  const sunDamage    = clamp(Math.round(avgContrast * 1.8 + avgStdDev * 0.2), 5, 70)
+  const vascularity  = clamp(Math.round(cheekNoseRedRatio * 250 - 10), 3, 60)
+
+  // Overall (higher = better)
+  const overall = clamp(Math.round(
+    luminosity * 0.15 + hydration * 0.18 + uniformity * 0.15 +
+    (100 - glycation) * 0.12 + (100 - inflammation) * 0.18 +
+    (100 - sunDamage) * 0.12 + (100 - vascularity) * 0.10
+  ), 30, 96)
+
+  // Per-zone score
+  const zoneScore = (zn: string): number => {
+    const za = zoneAvgs[zn]
+    if (!za) return 50
+    const lumScore = clamp(Math.round((za.lum / fitz.lumBaseline) * 100), 20, 100)
+    const redScore = clamp(Math.round(100 - za.redRatio * 400), 30, 100)
+    const texScore = clamp(Math.round(100 - za.contrast * 2.0), 30, 100)
+    return Math.round(lumScore * 0.35 + redScore * 0.35 + texScore * 0.30)
+  }
+
+  // Apparent age
+  const ageApparent = clamp(
+    ageCfg.ageMid + Math.round((100 - overall) * 0.15 + glycation * 0.08 - 5),
+    17, 65
+  )
+
   return {
-    overall, hydration, inflammation, elasticity, melanin, oxidation, texture, luminosity,
-    ageApparent: clamp(26 + Math.round((100 - overall) * 0.2 + (100 - elasticity) * 0.1), 17, 60),
+    overall, luminosity, hydration, uniformity, glycation, inflammation, sunDamage, vascularity,
+    ageApparent,
     zoneScores: {
-      forehead: zoneScore(z.forehead), leftCheek: zoneScore(z.leftCheek),
-      rightCheek: zoneScore(z.rightCheek), nose: zoneScore(z.nose), chin: zoneScore(z.chin),
-    }
+      forehead:    zoneScore("forehead"),
+      periocularL: zoneScore("periocularL"),
+      periocularR: zoneScore("periocularR"),
+      nose:        zoneScore("nose"),
+      lips:        zoneScore("lips"),
+      cheekL:      zoneScore("cheekL"),
+      cheekR:      zoneScore("cheekR"),
+      jaw:         zoneScore("jaw"),
+      neck:        zoneScore("neck"),
+    },
   }
 }
 
-// ── Gamified profile quiz ─────────────────────────────────────────
-function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => void; scores: Scores }) {
+// ── Biomarker insights (7 new biomarkers) ────────────────────────
+function getBiomarkerInsight(label: string, value: number): string {
+  switch (label) {
+    case "Luminosidad":
+      if (value >= 70) return "Tu piel refleja bien la luz. Luce descansada, nutrida y con buen tono."
+      if (value >= 50) return "Piel algo apagada. La vitamina C y una buena exfoliación pueden recuperar el brillo."
+      return "Piel opaca. El daño acumulado está afectando directamente la reflexión de la luz."
+    case "Hidratación":
+      if (value >= 75) return "Tu barrera cutánea retiene bien la humedad. Mantén tu hidratante actual."
+      if (value >= 55) return "Tu piel pierde agua más rápido de lo que la repone. Refuerza la hidratación."
+      return "Deshidratación crítica — tu piel está bajo estrés constante y eso amplifica todos los demás daños."
+    case "Uniformidad":
+      if (value >= 75) return "Tono parejo entre zonas. Tu piel refleja la luz de forma consistente."
+      if (value >= 55) return "Hay variaciones de tono entre zonas. Una rutina unificadora puede equilibrarlo."
+      return "Diferencias marcadas entre zonas faciales. Manchas o rojeces generan un tono desigual."
+    case "Glicación":
+      if (value <= 15) return "Sin signos de glicación. El colágeno no muestra daño por azúcar."
+      if (value <= 30) return "Glicación leve detectada. Reducir azúcar refinada puede frenar este proceso."
+      return "Glicación elevada — el azúcar está dañando las fibras de colágeno, acelerando el envejecimiento."
+    case "Inflamación":
+      if (value <= 15) return "Piel calmada, sin signos de estrés visible. Buen punto de partida."
+      if (value <= 30) return "Inflamación silenciosa activa. Se puede expresar como rojez, sensibilidad o poros dilatados."
+      return "Inflamación elevada — es el factor que amplifica el envejecimiento y daña la barrera cutánea."
+    case "Daño solar":
+      if (value <= 15) return "Mínimo daño solar acumulado. Tu protección UV está funcionando."
+      if (value <= 30) return "Daño solar moderado. El SPF diario y antioxidantes pueden revertir parte de este daño."
+      return "Daño solar significativo. Sin protección activa, las manchas y la textura irregular seguirán avanzando."
+    case "Vascularidad":
+      if (value <= 12) return "Red vascular estable. Sin signos de cuperosis ni rojez persistente."
+      if (value <= 25) return "Algo de actividad vascular visible. Puede manifestarse como rojez en mejillas y nariz."
+      return "Vascularidad elevada — tendencia a rojez, cuperosis o rosácea. Necesita ingredientes calmantes."
+    default:
+      return ""
+  }
+}
+
+// ── Zone status helper ──────────────────────────────────────────
+function getZoneStatus(score: number): { label: string; color: string } {
+  if (score >= 80) return { label: "Óptimo", color: "#7ecba1" }
+  if (score >= 60) return { label: "Normal", color: "#d4af88" }
+  if (score >= 40) return { label: "Atención", color: "#e8a4b0" }
+  return { label: "Crítico", color: "#ef4444" }
+}
+
+// ── ProfileQuiz — multi-mode gamified questionnaire ─────────────
+function ProfileQuiz({ mode, onComplete, scores }: {
+  mode: "pre-scan" | "contact" | "gate"
+  onComplete: (data: Record<string, string>) => void
+  scores?: Scores | null
+}) {
+  const steps = mode === "pre-scan" ? PRE_SCAN_STEPS : mode === "contact" ? CONTACT_STEPS : GATE_STEPS
   const [step, setStep] = useState(0)
-  const [data, setData]   = useState<Partial<UserProfile>>({})
+  const [data, setData] = useState<Record<string, string>>({})
   const [inputVal, setInputVal] = useState("")
   const [animating, setAnimating] = useState(false)
 
-  const current = QUIZ_STEPS[step]
+  const current = steps[step]
 
-  const advance = (update: Partial<UserProfile>) => {
+  const advance = (update: Record<string, string>) => {
     const next = { ...data, ...update }
     setData(next)
-    if (step < QUIZ_STEPS.length - 1) {
+    if (step < steps.length - 1) {
       setAnimating(true)
       setTimeout(() => { setStep(s => s + 1); setInputVal(""); setAnimating(false) }, 220)
     } else {
-      // Save profile to localStorage
-      try { localStorage.setItem("insideoutmed_profile", JSON.stringify(next)) } catch {}
-      onComplete(next as UserProfile)
+      onComplete(next)
     }
   }
 
-  const skip = () => {
-    advance({})
-  }
+  const headerText = mode === "pre-scan"
+    ? "Antes de escanear"
+    : mode === "contact"
+    ? "Tu análisis está listo"
+    : "Desbloquea tu informe completo"
+
+  const headerSub = mode === "pre-scan"
+    ? `${steps.length} preguntas para calibrar tu análisis`
+    : mode === "contact"
+    ? (scores ? `Score: ${scores.overall}/100 — necesitamos tus datos para enviártelo` : "Necesitamos tus datos para enviarte el informe")
+    : `${steps.length} preguntas más para personalizar tu plan`
 
   return (
     <div style={{ maxWidth: 480, width: "100%", margin: "0 auto" }}>
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: 32 }}>
-        <p style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>
-          Tu análisis está listo
+        <p style={{ fontSize: 10, letterSpacing: "0.18em", color: mode === "contact" ? "#7ecba1" : "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>
+          {headerText}
         </p>
         <p style={{ fontSize: 13, color: "rgba(245,237,232,0.35)", letterSpacing: "0.04em" }}>
-          3 preguntas para personalizar tu plan · Score: <span style={{ color: "#e8a4b0", fontWeight: 700 }}>{scores.overall}/100</span>
+          {headerSub}
         </p>
       </div>
 
       {/* Progress dots */}
       <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 40 }}>
-        {QUIZ_STEPS.map((_, i) => (
+        {steps.map((_, i) => (
           <div key={i} style={{
             width: i === step ? 24 : 7, height: 7,
             borderRadius: 4,
@@ -338,7 +590,7 @@ function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => v
                 onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(245,237,232,0.10)"; e.currentTarget.style.background = "rgba(245,237,232,0.03)" }}
               >
                 <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>{opt.label}</span>
-                {"sub" in opt && <span style={{ fontSize: 10, color: "rgba(245,237,232,0.35)", letterSpacing: "0.08em" }}>{(opt as {sub:string}).sub}</span>}
+                {opt.sub && <span style={{ fontSize: 10, color: "rgba(245,237,232,0.35)", letterSpacing: "0.08em" }}>{opt.sub}</span>}
               </button>
             ))}
           </div>
@@ -361,10 +613,45 @@ function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => v
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(212,175,136,0.5)"; e.currentTarget.style.background = "rgba(212,175,136,0.06)" }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(245,237,232,0.10)"; e.currentTarget.style.background = "rgba(245,237,232,0.03)" }}
               >
-                {"icon" in opt && <span style={{ fontSize: 22 }}>{(opt as {icon:string}).icon}</span>}
+                {opt.icon && <span style={{ fontSize: 22 }}>{opt.icon}</span>}
                 <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(245,237,232,0.75)" }}>{opt.label}</span>
               </button>
             ))}
+          </div>
+        )}
+
+        {/* fitz6: Fitzpatrick 3x2 grid of circular skin tone tiles */}
+        {current.type === "fitz6" && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+            {FITZ_TILES.map(tile => {
+              const isSelected = data[current.id] === tile.value
+              return (
+                <button key={tile.value} onClick={() => advance({ [current.id]: tile.value })}
+                  style={{
+                    padding: "18px 10px",
+                    background: "rgba(245,237,232,0.03)",
+                    border: `1.5px solid ${isSelected ? "rgba(232,164,176,0.6)" : "rgba(245,237,232,0.10)"}`,
+                    borderRadius: 16,
+                    cursor: "pointer",
+                    color: "#f5ede8",
+                    textAlign: "center",
+                    transition: "all 0.18s",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(232,164,176,0.5)"; e.currentTarget.style.background = "rgba(232,164,176,0.06)" }}
+                  onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.borderColor = "rgba(245,237,232,0.10)"; e.currentTarget.style.background = "rgba(245,237,232,0.03)" } }}
+                >
+                  <div style={{ position: "relative", width: 52, height: 52, borderRadius: "50%", background: tile.color, border: "2px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {isSelected && (
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 13l4 4L19 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(245,237,232,0.65)" }}>{tile.label}</span>
+                </button>
+              )
+            })}
           </div>
         )}
 
@@ -387,7 +674,7 @@ function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => v
               >
                 <div style={{ textAlign: "left" }}>
                   <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{opt.label}</p>
-                  {"sub" in opt && <p style={{ fontSize: 11, color: "rgba(245,237,232,0.35)" }}>{(opt as {sub:string}).sub}</p>}
+                  {opt.sub && <p style={{ fontSize: 11, color: "rgba(245,237,232,0.35)" }}>{opt.sub}</p>}
                 </div>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, opacity: 0.4 }}>
                   <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -408,7 +695,7 @@ function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => v
                 placeholder="tu@email.com"
                 value={inputVal}
                 onChange={e => setInputVal(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && emailValid) advance({ email: inputVal }) }}
+                onKeyDown={e => { if (e.key === "Enter" && emailValid) advance({ [current.id]: inputVal }) }}
                 autoFocus
                 style={{
                   width: "100%", padding: "18px 20px",
@@ -429,7 +716,7 @@ function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => v
               )}
             </div>
             <button
-              onClick={() => { if (emailValid) advance({ email: inputVal }) }}
+              onClick={() => { if (emailValid) advance({ [current.id]: inputVal }) }}
               disabled={!emailValid}
               style={{
                 width: "100%", padding: "15px",
@@ -448,7 +735,7 @@ function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => v
           )
         })()}
 
-        {/* phone input — numbers only, required */}
+        {/* phone input — numbers only, required, min 8 digits */}
         {current.type === "phone" && (() => {
           const digitsOnly = inputVal.replace(/\D/g, "")
           const isValid = digitsOnly.length >= 8
@@ -461,11 +748,10 @@ function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => v
                 placeholder="+52 55 1234 5678"
                 value={inputVal}
                 onChange={e => {
-                  // Only allow digits, spaces, + and -
                   const filtered = e.target.value.replace(/[^\d\s+\-()]/g, "")
                   setInputVal(filtered)
                 }}
-                onKeyDown={e => { if (e.key === "Enter" && isValid) advance({ phone: inputVal }) }}
+                onKeyDown={e => { if (e.key === "Enter" && isValid) advance({ [current.id]: inputVal }) }}
                 autoFocus
                 style={{
                   width: "100%", padding: "18px 20px",
@@ -485,7 +771,7 @@ function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => v
               )}
             </div>
             <button
-              onClick={() => { if (isValid) advance({ phone: inputVal }) }}
+              onClick={() => { if (isValid) advance({ [current.id]: inputVal }) }}
               disabled={!isValid}
               style={{
                 width: "100%", padding: "15px",
@@ -514,15 +800,19 @@ function ProfileQuiz({ onComplete, scores }: { onComplete: (p: UserProfile) => v
 
 // ── Main page component ───────────────────────────────────────────
 export default function AnalyzePage() {
-  const [stage, setStage]             = useState<Stage>("choose")
+  const [stage, setStage] = useState<Stage>("choose")
+  const [captureMode, setCaptureMode] = useState<"camera" | "upload">("camera")
   const [capturedUrl, setCapturedUrl] = useState<string | null>(null)
   const [scanProgress, setScanProgress] = useState(0)
   const [activeZoneIdx, setActiveZoneIdx] = useState(-1)
   const [completedZones, setCompletedZones] = useState<number[]>([])
   const [qualityError, setQualityError] = useState<string | null>(null)
-  const [scores, setScores]           = useState<Scores | null>(null)
+  const [scores, setScores] = useState<Scores | null>(null)
+  const [preQuizData, setPreQuizData] = useState<Record<string, string>>({})
+  const [contactData, setContactData] = useState<Record<string, string>>({})
+  const [gateData, setGateData] = useState<Record<string, string>>({})
 
-  const fileRef        = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ── Camera path: scores arrive pre-computed ────────────────────
@@ -534,13 +824,13 @@ export default function AnalyzePage() {
     let progress = 0
 
     scanIntervalRef.current = setInterval(() => {
-      progress += Math.random() * 1.4 + 0.4
+      progress += 1.0 + (progress / 100) * 0.6
       if (progress >= 100) {
         progress = 100
         clearInterval(scanIntervalRef.current!)
         setTimeout(() => {
           setScores(preScores)
-          setStage("profile")
+          setStage("contact")
         }, 500)
       }
       setScanProgress(Math.min(progress, 100))
@@ -558,6 +848,9 @@ export default function AnalyzePage() {
 
   // ── Upload path: run analysis after capture ────────────────────
   const beginScanWithUpload = useCallback((dataUrl: string) => {
+    const fitzpatrick = parseInt(preQuizData.fitzpatrick || "3", 10)
+    const ageRange = preQuizData.age || "26-35"
+
     setStage("scanning")
     setScanProgress(0)
     setActiveZoneIdx(-1)
@@ -565,10 +858,10 @@ export default function AnalyzePage() {
     let progress = 0
     let analysisResult: Scores | null | undefined = undefined
 
-    runUploadAnalysis(dataUrl).then(r => { analysisResult = r }).catch(() => { analysisResult = null })
+    runUploadAnalysis(dataUrl, fitzpatrick, ageRange).then(r => { analysisResult = r }).catch(() => { analysisResult = null })
 
     scanIntervalRef.current = setInterval(() => {
-      progress += Math.random() * 1.4 + 0.4
+      progress += 1.0 + (progress / 100) * 0.6
       if (progress >= 100) {
         progress = 100
         clearInterval(scanIntervalRef.current!)
@@ -579,7 +872,7 @@ export default function AnalyzePage() {
             setStage("error")
           } else {
             setScores(analysisResult)
-            setStage("profile")
+            setStage("contact")
           }
         }
         setTimeout(finish, 500)
@@ -595,7 +888,7 @@ export default function AnalyzePage() {
         return prev
       })
     }, 80)
-  }, [])
+  }, [preQuizData])
 
   const handleCameraCapture = useCallback((dataUrl: string, preScores: Scores) => {
     setCapturedUrl(dataUrl)
@@ -629,66 +922,94 @@ export default function AnalyzePage() {
     setCompletedZones([])
     setQualityError(null)
     setScores(null)
+    setPreQuizData({})
+    setContactData({})
+    setGateData({})
     setStage("choose")
   }
 
-  const handleProfileComplete = (profile: UserProfile) => {
-    // Save profile for plan page to use
-    try {
-      localStorage.setItem("insideoutmed_profile", JSON.stringify(profile))
-      if (scores) localStorage.setItem("insideoutmed_scores", JSON.stringify({
-        overall: scores.overall, hydration: scores.hydration, inflammation: scores.inflammation,
-        elasticity: scores.elasticity, melanin: scores.melanin, oxidation: scores.oxidation,
-        ...profile,
-      }))
-    } catch {}
-    setStage("results")
-  }
-
-  function getBiomarkerInsight(label: string, value: number): string {
-    switch (label) {
-      case "Hidratación":
-        if (value >= 75) return "Tu barrera cutánea retiene bien la humedad. Mantén tu hidratante actual."
-        if (value >= 55) return "Tu piel pierde agua más rápido de lo que la repone. Refuerza la hidratación."
-        return "Deshidratación crítica — tu piel está bajo estrés constante y eso amplifica todos los demás daños."
-      case "Inflamación":
-        if (value <= 20) return "Piel calmada, sin signos de estrés visible. Buen punto de partida."
-        if (value <= 35) return "Inflamación silenciosa activa. Se puede expresar como rojez, sensibilidad o poros dilatados."
-        return "Inflamación elevada — es el factor que amplifica el envejecimiento y daña la barrera cutánea."
-      case "Elasticidad":
-        if (value >= 75) return "Buen tono y firmeza. El colágeno está respondiendo bien a tu rutina actual."
-        if (value >= 55) return "Algo de laxitud en el contorno. El retinol puede estimular el colágeno de forma visible."
-        return "Pérdida notable de firmeza. Se necesita estimulación activa del colágeno para revertirlo."
-      case "Oxidación":
-        if (value <= 20) return "Daño por radicales libres bajo control. Tu piel está protegida del estrés ambiental."
-        if (value <= 35) return "Estrés oxidativo moderado — la vitamina C puede revertir este daño de forma clínica."
-        return "Daño oxidativo acumulado. Sin antioxidantes potentes, este daño escala rápidamente."
-      case "Melanina":
-        if (value >= 65) return "Alta concentración de pigmento activo. Hay riesgo de manchas visibles o hiperpigmentación."
-        if (value >= 40) return "Pigmentación dentro del rango normal para tu fototipo. Sin hiperpigmentación activa."
-        return "Índice de melanina bajo. Sin señales de hiperpigmentación activa detectable."
-      case "Textura":
-        if (value >= 75) return "Superficie cutánea uniforme. Poros bien regulados y reflejo de luz consistente."
-        if (value >= 55) return "Textura algo irregular, posiblemente por deshidratación o acumulación de células muertas."
-        return "Textura notablemente irregular. La exfoliación química puede hacer una diferencia visible en semanas."
-      case "Luminosidad":
-        if (value >= 70) return "Tu piel refleja bien la luz. Luce descansada, nutrida y con buen tono."
-        if (value >= 50) return "Piel algo apagada. La vitamina C y una buena exfoliación pueden recuperar el brillo."
-        return "Piel opaca. El daño acumulado está afectando directamente la reflexión de la luz."
-      default:
-        return ""
+  // ── Pre-quiz complete → go to camera or upload ─────────────────
+  const handlePreQuizComplete = (data: Record<string, string>) => {
+    setPreQuizData(data)
+    if (captureMode === "camera") {
+      setStage("camera")
+    } else {
+      setStage("upload-guide")
     }
   }
 
+  // ── Contact complete → results-1 ──────────────────────────────
+  const handleContactComplete = (data: Record<string, string>) => {
+    setContactData(data)
+    // Save to localStorage
+    try {
+      localStorage.setItem("insideoutmed_profile", JSON.stringify({ ...preQuizData, ...data }))
+      if (scores) {
+        localStorage.setItem("insideoutmed_scores", JSON.stringify({
+          overall: scores.overall,
+          luminosity: scores.luminosity,
+          hydration: scores.hydration,
+          uniformity: scores.uniformity,
+          glycation: scores.glycation,
+          inflammation: scores.inflammation,
+          sunDamage: scores.sunDamage,
+          vascularity: scores.vascularity,
+          ...preQuizData, ...data,
+        }))
+      }
+    } catch {}
+    setStage("results-1")
+  }
+
+  // ── Gate quiz complete → results-2 ─────────────────────────────
+  const handleGateComplete = (data: Record<string, string>) => {
+    setGateData(data)
+    // Save all data to localStorage
+    try {
+      localStorage.setItem("insideoutmed_profile", JSON.stringify({ ...preQuizData, ...contactData, ...data }))
+      if (scores) {
+        localStorage.setItem("insideoutmed_scores", JSON.stringify({
+          overall: scores.overall,
+          luminosity: scores.luminosity,
+          hydration: scores.hydration,
+          uniformity: scores.uniformity,
+          glycation: scores.glycation,
+          inflammation: scores.inflammation,
+          sunDamage: scores.sunDamage,
+          vascularity: scores.vascularity,
+          ...preQuizData, ...contactData, ...data,
+        }))
+      }
+    } catch {}
+    setStage("results-2")
+  }
+
+  // ── Build biomarker list ──────────────────────────────────────
   const biomarkers = scores ? [
-    { label: "Hidratación",  value: scores.hydration,    color: scores.hydration >= 70    ? "#7ecba1" : scores.hydration >= 50    ? "#d4af88" : "#e8a4b0", note: scores.hydration >= 75    ? "Excelente" : scores.hydration >= 55    ? "Mejorable" : "Baja",      alert: scores.hydration < 55,    insight: getBiomarkerInsight("Hidratación",  scores.hydration) },
-    { label: "Inflamación",  value: scores.inflammation, color: scores.inflammation <= 20 ? "#7ecba1" : scores.inflammation <= 35 ? "#d4af88" : "#e8a4b0", note: scores.inflammation <= 20 ? "Controlada" : scores.inflammation <= 35 ? "Moderada"  : "Elevada",    alert: scores.inflammation > 35, insight: getBiomarkerInsight("Inflamación",  scores.inflammation) },
-    { label: "Elasticidad",  value: scores.elasticity,   color: scores.elasticity >= 70   ? "#7ecba1" : scores.elasticity >= 55   ? "#d4af88" : "#e8a4b0", note: scores.elasticity >= 75   ? "Óptima"     : scores.elasticity >= 55   ? "Aceptable" : "Baja",      alert: scores.elasticity < 55,   insight: getBiomarkerInsight("Elasticidad",  scores.elasticity) },
-    { label: "Oxidación",    value: scores.oxidation,    color: scores.oxidation <= 20    ? "#7ecba1" : scores.oxidation <= 35    ? "#d4af88" : "#e8a4b0", note: scores.oxidation <= 20    ? "Bajo"       : scores.oxidation <= 35    ? "Moderado"  : "Elevado",   alert: scores.oxidation > 35,    insight: getBiomarkerInsight("Oxidación",    scores.oxidation) },
-    { label: "Melanina",     value: scores.melanin,      color: "#d4af88",                                                                                  note: scores.melanin >= 65      ? "Alta"       : scores.melanin >= 40      ? "Media"     : "Baja",      alert: scores.melanin > 65,      insight: getBiomarkerInsight("Melanina",     scores.melanin) },
-    { label: "Textura",      value: scores.texture,      color: scores.texture >= 70      ? "#7ecba1" : scores.texture >= 55      ? "#d4af88" : "#e8a4b0", note: scores.texture >= 75      ? "Fina"       : scores.texture >= 55      ? "Normal"    : "Irregular", alert: scores.texture < 55,      insight: getBiomarkerInsight("Textura",      scores.texture) },
-    { label: "Luminosidad",  value: scores.luminosity,   color: scores.luminosity >= 65   ? "#7ecba1" : scores.luminosity >= 50   ? "#d4af88" : "#e8a4b0", note: scores.luminosity >= 70   ? "Radiante"   : scores.luminosity >= 50   ? "Normal"    : "Opaca",     alert: scores.luminosity < 50,   insight: getBiomarkerInsight("Luminosidad",  scores.luminosity) },
-  ] : []
+    { label: "Luminosidad",  value: scores.luminosity,    higherBetter: true },
+    { label: "Hidratación",  value: scores.hydration,     higherBetter: true },
+    { label: "Uniformidad",  value: scores.uniformity,    higherBetter: true },
+    { label: "Glicación",    value: scores.glycation,     higherBetter: false },
+    { label: "Inflamación",  value: scores.inflammation,  higherBetter: false },
+    { label: "Daño solar",   value: scores.sunDamage,     higherBetter: false },
+    { label: "Vascularidad", value: scores.vascularity,   higherBetter: false },
+  ].map(b => {
+    const severity = b.higherBetter ? (100 - b.value) : b.value
+    let color: string, note: string, alert: boolean
+    if (b.higherBetter) {
+      color = b.value >= 70 ? "#7ecba1" : b.value >= 50 ? "#d4af88" : "#e8a4b0"
+      note = b.value >= 75 ? "Excelente" : b.value >= 55 ? "Mejorable" : "Baja"
+      alert = b.value < 55
+    } else {
+      color = b.value <= 15 ? "#7ecba1" : b.value <= 30 ? "#d4af88" : "#e8a4b0"
+      note = b.value <= 15 ? "Controlado" : b.value <= 30 ? "Moderado" : "Elevado"
+      alert = b.value > 30
+    }
+    return { ...b, severity, color, note, alert, insight: getBiomarkerInsight(b.label, b.value) }
+  }) : []
+
+  // Top 3 critical findings (sorted by severity)
+  const criticalFindings = [...biomarkers].sort((a, b) => b.severity - a.severity).slice(0, 3)
 
   const percentile = scores ? Math.round(100 - scores.overall * 0.82) : 18
 
@@ -711,7 +1032,7 @@ export default function AnalyzePage() {
         {/* ── CHOOSE ── */}
         {stage === "choose" && (
           <div style={{ maxWidth: 520, width: "100%", textAlign: "center" }}>
-            <p style={{ fontSize: 10, letterSpacing: "0.16em", color: "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 14 }}>Paso 1 de 1</p>
+            <p style={{ fontSize: 10, letterSpacing: "0.16em", color: "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 14 }}>Paso 1</p>
             <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(26px, 5vw, 42px)", fontWeight: 400, lineHeight: 1.1, marginBottom: 12, letterSpacing: "-0.03em" }}>
               ¿Cómo quieres analizarte?
             </h1>
@@ -720,7 +1041,7 @@ export default function AnalyzePage() {
               Necesitas <strong style={{ color: "rgba(245,237,232,0.7)", fontWeight: 500 }}>buena luz natural</strong> y el rostro visible.
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 28 }}>
-              <button onClick={() => setStage("camera")}
+              <button onClick={() => { setCaptureMode("camera"); setStage("pre-quiz") }}
                 style={{ background: "rgba(245,237,232,0.03)", border: "1.5px solid rgba(245,237,232,0.1)", borderRadius: 18, padding: "28px 18px", cursor: "pointer", color: "#f5ede8", textAlign: "center", transition: "all 0.2s", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}
                 onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(232,164,176,0.45)";e.currentTarget.style.background="rgba(232,164,176,0.05)"}}
                 onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(245,237,232,0.1)";e.currentTarget.style.background="rgba(245,237,232,0.03)"}}>
@@ -730,7 +1051,7 @@ export default function AnalyzePage() {
                 <div><p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Escaneo en vivo</p><p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", lineHeight: 1.5 }}>Cámara frontal</p></div>
                 <span style={{ fontSize: 9, color: "#e8a4b0", letterSpacing: "0.12em", fontWeight: 700, border: "1px solid rgba(232,164,176,0.3)", padding: "2px 10px", borderRadius: 99 }}>RECOMENDADO</span>
               </button>
-              <button onClick={() => setStage("upload-guide")}
+              <button onClick={() => { setCaptureMode("upload"); setStage("pre-quiz") }}
                 style={{ background: "rgba(245,237,232,0.03)", border: "1.5px solid rgba(245,237,232,0.1)", borderRadius: 18, padding: "28px 18px", cursor: "pointer", color: "#f5ede8", textAlign: "center", transition: "all 0.2s", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}
                 onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(245,237,232,0.22)";e.currentTarget.style.background="rgba(245,237,232,0.05)"}}
                 onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(245,237,232,0.1)";e.currentTarget.style.background="rgba(245,237,232,0.03)"}}>
@@ -754,6 +1075,11 @@ export default function AnalyzePage() {
           </div>
         )}
 
+        {/* ── PRE-QUIZ ── */}
+        {stage === "pre-quiz" && (
+          <ProfileQuiz mode="pre-scan" onComplete={handlePreQuizComplete} />
+        )}
+
         {/* ── UPLOAD GUIDE ── */}
         {stage === "upload-guide" && (
           <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
@@ -763,9 +1089,15 @@ export default function AnalyzePage() {
             </h2>
             <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", marginBottom: 28, lineHeight: 1.65 }}>Usamos 478 puntos para mapear tu cara y analizar cada zona.</p>
             <div style={{ textAlign: "left", marginBottom: 14 }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "#7ecba1", fontWeight: 700, marginBottom: 10 }}>✓ Así sí funciona</p>
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "#7ecba1", fontWeight: 700, marginBottom: 10 }}>Asi funciona</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                {[{icon:"☀",text:"Luz natural frontal — ventana o lámpara apuntando a tu cara, sin contraluz"},{icon:"👤",text:"Rostro centrado y completo — frente, mejillas, nariz y mentón visibles"},{icon:"🚫",text:"Sin maquillaje, filtros, gafas ni cabello tapando la cara"},{icon:"📐",text:"Cámara al nivel de los ojos, a 30–50 cm de distancia"},{icon:"🔆",text:"Imagen nítida y bien expuesta"}].map((item,i)=>(
+                {[
+                  { icon: "☀", text: "Luz natural frontal — ventana o lámpara apuntando a tu cara, sin contraluz" },
+                  { icon: "👤", text: "Rostro centrado y completo — frente, mejillas, nariz y mentón visibles" },
+                  { icon: "🚫", text: "Sin maquillaje, filtros, gafas ni cabello tapando la cara" },
+                  { icon: "📐", text: "Cámara al nivel de los ojos, a 30–50 cm de distancia" },
+                  { icon: "🔆", text: "Imagen nítida y bien expuesta" },
+                ].map((item,i)=>(
                   <div key={i} style={{ display: "flex", gap: 12, padding: "11px 14px", background: "rgba(126,203,161,0.04)", border: "1px solid rgba(126,203,161,0.1)", borderRadius: 11 }}>
                     <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
                     <span style={{ fontSize: 13, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>{item.text}</span>
@@ -774,7 +1106,7 @@ export default function AnalyzePage() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setStage("choose")} style={{ flex: 1, padding: "13px", background: "rgba(245,237,232,0.05)", border: "1px solid rgba(245,237,232,0.1)", borderRadius: 12, color: "rgba(245,237,232,0.5)", fontSize: 13, cursor: "pointer" }}>Volver</button>
+              <button onClick={() => setStage("pre-quiz")} style={{ flex: 1, padding: "13px", background: "rgba(245,237,232,0.05)", border: "1px solid rgba(245,237,232,0.1)", borderRadius: 12, color: "rgba(245,237,232,0.5)", fontSize: 13, cursor: "pointer" }}>Volver</button>
               <button onClick={() => fileRef.current?.click()} style={{ flex: 2, padding: "13px", background: "linear-gradient(135deg,#d4af88,#b8936a)", border: "none", borderRadius: 12, color: "#0e0c12", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 Elegir foto
@@ -783,20 +1115,22 @@ export default function AnalyzePage() {
           </div>
         )}
 
-        {/* ── CAMERA — uses CameraStage with full guided experience ── */}
+        {/* ── CAMERA — uses CameraStage with guided experience ── */}
         {stage === "camera" && (
           <CameraStage
             onCapture={handleCameraCapture}
             onCancel={reset}
             onScanError={handleScanError}
+            fitzpatrick={parseInt(preQuizData.fitzpatrick || "3", 10)}
+            ageRange={preQuizData.age || "26-35"}
           />
         )}
 
-        {/* ── SCANNING — cinematic zone-by-zone reveal ── */}
+        {/* ── SCANNING — cinematic 9-zone reveal ── */}
         {stage === "scanning" && capturedUrl && (
           <div style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
             <p style={{ fontSize: 10, letterSpacing: "0.16em", color: "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 20 }}>
-              Analizando 478 puntos faciales
+              Analizando 9 zonas faciales
             </p>
 
             {/* Face image with animated zone overlays */}
@@ -806,7 +1140,7 @@ export default function AnalyzePage() {
               {/* Dark vignette */}
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(14,12,18,0.3) 0%,transparent 20%,transparent 70%,rgba(14,12,18,0.6) 100%)", pointerEvents: "none" }} />
 
-              {/* Scan beam — travels down */}
+              {/* Scan beam */}
               <div style={{
                 position: "absolute", left: 0, right: 0, height: 3,
                 background: "linear-gradient(90deg,transparent,#e8a4b0 20%,#d4af88 50%,#7ecba1 80%,transparent)",
@@ -841,7 +1175,7 @@ export default function AnalyzePage() {
                       transition: "color 0.3s",
                       textShadow: isActive ? `0 0 8px ${zone.color}` : "none",
                     }}>
-                      {zone.label}
+                      {zone.icon} {zone.label}
                     </span>
                     {isDone && (
                       <span style={{ fontSize: 9, color: zone.color, fontWeight: 700 }}>✓</span>
@@ -870,19 +1204,20 @@ export default function AnalyzePage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <div style={{ width: 5, height: 5, borderRadius: "50%", background: SCAN_ZONES_ANIM[activeZoneIdx]?.color ?? "#e8a4b0", animation: "pulseDot 0.8s ease-in-out infinite" }} />
               <p style={{ fontSize: 11, color: "rgba(245,237,232,0.4)", letterSpacing: "0.06em" }}>
-                {scanProgress < 20 ? "Detectando estructura facial…" :
-                 scanProgress < 40 ? `Escaneando ${SCAN_ZONES_ANIM[activeZoneIdx]?.label ?? ""}…` :
-                 scanProgress < 65 ? "Analizando biomarcadores…" :
-                 scanProgress < 85 ? "Calculando puntuaciones por zona…" :
+                {scanProgress < 15 ? "Detectando estructura facial…" :
+                 scanProgress < 30 ? `Escaneando ${SCAN_ZONES_ANIM[activeZoneIdx]?.label ?? ""}…` :
+                 scanProgress < 50 ? "Analizando biomarcadores…" :
+                 scanProgress < 70 ? "Calculando puntuaciones por zona…" :
+                 scanProgress < 85 ? "Evaluando luminosidad e hidratación…" :
                  scanProgress < 99 ? "Finalizando análisis…" : "Análisis completado ✓"}
               </p>
             </div>
           </div>
         )}
 
-        {/* ── PROFILE — gamified quiz ── */}
-        {stage === "profile" && scores && (
-          <ProfileQuiz scores={scores} onComplete={handleProfileComplete} />
+        {/* ── CONTACT — email + phone quiz ── */}
+        {stage === "contact" && scores && (
+          <ProfileQuiz mode="contact" onComplete={handleContactComplete} scores={scores} />
         )}
 
         {/* ── ERROR ── */}
@@ -905,23 +1240,115 @@ export default function AnalyzePage() {
           </div>
         )}
 
-        {/* ── RESULTS ── */}
-        {stage === "results" && scores && (
-          <div style={{ maxWidth: 900, width: "100%" }}>
-            <div style={{ textAlign: "center", marginBottom: 40 }}>
+        {/* ── RESULTS LAYER 1 — top 3 critical findings ── */}
+        {stage === "results-1" && scores && (
+          <div style={{ maxWidth: 520, width: "100%" }}>
+            <div style={{ textAlign: "center", marginBottom: 32 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 8px rgba(126,203,161,0.8)" }} />
-                <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>Análisis completado · 478 puntos</span>
+                <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>Análisis completado · 9 zonas</span>
               </div>
               <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 400, marginBottom: 10, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
                 Tu piel habla. <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>Esto es lo que dice.</em>
               </h1>
-              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.35)", maxWidth: 380, margin: "0 auto" }}>Análisis por zonas: frente, mejillas, nariz y mentón — cada una medida por separado.</p>
+            </div>
+
+            {/* Score card with photo */}
+            <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
+                {/* Score */}
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 12, fontWeight: 700 }}>Score Global</p>
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 72, fontFamily: "var(--font-fraunces)", fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>{scores.overall}</span>
+                    <div style={{ paddingBottom: 8 }}>
+                      <span style={{ fontSize: 17, color: "rgba(245,237,232,0.22)" }}>/100</span>
+                      <p style={{ fontSize: 9, color: "#7ecba1", fontWeight: 700, letterSpacing: "0.08em", marginTop: 4 }}>TOP {percentile}%</p>
+                    </div>
+                  </div>
+                  <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${scores.overall}%`, background: "linear-gradient(90deg,#e8a4b0,#d4af88)", borderRadius: 2 }} />
+                  </div>
+                </div>
+                {/* Captured photo thumbnail */}
+                {capturedUrl && (
+                  <div style={{ width: 80, height: 100, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(245,237,232,0.1)", flexShrink: 0 }}>
+                    <img src={capturedUrl} alt="Tu foto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                )}
+              </div>
+              <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.42)", lineHeight: 1.7, marginTop: 16 }}>
+                {scores.overall >= 80 ? "Tu piel está en un estado superior a la media. Mantén la rutina." : scores.overall >= 65 ? "Hay margen de mejora claro. Con el plan correcto puedes subir 10–15 puntos en 6 semanas." : "Tu piel necesita atención prioritaria. El plan de productos es el primer paso."}
+              </p>
+            </div>
+
+            {/* Top 3 critical findings */}
+            <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px", marginBottom: 16 }}>
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>Hallazgos principales</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                {criticalFindings.map(b => (
+                  <div key={b.label}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 13, color: "rgba(245,237,232,0.7)", fontWeight: 500 }}>{b.label}</span>
+                        {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>ATENCIÓN</span>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 9, color: "rgba(245,237,232,0.28)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{b.note}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: b.color, minWidth: 36, textAlign: "right" }}>{b.value}%</span>
+                      </div>
+                    </div>
+                    <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1, overflow: "hidden", marginBottom: 6 }}>
+                      <div style={{ height: "100%", width: `${b.value}%`, background: b.color, borderRadius: 1 }} />
+                    </div>
+                    <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.36)", lineHeight: 1.55 }}>
+                      {b.insight}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CTA to unlock full report */}
+            <button
+              onClick={() => setStage("gate-quiz")}
+              style={{
+                width: "100%", padding: "17px 28px",
+                background: "linear-gradient(135deg,#e8a4b0,#c97e8e)",
+                border: "none", borderRadius: 14, color: "#fff",
+                fontSize: 15, fontWeight: 700, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                boxShadow: "0 6px 24px rgba(232,164,176,0.3)",
+                transition: "all 0.2s",
+              }}
+            >
+              Ver informe completo →
+            </button>
+          </div>
+        )}
+
+        {/* ── GATE QUIZ — 6 questions to unlock full report ── */}
+        {stage === "gate-quiz" && (
+          <ProfileQuiz mode="gate" onComplete={handleGateComplete} scores={scores} />
+        )}
+
+        {/* ── RESULTS LAYER 2 — full report ── */}
+        {stage === "results-2" && scores && (
+          <div style={{ maxWidth: 900, width: "100%" }}>
+            <div style={{ textAlign: "center", marginBottom: 40 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 8px rgba(126,203,161,0.8)" }} />
+                <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>Informe completo · 9 zonas · 7 biomarcadores</span>
+              </div>
+              <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 400, marginBottom: 10, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
+                Tu informe <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>detallado.</em>
+              </h1>
+              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.35)", maxWidth: 420, margin: "0 auto" }}>Análisis completo: 7 biomarcadores calibrados y 9 zonas faciales medidas por separado.</p>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 14, marginBottom: 14 }}>
-              {/* Score card */}
-              <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px 28px 24px" }}>
+              {/* Score + Zones card */}
+              <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px 28px 24px" }}>
                 <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>Score Global</p>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 6 }}>
                   <span style={{ fontSize: 80, fontFamily: "var(--font-fraunces)", fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>{scores.overall}</span>
@@ -936,39 +1363,35 @@ export default function AnalyzePage() {
                 <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.42)", lineHeight: 1.7, marginBottom: 18 }}>
                   {scores.overall >= 80 ? "Tu piel está en un estado superior a la media. Mantén la rutina." : scores.overall >= 65 ? "Hay margen de mejora claro. Con el plan correcto puedes subir 10–15 puntos en 6 semanas." : "Tu piel necesita atención prioritaria. El plan de productos es el primer paso."}
                 </p>
+
+                {/* 9-zone analysis */}
                 <div style={{ paddingTop: 16, borderTop: "1px solid rgba(245,237,232,0.06)", marginBottom: 16 }}>
-                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.25)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, fontWeight: 700 }}>Estado por zona</p>
+                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.25)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12, fontWeight: 700 }}>Estado por zona · 9 zonas</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {([
-                      { key: "forehead",   label: "Frente",       value: scores.zoneScores.forehead,   insights: ["Zona T controlada, equilibrio sebáceo bueno", "Zona T con algo de actividad — hidratación media", "Alta actividad en zona T — brillo y poros dilatados"] },
-                      { key: "leftCheek",  label: "Mejilla izq",  value: scores.zoneScores.leftCheek,  insights: ["Sin inflamación activa, tono uniforme", "Leve irritación — puede ser sensibilidad", "Inflamación activa detectada en esta mejilla"] },
-                      { key: "rightCheek", label: "Mejilla der",  value: scores.zoneScores.rightCheek, insights: ["Sin inflamación activa, tono uniforme", "Leve irritación — puede ser sensibilidad", "Inflamación activa detectada en esta mejilla"] },
-                      { key: "nose",       label: "Nariz",        value: scores.zoneScores.nose,        insights: ["Poros regulados, buen control sebáceo", "Algo de actividad sebácea en la nariz", "Poros dilatados y exceso de sebo visible"] },
-                      { key: "chin",       label: "Mentón",       value: scores.zoneScores.chin,        insights: ["Mentón estable, sin signos de estrés", "Algo de irregularidad en el mentón", "Actividad hormonal detectable en el mentón"] },
-                    ] as const).map(z => {
-                      const color = z.value >= 70 ? "#7ecba1" : z.value >= 50 ? "#d4af88" : "#e8a4b0"
-                      const status = z.value >= 70 ? "Óptima" : z.value >= 50 ? "Normal" : "Atención"
-                      const insightIdx = z.value >= 70 ? 0 : z.value >= 50 ? 1 : 2
-                      const insight = z.insights[insightIdx]
+                    {(Object.entries(scores.zoneScores) as [string, number][]).map(([key, value]) => {
+                      const { label: statusLabel, color } = getZoneStatus(value)
+                      const zoneLabel = ZONE_LABELS[key] || key
                       return (
-                        <div key={z.key} style={{ display: "grid", gridTemplateColumns: "70px 1fr", gap: "4px 10px", alignItems: "start" }}>
-                          <span style={{ fontSize: 11, color: "rgba(245,237,232,0.42)", paddingTop: 2 }}>{z.label}</span>
-                          <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-                              <div style={{ width: 5, height: 5, borderRadius: "50%", background: color, flexShrink: 0 }} />
-                              <span style={{ fontSize: 10, color, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{status}</span>
-                            </div>
-                            <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.35)", lineHeight: 1.4 }}>{insight}</p>
+                        <div key={key} style={{ display: "grid", gridTemplateColumns: "85px 1fr", gap: "4px 10px", alignItems: "center" }}>
+                          <span style={{ fontSize: 11, color: "rgba(245,237,232,0.42)" }}>{zoneLabel}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <div style={{ width: 5, height: 5, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                            <span style={{ fontSize: 10, color, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{statusLabel}</span>
+                            <span style={{ fontSize: 10, color: "rgba(245,237,232,0.28)", marginLeft: "auto" }}>{value}</span>
                           </div>
                         </div>
                       )
                     })}
                   </div>
                 </div>
+
+                {/* Apparent age */}
                 <div style={{ paddingTop: 14, borderTop: "1px solid rgba(245,237,232,0.06)" }}>
                   <p style={{ fontSize: 9, color: "rgba(245,237,232,0.25)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>Edad aparente</p>
                   <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 22, color: "#7ecba1", fontWeight: 300 }}>{scores.ageApparent} años</p>
                 </div>
+
+                {/* Captured photo thumbnail */}
                 {capturedUrl && (
                   <div style={{ marginTop: 14, borderTop: "1px solid rgba(245,237,232,0.06)", paddingTop: 14 }}>
                     <div style={{ width: 60, height: 76, borderRadius: 9, overflow: "hidden", border: "1px solid rgba(245,237,232,0.1)" }}>
@@ -978,9 +1401,9 @@ export default function AnalyzePage() {
                 )}
               </div>
 
-              {/* Biomarkers card */}
-              <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px 28px 24px" }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>Biomarcadores · Medición por zona</p>
+              {/* Biomarkers card — all 7 */}
+              <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px 28px 24px" }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>Biomarcadores · 7 métricas</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
                   {biomarkers.map(b => (
                     <div key={b.label}>
@@ -997,7 +1420,7 @@ export default function AnalyzePage() {
                       <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1, overflow: "hidden", marginBottom: 6 }}>
                         <div style={{ height: "100%", width: `${b.value}%`, background: b.color, borderRadius: 1 }} />
                       </div>
-                      <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.36)", lineHeight: 1.55, paddingLeft: 0 }}>
+                      <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.36)", lineHeight: 1.55 }}>
                         {b.insight}
                       </p>
                     </div>
@@ -1022,7 +1445,21 @@ export default function AnalyzePage() {
             {/* Plan CTA */}
             <button
               onClick={() => {
-                try { if (scores) localStorage.setItem("insideoutmed_scores", JSON.stringify({ overall: scores.overall, hydration: scores.hydration, inflammation: scores.inflammation, elasticity: scores.elasticity, melanin: scores.melanin, oxidation: scores.oxidation })) } catch {}
+                try {
+                  if (scores) {
+                    localStorage.setItem("insideoutmed_scores", JSON.stringify({
+                      overall: scores.overall,
+                      luminosity: scores.luminosity,
+                      hydration: scores.hydration,
+                      uniformity: scores.uniformity,
+                      glycation: scores.glycation,
+                      inflammation: scores.inflammation,
+                      sunDamage: scores.sunDamage,
+                      vascularity: scores.vascularity,
+                      ...preQuizData, ...contactData, ...gateData,
+                    }))
+                  }
+                } catch {}
                 window.location.href = "/plan"
               }}
               style={{ width: "100%", padding: "17px 28px", background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.1)", borderRadius: 14, color: "#f5ede8", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", marginBottom: 24 }}
@@ -1031,7 +1468,7 @@ export default function AnalyzePage() {
             >
               <div style={{ textAlign: "left" }}>
                 <p style={{ fontSize: 11, color: "rgba(245,237,232,0.38)", marginBottom: 2 }}>Basado en tus biomarcadores reales</p>
-                <span>Ver mis productos recomendados →</span>
+                <span>Ver plan personalizado →</span>
               </div>
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>

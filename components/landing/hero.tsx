@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useLanguage } from "@/components/providers/language-provider"
 
 const MARKERS = [
   "Luminosidad", "Hidratación", "Uniformidad", "Salud del colágeno",
@@ -11,6 +12,7 @@ const MARKERS = [
 ]
 
 export function Hero() {
+  const { t } = useLanguage()
   const heroRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const orbRef1 = useRef<HTMLDivElement>(null)
@@ -136,7 +138,7 @@ export function Hero() {
       >
         {/* Badge */}
         <div className="hero-anim" style={{ opacity: 0, marginBottom: 28 }}>
-          <span className="pill">Análisis facial en 60 segundos</span>
+          <span className="pill">{t("hero.badge")}</span>
         </div>
 
         {/* Headline */}
@@ -149,11 +151,11 @@ export function Hero() {
             textAlign: "center",
           }}
         >
-          ¿Qué edad
+          {t("hero.h1.1")}
           <br />
-          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>aparentas?</em>
+          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{t("hero.h1.2")}</em>
           <br />
-          Descúbrelo gratis.
+          {t("hero.h1.3")}
         </h1>
 
         {/* Divider */}
@@ -180,11 +182,11 @@ export function Hero() {
             opacity: 0,
           }}
         >
-          Tu rostro dice una edad. A veces coincide con la tuya. A veces no.{" "}
+          {t("hero.sub.1")}{" "}
           <strong style={{ color: "rgba(245,237,232,0.88)", fontWeight: 500 }}>
-            Escaneamos tu cara y te decimos qué edad aparentas — y qué hacer para mantenerla o mejorarla.
+            {t("hero.sub.2")}
           </strong>{" "}
-          60 segundos. Una selfie. Sin compromiso.
+          {t("hero.sub.3")}
         </p>
 
         {/* CTAs */}
@@ -200,12 +202,12 @@ export function Hero() {
           }}
         >
           <button className="btn-rose" onClick={handleStart} style={{ minWidth: 220 }}>
-            Descubrir qué edad aparento
+            {t("hero.cta")}
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          <button className="btn-ghost" onClick={handleHowItWorks}>Ver cómo funciona</button>
+          <button className="btn-ghost" onClick={handleHowItWorks}>{t("hero.secondary")}</button>
         </div>
 
         {/* Social proof */}
@@ -246,11 +248,11 @@ export function Hero() {
               ))}
             </div>
             <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.42)" }}>
-              <span style={{ color: "rgba(245,237,232,0.8)", fontWeight: 600 }}>+50.000 personas</span> ya saben qué edad aparentan
+              <span style={{ color: "rgba(245,237,232,0.8)", fontWeight: 600 }}>{t("hero.social.1")}</span> {t("hero.social.2")}
             </p>
           </div>
           <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.22)", letterSpacing: "0.08em" }}>
-            Sin tarjeta · Resultado en 60 segundos · 100% privado
+            {t("hero.trust")}
           </p>
         </div>
       </div>

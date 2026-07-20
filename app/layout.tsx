@@ -3,6 +3,7 @@ import { Inter, Fraunces } from "next/font/google"
 import "./globals.css"
 import { SmoothScrollProvider } from "@/components/providers/smooth-scroll"
 import { CursorGlow } from "@/components/providers/cursor-glow"
+import { LanguageProvider } from "@/components/providers/language-provider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -17,9 +18,9 @@ const fraunces = Fraunces({
 })
 
 export const metadata: Metadata = {
-  title: "InsideOutMed — Análisis Facial con IA Médica",
+  title: "InsideOutMed — ¿Qué edad aparentas? Descúbrelo gratis",
   description:
-    "Análisis visual de 12 biomarcadores de piel. Sin agujas, sin esperas. Tu plan personalizado en menos de 60 segundos.",
+    "Descubre qué edad aparentas con un análisis facial de 7 biomarcadores y 9 zonas. Gratis, en 60 segundos, 100% privado.",
 }
 
 export default function RootLayout({
@@ -30,10 +31,12 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} ${fraunces.variable}`}>
       <body>
-        <SmoothScrollProvider>
-          <CursorGlow />
-          {children}
-        </SmoothScrollProvider>
+        <LanguageProvider>
+          <SmoothScrollProvider>
+            <CursorGlow />
+            {children}
+          </SmoothScrollProvider>
+        </LanguageProvider>
       </body>
     </html>
   )

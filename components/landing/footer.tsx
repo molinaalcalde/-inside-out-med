@@ -1,6 +1,9 @@
 "use client"
 
+import { useLanguage } from "@/components/providers/language-provider"
+
 export function Footer() {
+  const { t } = useLanguage()
   return (
     <footer
       style={{
@@ -38,10 +41,10 @@ export function Footer() {
             </span>
           </div>
           <p style={{ fontSize: 13, color: "rgba(245,237,232,0.3)", maxWidth: 280, lineHeight: 1.7 }}>
-            Análisis facial avanzado. Tu piel, entendida desde adentro.
+            {t("footer.desc")}
           </p>
           <p style={{ fontSize: 11, color: "rgba(245,237,232,0.18)", marginTop: 24, letterSpacing: "0.04em" }}>
-            © {new Date().getFullYear()} InsideOutMed. Todos los derechos reservados.
+            © {new Date().getFullYear()} {t("footer.brand")}. {t("footer.rights")}
           </p>
         </div>
 
@@ -54,8 +57,8 @@ export function Footer() {
           }}
         >
           {[
-            "Privacidad", "Términos", "Contacto", "Blog",
-            "Médicos", "Empresas",
+            t("footer.privacy"), t("footer.terms"), t("footer.contact"), t("footer.blog"),
+            t("footer.doctors"), t("footer.enterprise"),
           ].map((l) => (
             <a
               key={l}
@@ -78,7 +81,7 @@ export function Footer() {
       {/* Disclaimer */}
       <div className="container" style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(245,237,232,0.04)" }}>
         <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.18)", lineHeight: 1.6, maxWidth: 700 }}>
-          InsideOutMed es un servicio de análisis facial con fines informativos. No reemplaza el diagnóstico de un profesional de la salud. Los resultados son orientativos y deben interpretarse junto con un médico o dermatólogo.
+          {t("footer.disclaimer")}
         </p>
       </div>
     </footer>

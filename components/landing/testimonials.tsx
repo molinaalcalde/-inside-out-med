@@ -1,5 +1,7 @@
 "use client"
 
+import { useLanguage } from "@/components/providers/language-provider"
+
 const ROW_1 = [
   {
     quote: "Mi edad facial salió 4 años menor que mi edad real. No me lo esperaba. Ahora sé qué hacer para mantenerla así.",
@@ -171,6 +173,7 @@ function TestimonialCard({
 }
 
 export function Testimonials() {
+  const { t } = useLanguage()
   const doubled1 = [...ROW_1, ...ROW_1]
   const doubled2 = [...ROW_2, ...ROW_2]
 
@@ -179,11 +182,11 @@ export function Testimonials() {
       {/* Header */}
       <div className="container" style={{ marginBottom: 64 }}>
         <div style={{ textAlign: "center" }}>
-          <p className="pill" style={{ marginBottom: 20 }}>Testimonios</p>
+          <p className="pill" style={{ marginBottom: 20 }}>{t("test.badge")}</p>
           <h2 className="display-lg">
-            Lo que dicen
+            {t("test.h1")}
             <br />
-            <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>las que ya lo probaron</em>
+            <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{t("test.h2")}</em>
           </h2>
         </div>
       </div>
@@ -202,15 +205,15 @@ export function Testimonials() {
       >
         {/* Row 1 — left */}
         <div className="marquee-track marquee-left" style={{ display: "flex" }}>
-          {doubled1.map((t, i) => (
-            <TestimonialCard key={i} t={t} />
+          {doubled1.map((card, i) => (
+            <TestimonialCard key={i} t={card} />
           ))}
         </div>
 
         {/* Row 2 — right */}
         <div className="marquee-track marquee-right" style={{ display: "flex" }}>
-          {doubled2.map((t, i) => (
-            <TestimonialCard key={i} t={t} />
+          {doubled2.map((card, i) => (
+            <TestimonialCard key={i} t={card} />
           ))}
         </div>
       </div>
@@ -228,10 +231,10 @@ export function Testimonials() {
         }}
       >
         {[
-          { icon: "⬡", text: "Datos privados" },
-          { icon: "◈", text: "Sin almacenamiento de fotos" },
-          { icon: "◇", text: "Resultados en 60 segundos" },
-          { icon: "△", text: "Protocolo médico revisado" },
+          { icon: "⬡", text: t("test.trust.1") },
+          { icon: "◈", text: t("test.trust.2") },
+          { icon: "◇", text: t("test.trust.3") },
+          { icon: "△", text: t("test.trust.4") },
         ].map((item, i) => (
           <div
             key={i}

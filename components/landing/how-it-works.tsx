@@ -3,35 +3,37 @@
 import { useEffect, useRef } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
-
-const STEPS = [
-  {
-    n: "01",
-    title: "Una selfie. Sin filtros.",
-    body: "Usa tu cámara frontal con luz natural. Sin maquillaje si puedes. Treinta segundos de tu tiempo.",
-    accent: "#e8a4b0",
-  },
-  {
-    n: "02",
-    title: "9 zonas. 7 biomarcadores.",
-    body: "Luminosidad, hidratación, uniformidad, colágeno, inflamación, protección solar y salud vascular. Cada zona analizada por separado.",
-    accent: "#d4af88",
-  },
-  {
-    n: "03",
-    title: "Descubre qué edad aparentas",
-    body: "Te revelamos la edad que proyecta tu rostro y qué está sumando años. Visual, directo, sin rodeos.",
-    accent: "#7ecba1",
-  },
-  {
-    n: "04",
-    title: "Tu plan, solo tuyo",
-    body: "Ingredientes activos, rutinas y productos ordenados por urgencia. Adaptados a lo que encontramos en tu piel.",
-    accent: "#e8a4b0",
-  },
-]
+import { useLanguage } from "@/components/providers/language-provider"
 
 export function HowItWorks() {
+  const { t } = useLanguage()
+
+  const STEPS = [
+    {
+      n: "01",
+      title: t("how.s1.title"),
+      body: t("how.s1.body"),
+      accent: "#e8a4b0",
+    },
+    {
+      n: "02",
+      title: t("how.s2.title"),
+      body: t("how.s2.body"),
+      accent: "#d4af88",
+    },
+    {
+      n: "03",
+      title: t("how.s3.title"),
+      body: t("how.s3.body"),
+      accent: "#7ecba1",
+    },
+    {
+      n: "04",
+      title: t("how.s4.title"),
+      body: t("how.s4.body"),
+      accent: "#e8a4b0",
+    },
+  ]
   const sectionRef = useRef<HTMLDivElement>(null)
   const lineRef = useRef<HTMLDivElement>(null)
 
@@ -83,16 +85,16 @@ export function HowItWorks() {
             marginBottom: 80,
           }}
         >
-          <p className="pill" style={{ alignSelf: "flex-start" }}>Proceso</p>
+          <p className="pill" style={{ alignSelf: "flex-start" }}>{t("how.badge")}</p>
           <h2 className="display-lg">
-            De tu selfie
+            {t("how.h1")}
             <br />
-            <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>a saber qué edad aparentas</em>
+            <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{t("how.h2")}</em>
             <br />
-            en 60 segundos.
+            {t("how.h3")}
           </h2>
           <p style={{ fontSize: 15, color: "rgba(245,237,232,0.45)", lineHeight: 1.75, maxWidth: 420 }}>
-            Cuatro pasos. Sin complicaciones. Sin filtros.
+            {t("how.sub")}
           </p>
         </div>
 

@@ -3,24 +3,18 @@
 import { useEffect, useRef, useState } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
-
-const STAGES = [
-  { from: 0,    to: 0.20, headline: "¿Qué edad aparentas?", sub: "Tu cara dice un número. No siempre es el que crees." },
-  { from: 0.20, to: 0.40, headline: "Ella tiene 42.", sub: "Pero su rostro dice otra cosa." },
-  { from: 0.40, to: 0.60, headline: "Analizamos 9 zonas.", sub: "Hidratación, inflamación, colágeno — dato por dato." },
-  { from: 0.60, to: 0.80, headline: "Resultado: aparenta 45.", sub: "+3 años por encima de su edad real." },
-  { from: 0.80, to: 1.0,  headline: "Con su plan, volverá a 42.", sub: "En 12 semanas. Con productos que funcionan para SU piel." },
-]
-
-const BIOMARKERS = [
-  { label: "Luminosidad",          value: 87, color: "#7ecba1" },
-  { label: "Hidratación",          value: 72, color: "#d4af88" },
-  { label: "Uniformidad",          value: 65, color: "#e8a4b0" },
-  { label: "Salud del colágeno",   value: 79, color: "#7ecba1" },
-  { label: "Protección solar",     value: 54, color: "#d4af88" },
-]
+import { useLanguage } from "@/components/providers/language-provider"
 
 export function FaceScrollSection() {
+  const { t } = useLanguage()
+
+  const stages = [
+    { from: 0,    to: 0.20, headline: t("scroll.s1.h"), sub: t("scroll.s1.s") },
+    { from: 0.20, to: 0.40, headline: t("scroll.s2.h"), sub: t("scroll.s2.s") },
+    { from: 0.40, to: 0.60, headline: t("scroll.s3.h"), sub: t("scroll.s3.s") },
+    { from: 0.60, to: 0.80, headline: t("scroll.s4.h"), sub: t("scroll.s4.s") },
+    { from: 0.80, to: 1.0,  headline: t("scroll.s5.h"), sub: t("scroll.s5.s") },
+  ]
   const sectionRef   = useRef<HTMLDivElement>(null)
   const videoRef     = useRef<HTMLVideoElement>(null)
   const headlineRef  = useRef<HTMLParagraphElement>(null)
@@ -88,7 +82,7 @@ export function FaceScrollSection() {
         }
 
         // Caption stage
-        const idx = STAGES.findIndex(s => p >= s.from && p < s.to)
+        const idx = stages.findIndex(s => p >= s.from && p < s.to)
         if (idx !== -1) setStageIdx(idx)
       },
     })
@@ -101,7 +95,7 @@ export function FaceScrollSection() {
     }
   }, [])
 
-  const stage = STAGES[stageIdx]
+  const stage = stages[stageIdx]
 
   return (
     <section
@@ -179,7 +173,7 @@ export function FaceScrollSection() {
               fontWeight: 600,
               marginBottom: 20,
             }}>
-              InsideOutMed
+              {t("scroll.label")}
             </span>
 
             <h2
@@ -229,23 +223,23 @@ export function FaceScrollSection() {
           >
             {/* Header */}
             <p style={{ fontSize: 8, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 14, fontWeight: 600, textAlign: "center" }}>
-              Resultado del análisis
+              {t("scroll.panel.title")}
             </p>
 
             {/* Age comparison */}
             <div style={{ textAlign: "center", marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
                 <div>
-                  <p style={{ fontSize: 8, color: "rgba(245,237,232,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 }}>Edad real</p>
+                  <p style={{ fontSize: 8, color: "rgba(245,237,232,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 }}>{t("scroll.panel.realAge")}</p>
                   <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "rgba(245,237,232,0.5)", lineHeight: 1 }}>42</p>
                 </div>
                 <span style={{ fontSize: 16, color: "rgba(245,237,232,0.2)", marginTop: 10 }}>→</span>
                 <div>
-                  <p style={{ fontSize: 8, color: "rgba(245,237,232,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 }}>Tu piel</p>
+                  <p style={{ fontSize: 8, color: "rgba(245,237,232,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 }}>{t("scroll.panel.skinAge")}</p>
                   <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>45</p>
                 </div>
               </div>
-              <p style={{ fontSize: 10, color: "#e8a4b0", fontWeight: 600, letterSpacing: "0.02em" }}>+3 años por encima</p>
+              <p style={{ fontSize: 10, color: "#e8a4b0", fontWeight: 600, letterSpacing: "0.02em" }}>{t("scroll.panel.above")}</p>
             </div>
 
             {/* Divider */}
@@ -253,13 +247,13 @@ export function FaceScrollSection() {
 
             {/* What we found */}
             <p style={{ fontSize: 8, letterSpacing: "0.1em", color: "rgba(245,237,232,0.28)", textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>
-              Detectamos
+              {t("scroll.panel.detected")}
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               {[
-                { label: "Protección solar",     value: 54, color: "#e8a4b0" },
-                { label: "Hidratación",           value: 62, color: "#d4af88" },
-                { label: "Salud del colágeno",    value: 71, color: "#d4af88" },
+                { label: t("scroll.panel.solar"),     value: 54, color: "#e8a4b0" },
+                { label: t("scroll.panel.hydration"),  value: 62, color: "#d4af88" },
+                { label: t("scroll.panel.collagen"),   value: 71, color: "#d4af88" },
               ].map((b) => (
                 <div key={b.label}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
@@ -278,9 +272,9 @@ export function FaceScrollSection() {
 
             {/* Recovery promise */}
             <p style={{ fontSize: 10, color: "rgba(245,237,232,0.45)", lineHeight: 1.5, marginBottom: 12, textAlign: "center" }}>
-              Con su plan personalizado puede volver a{" "}
-              <span style={{ color: "#7ecba1", fontWeight: 600 }}>42 o menos</span>{" "}
-              en 12 semanas.
+              {t("scroll.panel.recovery")}{" "}
+              <span style={{ color: "#7ecba1", fontWeight: 600 }}>{t("scroll.panel.orLess")}</span>{" "}
+              {t("scroll.panel.weeks")}
             </p>
 
             {/* CTA */}
@@ -292,7 +286,7 @@ export function FaceScrollSection() {
               boxShadow: "0 4px 14px rgba(232,164,176,0.2)",
               letterSpacing: "0.01em",
             }}>
-              ¿Y tu piel?
+              {t("scroll.panel.cta")}
             </a>
           </div>
         </div>
@@ -325,7 +319,7 @@ export function FaceScrollSection() {
             />
           </div>
           <span style={{ fontSize: 10, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase" }}>
-            Scroll
+            {t("scroll.progress")}
           </span>
         </div>
       </div>

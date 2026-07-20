@@ -3,37 +3,7 @@
 import { useEffect, useRef } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
-
-const STATS = [
-  {
-    value: 50000,
-    display: "50.000",
-    suffix: "+",
-    label: "personas ya conocen su edad facial",
-    note: "y contando",
-  },
-  {
-    value: 7,
-    display: "7",
-    suffix: "",
-    label: "biomarcadores faciales analizados en cada escáner",
-    note: "por análisis",
-  },
-  {
-    value: 60,
-    display: "60",
-    suffix: "s",
-    label: "de tu selfie a tu edad facial revelada",
-    note: "sin esperas",
-  },
-  {
-    value: 9,
-    display: "9",
-    suffix: "",
-    label: "zonas faciales analizadas una por una",
-    note: "mapa completo",
-  },
-]
+import { useLanguage } from "@/components/providers/language-provider"
 
 function Counter({
   value,
@@ -89,7 +59,39 @@ function Counter({
 }
 
 export function Stats() {
+  const { t } = useLanguage()
   const sectionRef = useRef<HTMLDivElement>(null)
+
+  const STATS = [
+    {
+      value: 50000,
+      display: t("stats.1.value"),
+      suffix: "",
+      label: t("stats.1.label"),
+      note: t("stats.1.note"),
+    },
+    {
+      value: 7,
+      display: t("stats.2.value"),
+      suffix: "",
+      label: t("stats.2.label"),
+      note: t("stats.2.note"),
+    },
+    {
+      value: 60,
+      display: "60",
+      suffix: "s",
+      label: t("stats.3.label"),
+      note: t("stats.3.note"),
+    },
+    {
+      value: 9,
+      display: t("stats.4.value"),
+      suffix: "",
+      label: t("stats.4.label"),
+      note: t("stats.4.note"),
+    },
+  ]
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
@@ -132,7 +134,7 @@ export function Stats() {
             marginBottom: 56,
           }}
         >
-          En números
+          {t("stats.label")}
         </p>
 
         {/* Stats list */}

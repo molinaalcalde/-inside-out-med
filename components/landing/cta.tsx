@@ -3,8 +3,10 @@
 import { useEffect, useRef } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export function CTA() {
+  const { t } = useLanguage()
   const sectionRef = useRef<HTMLDivElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
 
@@ -104,16 +106,16 @@ export function CTA() {
 
       <div className="container" style={{ position: "relative", zIndex: 2 }}>
         <div className="cta-anim" style={{ marginBottom: 24, opacity: 0 }}>
-          <span className="pill">Gratis · Sin tarjeta · 60 segundos</span>
+          <span className="pill">{t("cta.badge")}</span>
         </div>
 
         <h2
           className="display-xl cta-anim"
           style={{ marginBottom: 24, opacity: 0, maxWidth: 700, margin: "0 auto 24px" }}
         >
-          ¿Qué edad
+          {t("cta.h1")}
           <br />
-          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>aparentas realmente?</em>
+          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{t("cta.h2")}</em>
         </h2>
 
         <p
@@ -128,7 +130,7 @@ export function CTA() {
             opacity: 0,
           }}
         >
-          Una selfie. Descubre qué edad aparentas. Y qué hacer para verte más joven.
+          {t("cta.sub")}
         </p>
 
         <div
@@ -141,7 +143,7 @@ export function CTA() {
             style={{ fontSize: 16, padding: "18px 48px", minWidth: 240 }}
             onClick={() => window.location.href = '/analyze'}
           >
-            Descubrir qué edad aparento
+            {t("cta.btn")}
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M3.5 9h11M10 4.5l4.5 4.5L10 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -158,7 +160,7 @@ export function CTA() {
             opacity: 0,
           }}
         >
-          +50.000 personas ya saben qué edad aparentan · 100% privado
+          {t("cta.footer")}
         </p>
       </div>
     </section>

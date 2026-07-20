@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 const QUESTIONS = [
   {
@@ -146,16 +147,18 @@ function FAQItem({
 }
 
 export function FAQ() {
+  const { t } = useLanguage()
+
   return (
     <section id="faq" className="section">
       <div className="container" style={{ maxWidth: 860 }}>
         {/* Header */}
         <div style={{ marginBottom: 64 }}>
-          <p className="pill" style={{ marginBottom: 20 }}>Preguntas frecuentes</p>
+          <p className="pill" style={{ marginBottom: 20 }}>{t("faq.badge")}</p>
           <h2 className="display-lg">
-            Todo lo que
+            {t("faq.h1")}
             <br />
-            <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>necesitas saber</em>
+            <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{t("faq.h2")}</em>
           </h2>
         </div>
 
@@ -190,10 +193,10 @@ export function FAQ() {
                 marginBottom: 4,
               }}
             >
-              ¿Tienes más preguntas?
+              {t("faq.cta.h")}
             </p>
             <p style={{ fontSize: 13, color: "rgba(245,237,232,0.38)" }}>
-              Escríbenos y te respondemos en menos de 24 horas.
+              {t("faq.cta.sub")}
             </p>
           </div>
           <a
@@ -203,7 +206,7 @@ export function FAQ() {
             className="btn-ghost"
             style={{ flexShrink: 0, textDecoration: "none" }}
           >
-            Escribirnos
+            {t("faq.cta.btn")}
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M2 7h10M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>

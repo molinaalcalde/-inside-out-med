@@ -1,16 +1,18 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-
-const links = [
-  { label: "Cómo funciona", href: "#how" },
-  { label: "Resultados", href: "#results" },
-  { label: "Testimonios", href: "#testimonials" },
-]
+import { useLanguage } from "@/components/providers/language-provider"
 
 export function Nav() {
   const navRef = useRef<HTMLElement>(null)
   const [scrolled, setScrolled] = useState(false)
+  const { locale, setLocale, t } = useLanguage()
+
+  const links = [
+    { label: t("nav.howItWorks"), href: "#how" },
+    { label: t("nav.results"), href: "#results" },
+    { label: t("nav.testimonials"), href: "#testimonials" },
+  ]
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -88,8 +90,55 @@ export function Nav() {
 
       {/* CTA */}
       <a href="/analyze" className="btn-rose hidden md:inline-flex" style={{ padding: "10px 24px", fontSize: 14 }}>
-        ¿Qué edad aparento?
+        {t("nav.cta")}
       </a>
+
+      {/* Language toggle */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          background: "rgba(245,237,232,0.06)",
+          border: "1px solid rgba(245,237,232,0.1)",
+          borderRadius: 99,
+          padding: "4px 6px",
+          gap: 2,
+        }}
+      >
+        <button
+          onClick={() => setLocale("es")}
+          style={{
+            background: locale === "es" ? "rgba(245,237,232,0.12)" : "transparent",
+            border: "none",
+            borderRadius: 99,
+            padding: "4px 10px",
+            fontSize: 11,
+            fontWeight: locale === "es" ? 700 : 500,
+            color: locale === "es" ? "#f5ede8" : "rgba(245,237,232,0.4)",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+        >
+          ES
+        </button>
+        <span style={{ color: "rgba(245,237,232,0.15)", fontSize: 11, userSelect: "none" }}>|</span>
+        <button
+          onClick={() => setLocale("en")}
+          style={{
+            background: locale === "en" ? "rgba(245,237,232,0.12)" : "transparent",
+            border: "none",
+            borderRadius: 99,
+            padding: "4px 10px",
+            fontSize: 11,
+            fontWeight: locale === "en" ? 700 : 500,
+            color: locale === "en" ? "#f5ede8" : "rgba(245,237,232,0.4)",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+        >
+          EN
+        </button>
+      </div>
 
       {/* Mobile menu */}
       <button
@@ -106,7 +155,7 @@ export function Nav() {
         }}
         onClick={() => handleClick("#cta")}
       >
-        Empezar
+        {t("nav.start")}
       </button>
     </nav>
   )

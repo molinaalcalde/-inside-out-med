@@ -88,7 +88,7 @@ export function Nav() {
 
       {/* CTA */}
       <a href="/analyze" className="btn-rose hidden md:inline-flex" style={{ padding: "10px 24px", fontSize: 14 }}>
-        Analizar mi piel
+        ¿Qué edad aparento?
       </a>
 
       {/* Mobile menu */}

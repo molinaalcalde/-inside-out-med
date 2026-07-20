@@ -5,11 +5,11 @@ import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
 const STAGES = [
-  { from: 0,    to: 0.20, headline: "Tu piel envejece. ¿Pero cuánto?", sub: "A veces más rápido de lo que crees." },
-  { from: 0.20, to: 0.40, headline: "Lo que se ve por fuera…", sub: "…no siempre refleja lo que pasa por dentro." },
-  { from: 0.40, to: 0.60, headline: "9 zonas. 7 biomarcadores.", sub: "Un mapa completo de tu piel." },
-  { from: 0.60, to: 0.80, headline: "Tu edad facial, revelada.", sub: "Sin filtros. Sin adivinar." },
-  { from: 0.80, to: 1.0,  headline: "Tu plan para revertirlo.", sub: "Productos y rutinas que funcionan para TU piel." },
+  { from: 0,    to: 0.20, headline: "¿Qué edad aparentas?", sub: "Tu cara dice un número. No siempre es el que crees." },
+  { from: 0.20, to: 0.40, headline: "Ella tiene 42.", sub: "Pero su rostro dice otra cosa." },
+  { from: 0.40, to: 0.60, headline: "Analizamos 9 zonas.", sub: "Hidratación, inflamación, colágeno — dato por dato." },
+  { from: 0.60, to: 0.80, headline: "Resultado: aparenta 45.", sub: "+3 años por encima de su edad real." },
+  { from: 0.80, to: 1.0,  headline: "Con su plan, volverá a 42.", sub: "En 12 semanas. Con productos que funcionan para SU piel." },
 ]
 
 const BIOMARKERS = [

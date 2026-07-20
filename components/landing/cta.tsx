@@ -111,9 +111,9 @@ export function CTA() {
           className="display-xl cta-anim"
           style={{ marginBottom: 24, opacity: 0, maxWidth: 700, margin: "0 auto 24px" }}
         >
-          ¿Lista para saber
+          ¿Qué edad
           <br />
-          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>cuántos años tiene tu piel?</em>
+          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>aparentas realmente?</em>
         </h2>
 
         <p
@@ -128,7 +128,7 @@ export function CTA() {
             opacity: 0,
           }}
         >
-          Una selfie. Tu edad facial revelada. Y un plan para mejorarla o mantenerla.
+          Una selfie. Descubre qué edad aparentas. Y qué hacer para verte más joven.
         </p>
 
         <div
@@ -141,7 +141,7 @@ export function CTA() {
             style={{ fontSize: 16, padding: "18px 48px", minWidth: 240 }}
             onClick={() => window.location.href = '/analyze'}
           >
-            Descubrir mi edad facial
+            Descubrir qué edad aparento
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M3.5 9h11M10 4.5l4.5 4.5L10 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -158,7 +158,7 @@ export function CTA() {
             opacity: 0,
           }}
         >
-          +50.000 personas ya conocen su edad facial · 100% privado
+          +50.000 personas ya saben qué edad aparentan · 100% privado
         </p>
       </div>
     </section>

@@ -19,8 +19,8 @@ const STEPS = [
   },
   {
     n: "03",
-    title: "Tu edad facial vs tu edad real",
-    body: "Te mostramos cuántos años tiene tu piel comparado con tu edad real. Visual, directo, accionable.",
+    title: "Descubre qué edad aparentas",
+    body: "Te revelamos la edad que proyecta tu rostro y qué está sumando años. Visual, directo, sin rodeos.",
     accent: "#7ecba1",
   },
   {
@@ -87,12 +87,12 @@ export function HowItWorks() {
           <h2 className="display-lg">
             De tu selfie
             <br />
-            <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>a tu edad facial</em>
+            <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>a saber qué edad aparentas</em>
             <br />
             en 60 segundos.
           </h2>
           <p style={{ fontSize: 15, color: "rgba(245,237,232,0.45)", lineHeight: 1.75, maxWidth: 420 }}>
-            Cuatro pasos. Cero complicaciones. Tu piel, entendida de verdad.
+            Cuatro pasos. Sin complicaciones. Sin filtros.
           </p>
         </div>
 

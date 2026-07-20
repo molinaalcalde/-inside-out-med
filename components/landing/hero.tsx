@@ -136,7 +136,7 @@ export function Hero() {
       >
         {/* Badge */}
         <div className="hero-anim" style={{ opacity: 0, marginBottom: 28 }}>
-          <span className="pill">Descubre tu edad facial</span>
+          <span className="pill">Análisis facial en 60 segundos</span>
         </div>
 
         {/* Headline */}
@@ -149,11 +149,11 @@ export function Hero() {
             textAlign: "center",
           }}
         >
-          ¿Cuántos años
+          ¿Qué edad
           <br />
-          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>tiene tu piel?</em>
+          <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>aparentas?</em>
           <br />
-          Descúbrelo en 60 segundos.
+          Descúbrelo gratis.
         </h1>
 
         {/* Divider */}
@@ -180,11 +180,11 @@ export function Hero() {
             opacity: 0,
           }}
         >
-          Tu piel envejece a su propio ritmo — y no siempre coincide con tu edad real.{" "}
+          Tu rostro dice una edad. A veces coincide con la tuya. A veces no.{" "}
           <strong style={{ color: "rgba(245,237,232,0.88)", fontWeight: 500 }}>
-            Te revelamos tu edad facial y te mostramos cómo mejorarla o mantenerla.
+            Escaneamos tu cara y te decimos qué edad aparentas — y qué hacer para mantenerla o mejorarla.
           </strong>{" "}
-          7 biomarcadores. 9 zonas faciales. 60 segundos.
+          60 segundos. Una selfie. Sin compromiso.
         </p>
 
         {/* CTAs */}
@@ -200,7 +200,7 @@ export function Hero() {
           }}
         >
           <button className="btn-rose" onClick={handleStart} style={{ minWidth: 220 }}>
-            Descubrir mi edad facial
+            Descubrir qué edad aparento
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -246,7 +246,7 @@ export function Hero() {
               ))}
             </div>
             <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.42)" }}>
-              <span style={{ color: "rgba(245,237,232,0.8)", fontWeight: 600 }}>+50.000 personas</span> ya conocen su edad facial
+              <span style={{ color: "rgba(245,237,232,0.8)", fontWeight: 600 }}>+50.000 personas</span> ya saben qué edad aparentan
             </p>
           </div>
           <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.22)", letterSpacing: "0.08em" }}>

@@ -87,7 +87,7 @@ const QUIZ_STEPS = [
   },
 ]
 
-// ── Load MediaPipe IMAGE mode from CDN (for upload path only) ─────
+// ── Load MediaPipe IMAGE mode from LOCAL files ──────────────────
 let _landmarkerPromise: Promise<unknown> | null = null
 
 async function getMediaPipeLandmarker() {
@@ -96,7 +96,7 @@ async function getMediaPipeLandmarker() {
   _landmarkerPromise = (async () => {
     const vision = await import(
       /* webpackIgnore: true */
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs" as string
+      "/mediapipe/vision_bundle.mjs" as string
     ) as {
       FilesetResolver: { forVisionTasks: (path: string) => Promise<unknown> }
       FaceLandmarker: {
@@ -109,14 +109,13 @@ async function getMediaPipeLandmarker() {
     }
 
     const filesetResolver = await vision.FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
+      "/mediapipe/wasm"
     )
 
     return await vision.FaceLandmarker.createFromOptions(filesetResolver, {
       baseOptions: {
-        modelAssetPath:
-          "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-        delegate: "GPU",
+        modelAssetPath: "/mediapipe/face_landmarker.task",
+        delegate: "CPU",
       },
       runningMode: "IMAGE",
       numFaces: 1,

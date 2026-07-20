@@ -227,29 +227,59 @@ export function FaceScrollSection() {
               minWidth: 260,
             }}
           >
-            <p style={{ fontSize: 10, letterSpacing: "0.14em", color: "rgba(245,237,232,0.4)", textTransform: "uppercase", marginBottom: 20, fontWeight: 600 }}>
-              Biomarcadores
+            {/* Hook */}
+            <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", marginBottom: 14, fontWeight: 600 }}>
+              Lo que no te dice el espejo
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {BIOMARKERS.map((b) => (
-                <div key={b.label}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 12, color: "rgba(245,237,232,0.65)" }}>{b.label}</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: b.color }}>{b.value}%</span>
-                  </div>
-                  <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1 }}>
-                    <div style={{ height: "100%", width: `${b.value}%`, background: b.color, borderRadius: 1 }} />
-                  </div>
+            <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 18, fontWeight: 400, color: "#f5ede8", lineHeight: 1.35, marginBottom: 4, letterSpacing: "-0.02em" }}>
+              Tu piel puede aparentar hasta{" "}
+              <span style={{ color: "#e8a4b0" }}>3–5 años más</span>{" "}
+              de los que tienes.
+            </p>
+            <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.32)", lineHeight: 1.5, marginBottom: 18 }}>
+              Sin que lo notes.
+            </p>
+
+            {/* Divider */}
+            <div style={{ height: 1, background: "rgba(245,237,232,0.08)", marginBottom: 16 }} />
+
+            {/* Aging factors */}
+            <p style={{ fontSize: 9, letterSpacing: "0.12em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", marginBottom: 12, fontWeight: 600 }}>
+              Lo que más envejece tu piel
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                { factor: "Falta de protección solar", impact: "hasta +2 años" },
+                { factor: "Inflamación silenciosa",    impact: "hasta +1.5 años" },
+                { factor: "Deshidratación crónica",    impact: "hasta +1 año" },
+              ].map((item) => (
+                <div key={item.factor} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 11, color: "rgba(245,237,232,0.55)" }}>{item.factor}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#e8a4b0", letterSpacing: "0.02em", flexShrink: 0, marginLeft: 10 }}>{item.impact}</span>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid rgba(245,237,232,0.08)" }}>
-              <p style={{ fontSize: 10, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", marginBottom: 4 }}>SCORE GLOBAL</p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                <span style={{ fontSize: 48, fontFamily: "var(--font-fraunces)", fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>84</span>
-                <span style={{ fontSize: 16, color: "rgba(245,237,232,0.3)" }}>/100</span>
-              </div>
-            </div>
+
+            {/* Divider */}
+            <div style={{ height: 1, background: "rgba(245,237,232,0.08)", margin: "16px 0" }} />
+
+            {/* Recovery */}
+            <p style={{ fontSize: 11, color: "rgba(245,237,232,0.5)", lineHeight: 1.55, marginBottom: 16 }}>
+              Con una rutina personalizada puedes reducir tu edad facial{" "}
+              <span style={{ color: "#7ecba1", fontWeight: 600 }}>hasta 2 años en 12 semanas.</span>
+            </p>
+
+            {/* CTA */}
+            <a href="/analyze" style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "linear-gradient(135deg, #e8a4b0, #c97e8e)",
+              color: "#fff", fontSize: 12, fontWeight: 700, padding: "12px 18px",
+              borderRadius: 10, textDecoration: "none",
+              boxShadow: "0 4px 16px rgba(232,164,176,0.25)",
+              letterSpacing: "0.01em",
+            }}>
+              ¿Cuántos años aparenta tu piel?
+            </a>
           </div>
         </div>
 

@@ -370,8 +370,10 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
   })
   const phaseStartRef    = useRef(0)
   const landmarkerRef    = useRef<FaceLandmarkerInstance | null>(null)
-  const hasLandmarkerRef = useRef(false) // true once MediaPipe loaded (even if null = fallback)
+  const hasLandmarkerRef = useRef(false)
   const faceDetectedRef  = useRef(false)
+  const landmarkFramesRef = useRef(0) // frames where landmarks were found during countdown
+  const noFaceFramesRef   = useRef(0) // consecutive frames without face during countdown
 
   const [phase, setPhase]         = useState<Phase>("init")
   const [guidance, setGuidance]   = useState<{ msg: string; sub: string; type: "neutral" | "warning" | "success" }>({ msg: "Iniciando cámara…", sub: "", type: "neutral" })
@@ -434,6 +436,13 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
     const video = videoRef.current
     if (!video) return
 
+    // If MediaPipe is loaded, require minimum landmark frames for valid analysis
+    if (landmarkerRef.current && landmarkFramesRef.current < 3) {
+      streamRef.current?.getTracks().forEach(t => t.stop())
+      onScanError?.("No detectamos tu rostro correctamente. Centra tu cara frente a la cámara con buena luz.")
+      return
+    }
+
     const scores = computeScores(accumRef.current)
 
     const canvas = document.createElement("canvas")
@@ -483,22 +492,37 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
 
       // ── STABILIZING ─────────────────────────────────────────────
       if (phase === "stabilizing") {
-        // Try detecting face with MediaPipe during stabilization
-        if (landmarkerRef.current && frameRef.current % 12 === 0) {
+        // Detect face with MediaPipe — REQUIRED before proceeding
+        if (landmarkerRef.current && frameRef.current % 8 === 0) {
           try {
             const result = landmarkerRef.current.detectForVideo(video, performance.now())
-            faceDetectedRef.current = !!(result.faceLandmarks?.length)
-          } catch { /* ignore detection errors during warmup */ }
+            if (result.faceLandmarks?.length) {
+              const lm = result.faceLandmarks[0]
+              // Check face is centered: nose tip (landmark 1) should be near center
+              const noseX = lm[1].x // 0-1 normalized
+              const noseY = lm[1].y
+              const centered = noseX > 0.3 && noseX < 0.7 && noseY > 0.25 && noseY < 0.65
+              // Check face is upright: forehead (10) should be above chin (152)
+              const upright = lm[10].y < lm[152].y
+              faceDetectedRef.current = centered && upright
+            } else {
+              faceDetectedRef.current = false
+            }
+          } catch { faceDetectedRef.current = false }
         }
 
+        // When MediaPipe is loaded, face detection is MANDATORY
         const faceOk = landmarkerRef.current ? faceDetectedRef.current : true
         if (faceOk) {
           drawOval(ctx, W, H, "neutral", pulseRef.current * 0.5)
           updateGuidance("Centra tu rostro en el óvalo", "Mantén la cámara estable", "neutral")
         } else {
           drawOval(ctx, W, H, "warning", 0)
-          updateGuidance("No detecto tu rostro", "Acerca la cámara y centra tu cara", "warning")
-          phaseStartRef.current = now - 1000
+          // Give specific feedback
+          if (!faceDetectedRef.current) {
+            updateGuidance("No detecto tu rostro", "Ponte frente a la cámara con el rostro derecho", "warning")
+          }
+          phaseStartRef.current = now - 1000 // reset stabilization timer
           return
         }
 
@@ -536,6 +560,8 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
             forehead: freshAccum(), leftCheek: freshAccum(), rightCheek: freshAccum(),
             nose: freshAccum(), chin: freshAccum(),
           }
+          landmarkFramesRef.current = 0
+          noFaceFramesRef.current = 0
           setPhase("countdown")
           return
         }
@@ -585,18 +611,45 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
               const result = landmarkerRef.current.detectForVideo(video, performance.now())
               if (result.faceLandmarks?.length) {
                 const lm = result.faceLandmarks[0]
-                for (const [zoneName, indices] of Object.entries(LANDMARK_ZONES)) {
-                  const bbox = landmarkBBox(lm, indices, off.width, off.height)
-                  const m = sampleRegion(oc, bbox.x, bbox.y, bbox.w, bbox.h)
-                  if (m) accumulate(accumRef.current[zoneName], m)
+                // Verify face is still centered and upright
+                const noseX = lm[1].x, noseY = lm[1].y
+                const centered = noseX > 0.25 && noseX < 0.75 && noseY > 0.2 && noseY < 0.7
+                const upright = lm[10].y < lm[152].y
+
+                if (centered && upright) {
+                  for (const [zoneName, indices] of Object.entries(LANDMARK_ZONES)) {
+                    const bbox = landmarkBBox(lm, indices, off.width, off.height)
+                    const m = sampleRegion(oc, bbox.x, bbox.y, bbox.w, bbox.h)
+                    if (m) accumulate(accumRef.current[zoneName], m)
+                  }
+                  usedLandmarks = true
+                  landmarkFramesRef.current++
+                  noFaceFramesRef.current = 0
+                } else {
+                  noFaceFramesRef.current++
                 }
-                usedLandmarks = true
+              } else {
+                noFaceFramesRef.current++
               }
-            } catch { /* fall through to oval fallback */ }
+            } catch {
+              noFaceFramesRef.current++
+            }
+
+            // If face lost for too many frames, abort and restart
+            if (noFaceFramesRef.current > 5) {
+              capturedRef.current = false
+              landmarkFramesRef.current = 0
+              noFaceFramesRef.current = 0
+              accumRef.current = { forehead: freshAccum(), leftCheek: freshAccum(), rightCheek: freshAccum(), nose: freshAccum(), chin: freshAccum() }
+              phaseStartRef.current = Date.now()
+              setPhase("stabilizing")
+              updateGuidance("Rostro perdido", "Centra tu cara y quédate quieto", "warning")
+              return
+            }
           }
 
-          // Fallback: oval-based zones
-          if (!usedLandmarks) {
+          // Fallback: oval-based zones (only when MediaPipe not available)
+          if (!usedLandmarks && !landmarkerRef.current) {
             const { cx, cy, rx, ry } = ovalParams(W, H)
             const sx = off.width / W, sy = off.height / H
             const vCx = cx * sx, vCy = cy * sy
@@ -636,6 +689,8 @@ export function CameraStage({ onCapture, onCancel, onScanError }: CameraStagePro
 
   const manualCapture = () => {
     if (capturedRef.current) return
+    // Require face to be detected before allowing manual capture
+    if (landmarkerRef.current && !faceDetectedRef.current) return
     capturedRef.current = true
     cancelAnimationFrame(rafRef.current)
     doCapture()

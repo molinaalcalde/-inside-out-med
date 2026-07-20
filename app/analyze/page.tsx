@@ -217,10 +217,10 @@ const GATE_STEPS: QuizStep[] = [
     sub: "Para recomendarte productos dentro de tu rango",
     type: "grid4",
     options: [
-      { value: "<500",       label: "<$500",        sub: "Esencial" },
-      { value: "500-1500",   label: "$500–1,500",   sub: "Intermedio" },
-      { value: "1500-3000",  label: "$1,500–3,000", sub: "Premium" },
-      { value: "3000+",      label: "$3,000+",      sub: "Luxury" },
+      { value: "<500",       label: "<$500 MXN",        sub: "Esencial" },
+      { value: "500-1500",   label: "$500–1,500 MXN",   sub: "Intermedio" },
+      { value: "1500-3000",  label: "$1,500–3,000 MXN", sub: "Premium" },
+      { value: "3000+",      label: "$3,000+ MXN",      sub: "Luxury" },
     ],
   },
 ]

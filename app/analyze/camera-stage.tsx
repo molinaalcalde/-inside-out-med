@@ -531,7 +531,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
         const faceOk = landmarkerRef.current ? faceDetectedRef.current : true
         if (faceOk) {
           drawOval(ctx, W, H, "neutral", pulseRef.current * 0.5)
-          updateGuidance("Centra tu rostro en el óvalo", "Mantén la cámara estable", "neutral")
+          updateGuidance("Centra tu rostro en el óvalo", "Sin gafas ni pelo en la cara · Mantén la cámara estable", "neutral")
         } else {
           drawOval(ctx, W, H, "warning", 0)
           updateGuidance("No detecto tu rostro", "Ponte frente a la cámara con el rostro derecho", "warning")

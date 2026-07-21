@@ -1341,91 +1341,151 @@ export default function AnalyzePage() {
         )}
 
         {/* ── RESULTS LAYER 1 — top 3 critical findings ── */}
-        {stage === "results-1" && scores && (
+        {stage === "results-1" && scores && (() => {
+          const userAge = parseInt(preQuizData.age || "30", 10)
+          const skinAge = scores.ageApparent || userAge + 3
+          const ageDiff = skinAge - userAge
+          const isOlder = ageDiff > 0
+          const isSame = ageDiff === 0
+          const isYounger = ageDiff < 0
+
+          return (
           <div style={{ maxWidth: 520, width: "100%" }}>
+            {/* Header */}
             <div style={{ textAlign: "center", marginBottom: 32 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 8px rgba(126,203,161,0.8)" }} />
                 <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>Análisis completado · 9 zonas</span>
               </div>
               <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 400, marginBottom: 10, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-                Tu piel habla. <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>Esto es lo que dice.</em>
+                {isOlder ? (
+                  <>Tu rostro aparenta <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{Math.abs(ageDiff)} {Math.abs(ageDiff) === 1 ? "año" : "años"} más.</em></>
+                ) : isYounger ? (
+                  <>Tu rostro aparenta <em style={{ color: "#7ecba1", fontStyle: "italic" }}>{Math.abs(ageDiff)} {Math.abs(ageDiff) === 1 ? "año" : "años"} menos.</em></>
+                ) : (
+                  <>Tu rostro aparenta <em style={{ color: "#7ecba1", fontStyle: "italic" }}>tu edad exacta.</em></>
+                )}
               </h1>
+              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", lineHeight: 1.6 }}>
+                {isOlder ? "Pero se puede revertir. Te mostramos cómo." : isYounger ? "Vas por buen camino. Te ayudamos a mantenerlo." : "Buen punto de partida. Te ayudamos a mejorarlo."}
+              </p>
             </div>
 
-            {/* Score card with photo */}
+            {/* Age comparison card */}
             <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px", marginBottom: 16 }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
-                {/* Score */}
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 12, fontWeight: 700 }}>Score Global</p>
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 6 }}>
-                    <span style={{ fontSize: 72, fontFamily: "var(--font-fraunces)", fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>{scores.overall}</span>
-                    <div style={{ paddingBottom: 8 }}>
-                      <span style={{ fontSize: 17, color: "rgba(245,237,232,0.22)" }}>/100</span>
-                      <p style={{ fontSize: 9, color: "#7ecba1", fontWeight: 700, letterSpacing: "0.08em", marginTop: 4 }}>TOP {percentile}%</p>
-                    </div>
-                  </div>
-                  <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${scores.overall}%`, background: "linear-gradient(90deg,#e8a4b0,#d4af88)", borderRadius: 2 }} />
-                  </div>
-                </div>
-                {/* Captured photo thumbnail */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginBottom: 16 }}>
+                {/* Photo */}
                 {capturedUrl && (
-                  <div style={{ width: 80, height: 100, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(245,237,232,0.1)", flexShrink: 0 }}>
+                  <div style={{ width: 72, height: 90, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(245,237,232,0.1)", flexShrink: 0 }}>
                     <img src={capturedUrl} alt="Tu foto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
                 )}
+                {/* Age comparison */}
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: 9, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4, fontWeight: 600 }}>Tu edad</p>
+                    <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 36, fontWeight: 300, color: "rgba(245,237,232,0.5)", lineHeight: 1 }}>{userAge}</p>
+                  </div>
+                  <span style={{ fontSize: 18, color: "rgba(245,237,232,0.15)", marginTop: 14 }}>→</span>
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: 9, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4, fontWeight: 600 }}>Aparentas</p>
+                    <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 36, fontWeight: 300, color: isOlder ? "#e8a4b0" : "#7ecba1", lineHeight: 1 }}>{skinAge}</p>
+                  </div>
+                </div>
               </div>
-              <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.42)", lineHeight: 1.7, marginTop: 16 }}>
-                {scores.overall >= 80 ? "Tu piel está en un estado superior a la media. Mantén la rutina." : scores.overall >= 65 ? "Hay margen de mejora claro. Con el plan correcto puedes subir 10–15 puntos en 6 semanas." : "Tu piel necesita atención prioritaria. El plan de productos es el primer paso."}
+
+              {/* Delta badge */}
+              <div style={{ textAlign: "center", marginBottom: 14 }}>
+                <span style={{
+                  display: "inline-block", padding: "5px 16px", borderRadius: 99,
+                  fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
+                  color: isOlder ? "#e8a4b0" : "#7ecba1",
+                  background: isOlder ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
+                  border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
+                }}>
+                  {isOlder ? `+${ageDiff} años por encima` : isSame ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
+                </span>
+              </div>
+
+              {/* Score bar */}
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)", letterSpacing: "0.08em" }}>SCORE GLOBAL</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#e8a4b0" }}>{scores.overall}/100</span>
+                </div>
+                <div style={{ height: 3, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${scores.overall}%`, background: "linear-gradient(90deg,#e8a4b0,#d4af88)", borderRadius: 2 }} />
+                </div>
+              </div>
+
+              <p style={{ fontSize: 12, color: "rgba(245,237,232,0.38)", lineHeight: 1.6, textAlign: "center" }}>
+                {isOlder
+                  ? `Con el plan correcto puedes recuperar esos ${ageDiff} años en 12 semanas.`
+                  : "Mantén tu rutina y sigue mejorando con nuestras recomendaciones."}
               </p>
             </div>
 
             {/* Top 3 critical findings */}
             <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px", marginBottom: 16 }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>Hallazgos principales</p>
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>
+                {isOlder ? "Lo que está sumando años" : "Áreas de oportunidad"}
+              </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 {criticalFindings.map(b => (
                   <div key={b.label}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 13, color: "rgba(245,237,232,0.7)", fontWeight: 500 }}>{b.label}</span>
-                        {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>ATENCIÓN</span>}
+                        <span style={{ fontSize: 13, color: "rgba(245,237,232,0.7)", fontWeight: 500 }}>{b.friendlyLabel}</span>
+                        {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>MEJORABLE</span>}
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 9, color: "rgba(245,237,232,0.28)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{b.note}</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: b.color, minWidth: 36, textAlign: "right" }}>{b.value}%</span>
-                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: b.color }}>{b.value}%</span>
                     </div>
-                    <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1, overflow: "hidden", marginBottom: 6 }}>
-                      <div style={{ height: "100%", width: `${b.value}%`, background: b.color, borderRadius: 1 }} />
+                    <div style={{ height: 3, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 6 }}>
+                      <div style={{ height: "100%", width: `${b.value}%`, background: `linear-gradient(90deg, ${b.color}88, ${b.color})`, borderRadius: 2 }} />
                     </div>
-                    <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.36)", lineHeight: 1.55 }}>
-                      {b.insight}
-                    </p>
+                    <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.36)", lineHeight: 1.55 }}>{b.insight}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* CTA to unlock full report */}
+            {/* Free plan CTA */}
             <button
               onClick={() => setStage("gate-quiz")}
               style={{
-                width: "100%", padding: "17px 28px",
+                width: "100%", padding: "17px 28px", marginBottom: 12,
                 background: "linear-gradient(135deg,#e8a4b0,#c97e8e)",
                 border: "none", borderRadius: 14, color: "#fff",
                 fontSize: 15, fontWeight: 700, cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 boxShadow: "0 6px 24px rgba(232,164,176,0.3)",
+              }}
+            >
+              Ver mi plan gratuito →
+            </button>
+
+            {/* Paid CTA */}
+            <a
+              href="https://wa.me/TUTELEFONO?text=Hola%2C%20quiero%20una%20asesor%C3%ADa%20personalizada.%20Mi%20score%20fue%20"
+              target="_blank" rel="noopener noreferrer"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                width: "100%", padding: "14px 28px",
+                background: "rgba(245,237,232,0.04)",
+                border: "1px solid rgba(245,237,232,0.1)",
+                borderRadius: 14, color: "rgba(245,237,232,0.6)",
+                fontSize: 13, fontWeight: 600, textDecoration: "none",
                 transition: "all 0.2s",
               }}
             >
-              Ver informe completo →
-            </button>
+              Quiero asesoría personalizada (servicio premium)
+            </a>
+            <p style={{ fontSize: 10, color: "rgba(245,237,232,0.2)", textAlign: "center", marginTop: 8 }}>
+              La asesoría incluye consulta 1:1 con especialista y plan a medida
+            </p>
           </div>
-        )}
+          )
+        })()}
 
         {/* ── GATE QUIZ — 6 questions to unlock full report ── */}
         {stage === "gate-quiz" && (

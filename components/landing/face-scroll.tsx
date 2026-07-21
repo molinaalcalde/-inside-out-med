@@ -212,66 +212,67 @@ export function FaceScrollSection() {
             ref={bioRef}
             style={{
               opacity: 0,
-              background: "rgba(14,12,18,0.65)",
+              background: "rgba(14,12,18,0.7)",
               backdropFilter: "blur(24px)",
               WebkitBackdropFilter: "blur(24px)",
               border: "1px solid rgba(245,237,232,0.08)",
-              borderRadius: 16,
-              padding: "22px 20px",
-              width: 210,
+              borderRadius: 18,
+              padding: "26px 24px",
+              width: 280,
+              marginLeft: "auto",
             }}
           >
             {/* Header */}
-            <p style={{ fontSize: 8, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 14, fontWeight: 600, textAlign: "center" }}>
+            <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16, fontWeight: 600, textAlign: "center" }}>
               {t("scroll.panel.title")}
             </p>
 
             {/* Age comparison */}
-            <div style={{ textAlign: "center", marginBottom: 14 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 10 }}>
                 <div>
-                  <p style={{ fontSize: 8, color: "rgba(245,237,232,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 }}>{t("scroll.panel.realAge")}</p>
-                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "rgba(245,237,232,0.5)", lineHeight: 1 }}>42</p>
+                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.35)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>{t("scroll.panel.realAge")}</p>
+                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 34, fontWeight: 300, color: "rgba(245,237,232,0.5)", lineHeight: 1 }}>42 <span style={{ fontSize: 14, color: "rgba(245,237,232,0.3)" }}>años</span></p>
                 </div>
-                <span style={{ fontSize: 16, color: "rgba(245,237,232,0.2)", marginTop: 10 }}>→</span>
+                <span style={{ fontSize: 18, color: "rgba(245,237,232,0.15)", marginTop: 14 }}>→</span>
                 <div>
-                  <p style={{ fontSize: 8, color: "rgba(245,237,232,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 }}>{t("scroll.panel.skinAge")}</p>
-                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>45</p>
+                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.35)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>Aparenta</p>
+                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 34, fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>45 <span style={{ fontSize: 14, color: "rgba(232,164,176,0.5)" }}>años</span></p>
                 </div>
               </div>
-              <p style={{ fontSize: 10, color: "#e8a4b0", fontWeight: 600, letterSpacing: "0.02em" }}>{t("scroll.panel.above")}</p>
+              <p style={{ fontSize: 11, color: "#e8a4b0", fontWeight: 600, letterSpacing: "0.02em" }}>{t("scroll.panel.above")}</p>
             </div>
 
             {/* Divider */}
             <div style={{ height: 1, background: "rgba(245,237,232,0.06)", marginBottom: 12 }} />
 
             {/* What we found */}
-            <p style={{ fontSize: 8, letterSpacing: "0.1em", color: "rgba(245,237,232,0.28)", textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>
+            <p style={{ fontSize: 9, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 10, fontWeight: 600 }}>
               {t("scroll.panel.detected")}
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
               {[
                 { label: t("scroll.panel.solar"),     value: 54, color: "#e8a4b0" },
                 { label: t("scroll.panel.hydration"),  value: 62, color: "#d4af88" },
                 { label: t("scroll.panel.collagen"),   value: 71, color: "#d4af88" },
               ].map((b) => (
                 <div key={b.label}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                    <span style={{ fontSize: 10, color: "rgba(245,237,232,0.5)" }}>{b.label}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: b.color }}>{b.value}%</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, color: "rgba(245,237,232,0.55)" }}>{b.label}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: b.color }}>{b.value}%</span>
                   </div>
-                  <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1 }}>
-                    <div style={{ height: "100%", width: `${b.value}%`, background: b.color, borderRadius: 1 }} />
+                  <div style={{ height: 3, background: "rgba(245,237,232,0.06)", borderRadius: 2 }}>
+                    <div style={{ height: "100%", width: `${b.value}%`, background: `linear-gradient(90deg, ${b.color}88, ${b.color})`, borderRadius: 2 }} />
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Divider */}
-            <div style={{ height: 1, background: "rgba(245,237,232,0.06)", margin: "12px 0" }} />
+            <div style={{ height: 1, background: "rgba(245,237,232,0.06)", margin: "14px 0" }} />
 
             {/* Recovery promise */}
-            <p style={{ fontSize: 10, color: "rgba(245,237,232,0.45)", lineHeight: 1.5, marginBottom: 12, textAlign: "center" }}>
+            <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.45)", lineHeight: 1.55, marginBottom: 14, textAlign: "center" }}>
               {t("scroll.panel.recovery")}{" "}
               <span style={{ color: "#7ecba1", fontWeight: 600 }}>{t("scroll.panel.orLess")}</span>{" "}
               {t("scroll.panel.weeks")}
@@ -281,9 +282,9 @@ export function FaceScrollSection() {
             <a href="/analyze" style={{
               display: "block", textAlign: "center",
               background: "linear-gradient(135deg, #e8a4b0, #c97e8e)",
-              color: "#fff", fontSize: 10.5, fontWeight: 700, padding: "10px 14px",
-              borderRadius: 8, textDecoration: "none",
-              boxShadow: "0 4px 14px rgba(232,164,176,0.2)",
+              color: "#fff", fontSize: 13, fontWeight: 700, padding: "13px 18px",
+              borderRadius: 10, textDecoration: "none",
+              boxShadow: "0 4px 16px rgba(232,164,176,0.25)",
               letterSpacing: "0.01em",
             }}>
               {t("scroll.panel.cta")}

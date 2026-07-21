@@ -60,15 +60,15 @@ const FITZ_TILES = [
 
 // ── Result zones with zoom+pan coordinates ─────────────────────
 const RESULT_ZONES = [
-  { key: "forehead",    label: "Frente",       zoomX: 50, zoomY: 20, zoomScale: 2.2 },
-  { key: "periocularL", label: "Ojo izq.",     zoomX: 60, zoomY: 32, zoomScale: 2.8 },
-  { key: "periocularR", label: "Ojo der.",     zoomX: 40, zoomY: 32, zoomScale: 2.8 },
-  { key: "nose",        label: "Nariz",        zoomX: 50, zoomY: 45, zoomScale: 2.5 },
-  { key: "cheekL",      label: "Mejilla izq.", zoomX: 70, zoomY: 50, zoomScale: 2.2 },
-  { key: "cheekR",      label: "Mejilla der.", zoomX: 30, zoomY: 50, zoomScale: 2.2 },
-  { key: "lips",        label: "Labios",       zoomX: 50, zoomY: 60, zoomScale: 2.8 },
-  { key: "jaw",         label: "Mandíbula",    zoomX: 50, zoomY: 72, zoomScale: 2.0 },
-  { key: "neck",        label: "Cuello",       zoomX: 50, zoomY: 85, zoomScale: 1.8 },
+  { key: "forehead",    label: "Frente",       dotX: 50, dotY: 28 },
+  { key: "periocularL", label: "Ojo izq.",     dotX: 62, dotY: 38 },
+  { key: "periocularR", label: "Ojo der.",     dotX: 38, dotY: 38 },
+  { key: "nose",        label: "Nariz",        dotX: 50, dotY: 48 },
+  { key: "cheekL",      label: "Mejilla izq.", dotX: 72, dotY: 52 },
+  { key: "cheekR",      label: "Mejilla der.", dotX: 28, dotY: 52 },
+  { key: "lips",        label: "Labios",       dotX: 50, dotY: 60 },
+  { key: "jaw",         label: "Mandíbula",    dotX: 50, dotY: 70 },
+  { key: "neck",        label: "Cuello",       dotX: 50, dotY: 82 },
 ]
 
 // ── Zone label map ──────────────────────────────────────────────
@@ -1613,45 +1613,72 @@ export default function AnalyzePage() {
               </p>
             </div>
 
-            {/* ── FACE VIEWER with zoom+pan ── */}
+            {/* ── FACE VIEWER — full photo with all dots ── */}
             {capturedUrl && (
               <div style={{
                 position: "relative", width: "100%", maxWidth: 420, margin: "0 auto",
                 aspectRatio: "3/4", borderRadius: 20, overflow: "hidden",
                 background: "#060409",
               }}>
-                {/* Photo with zoom+pan transform */}
+                {/* Photo — full view, no zoom */}
                 <img
                   src={capturedUrl}
                   alt="Tu análisis facial"
                   style={{
                     position: "absolute", inset: 0, width: "100%", height: "100%",
                     objectFit: "cover",
-                    transform: `scale(${zone.zoomScale}) translate(${-(zone.zoomX - 50)}%, ${-(zone.zoomY - 50)}%)`,
-                    transformOrigin: `${zone.zoomX}% ${zone.zoomY}%`,
-                    transition: "transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.4s ease",
+                    transition: "filter 0.4s ease",
                     filter: enhancedMode ? "contrast(1.4) saturate(1.3) brightness(1.1)" : "none",
                   }}
                 />
 
-                {/* Vignette overlay */}
+                {/* Subtle vignette */}
                 <div style={{
                   position: "absolute", inset: 0,
-                  background: "radial-gradient(circle at center, transparent 30%, rgba(14,12,18,0.6) 100%)",
+                  background: "linear-gradient(180deg, rgba(14,12,18,0.15) 0%, transparent 20%, transparent 75%, rgba(14,12,18,0.5) 100%)",
                   pointerEvents: "none",
                 }} />
 
-                {/* Glowing dot at zone position */}
+                {/* ALL 9 dots — active one is highlighted */}
+                {RESULT_ZONES.map((z, i) => {
+                  const s = (scores.zoneScores as Record<string, number>)[z.key] ?? 50
+                  const { color } = getZoneStatus(s)
+                  const isActive = activeResultZone === i
+                  return (
+                    <button
+                      key={z.key}
+                      onClick={() => { setActiveResultZone(i); setAutoPlay(false) }}
+                      style={{
+                        position: "absolute",
+                        left: `${z.dotX}%`, top: `${z.dotY}%`,
+                        transform: "translate(-50%, -50%)",
+                        width: isActive ? 14 : 8,
+                        height: isActive ? 14 : 8,
+                        borderRadius: "50%",
+                        background: isActive ? color : `${color}88`,
+                        border: isActive ? `2px solid ${color}` : "1.5px solid rgba(245,237,232,0.3)",
+                        boxShadow: isActive ? `0 0 14px ${color}, 0 0 28px ${color}44` : "0 0 4px rgba(0,0,0,0.5)",
+                        cursor: "pointer",
+                        transition: "all 0.4s ease",
+                        animation: isActive ? "hotspotPulseResult 2s ease-in-out infinite" : "none",
+                        zIndex: isActive ? 5 : 3,
+                        padding: 0,
+                      }}
+                    />
+                  )
+                })}
+
+                {/* Active zone label on photo */}
                 <div style={{
-                  position: "absolute",
-                  left: `${zone.zoomX}%`, top: `${zone.zoomY}%`,
-                  width: 12, height: 12, borderRadius: "50%",
-                  background: zoneColor,
-                  boxShadow: `0 0 12px ${zoneColor}, 0 0 24px ${zoneColor}44`,
-                  transform: "translate(-50%, -50%)",
-                  animation: "hotspotPulseResult 2s ease-in-out infinite",
-                  transition: "left 0.8s ease, top 0.8s ease",
-                }} />
+                  position: "absolute", top: 14, left: 14,
+                  background: "rgba(14,12,18,0.7)", backdropFilter: "blur(12px)",
+                  borderRadius: 10, padding: "7px 14px",
+                  transition: "all 0.3s ease",
+                  border: `1px solid ${zoneColor}33`,
+                }}>
+                  <span style={{ fontSize: 12, color: "#f5ede8", fontWeight: 600 }}>{zone.label}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: zoneColor, marginLeft: 8 }}>{zoneScore}</span>
+                </div>
 
                 {/* Enhanced mode toggle */}
                 <button onClick={() => setEnhancedMode(!enhancedMode)} style={{
@@ -1661,22 +1688,10 @@ export default function AnalyzePage() {
                   borderRadius: 10, padding: "6px 12px",
                   color: enhancedMode ? "#7ecba1" : "rgba(245,237,232,0.5)",
                   fontSize: 10, fontWeight: 600, cursor: "pointer",
-                  letterSpacing: "0.06em",
                   transition: "all 0.25s ease",
                 }}>
-                  {enhancedMode ? "~ Modo detalle" : "Modo detalle"}
+                  {enhancedMode ? "Modo detalle activo" : "Modo detalle"}
                 </button>
-
-                {/* Zone label overlay (top-left) */}
-                <div style={{
-                  position: "absolute", top: 16, left: 16,
-                  background: "rgba(14,12,18,0.7)", backdropFilter: "blur(12px)",
-                  borderRadius: 10, padding: "8px 14px",
-                  transition: "all 0.3s ease",
-                }}>
-                  <span style={{ fontSize: 12, color: "#f5ede8", fontWeight: 600 }}>{zone.label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: zoneColor, marginLeft: 8 }}>{zoneScore}/100</span>
-                </div>
               </div>
             )}
 

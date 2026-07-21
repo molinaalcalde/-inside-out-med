@@ -1472,25 +1472,35 @@ export default function AnalyzePage() {
               Ver mi plan gratuito →
             </button>
 
-            {/* Paid CTA */}
+            {/* Paid CTA — highlighted */}
             <a
               href="https://wa.me/TUTELEFONO?text=Hola%2C%20quiero%20una%20asesor%C3%ADa%20personalizada.%20Mi%20score%20fue%20"
               target="_blank" rel="noopener noreferrer"
               style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                width: "100%", padding: "14px 28px",
-                background: "rgba(245,237,232,0.04)",
-                border: "1px solid rgba(245,237,232,0.1)",
-                borderRadius: 14, color: "rgba(245,237,232,0.6)",
-                fontSize: 13, fontWeight: 600, textDecoration: "none",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                width: "100%", padding: "18px 28px",
+                background: "linear-gradient(135deg, rgba(212,175,136,0.12) 0%, rgba(232,164,176,0.08) 100%)",
+                border: "1.5px solid rgba(212,175,136,0.3)",
+                borderRadius: 14, color: "#d4af88",
+                fontSize: 14, fontWeight: 700, textDecoration: "none",
+                boxShadow: "0 4px 20px rgba(212,175,136,0.15)",
                 transition: "all 0.2s",
               }}
             >
-              Quiero asesoría personalizada (servicio premium)
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+              </svg>
+              Asesoría personalizada con especialista
             </a>
-            <p style={{ fontSize: 10, color: "rgba(245,237,232,0.2)", textAlign: "center", marginTop: 8 }}>
-              La asesoría incluye consulta 1:1 con especialista y plan a medida
-            </p>
+            <div style={{
+              display: "flex", justifyContent: "center", gap: 16, marginTop: 10, flexWrap: "wrap",
+            }}>
+              {["Consulta 1:1 por video", "Plan a tu medida", "Seguimiento mensual"].map(item => (
+                <span key={item} style={{ fontSize: 10, color: "rgba(212,175,136,0.5)", letterSpacing: "0.04em" }}>
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
           )
         })()}

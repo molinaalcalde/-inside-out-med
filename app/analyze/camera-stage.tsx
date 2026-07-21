@@ -526,29 +526,49 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
               const upright = lm[10].y < lm[152].y
               faceDetectedRef.current = centered && upright
 
-              // Glasses detection: check nose bridge area for dark band
-              // Landmarks 6 (nose bridge), 168 (between eyes), 197 (upper bridge)
-              // If the area between eyes is much darker than forehead/cheeks = likely glasses
+              // Glasses detection: MediaPipe landmarks shift when glasses are present
+              // Check the vertical gap between eyebrow (landmarks 66,296) and eye top (landmarks 159,386)
+              // Glasses frames push the detected eye landmarks down, creating abnormal spacing
+              // Also check horizontal edge contrast across the nose bridge area
               if (centered && upright && video.readyState >= 2) {
                 const vw = video.videoWidth || 640, vh = video.videoHeight || 480
+                // Method 1: Edge detection on nose bridge — glasses frames create strong horizontal edges
                 const bridgeX = Math.round(lm[6].x * vw), bridgeY = Math.round(lm[6].y * vh)
-                const foreheadY = Math.round(lm[10].y * vh)
-                const tc = document.createElement("canvas"); tc.width = 30; tc.height = 10
+                const sampleW = 40, sampleH = 20
+                const tc = document.createElement("canvas"); tc.width = sampleW; tc.height = sampleH
                 const tctx = tc.getContext("2d")!
-                // Sample nose bridge (between eyes)
-                tctx.drawImage(video, bridgeX - 15, bridgeY - 5, 30, 10, 0, 0, 30, 10)
-                const bridgeData = tctx.getImageData(0, 0, 30, 10).data
-                let bridgeLum = 0
-                for (let i = 0; i < bridgeData.length; i += 4) bridgeLum += 0.299 * bridgeData[i] + 0.587 * bridgeData[i+1] + 0.114 * bridgeData[i+2]
-                bridgeLum /= (30 * 10)
-                // Sample forehead for comparison
-                tctx.drawImage(video, bridgeX - 15, foreheadY, 30, 10, 0, 0, 30, 10)
-                const fhData = tctx.getImageData(0, 0, 30, 10).data
-                let fhLum = 0
-                for (let i = 0; i < fhData.length; i += 4) fhLum += 0.299 * fhData[i] + 0.587 * fhData[i+1] + 0.114 * fhData[i+2]
-                fhLum /= (30 * 10)
-                // If bridge is significantly darker than forehead → glasses
-                glassesDetectedRef.current = fhLum > 0 && (bridgeLum / fhLum) < 0.55
+                tctx.drawImage(video, bridgeX - sampleW/2, bridgeY - sampleH/2, sampleW, sampleH, 0, 0, sampleW, sampleH)
+                const pxData = tctx.getImageData(0, 0, sampleW, sampleH).data
+                // Count strong horizontal edges (adjacent pixel luminance diff > threshold)
+                let edgeCount = 0, totalChecks = 0
+                for (let row = 0; row < sampleH; row++) {
+                  for (let col = 1; col < sampleW - 1; col++) {
+                    const idx = (row * sampleW + col) * 4
+                    const lumC = 0.299 * pxData[idx] + 0.587 * pxData[idx+1] + 0.114 * pxData[idx+2]
+                    const idxUp = ((row > 0 ? row-1 : row) * sampleW + col) * 4
+                    const lumUp = 0.299 * pxData[idxUp] + 0.587 * pxData[idxUp+1] + 0.114 * pxData[idxUp+2]
+                    if (Math.abs(lumC - lumUp) > 35) edgeCount++
+                    totalChecks++
+                  }
+                }
+                const edgeRatio = totalChecks > 0 ? edgeCount / totalChecks : 0
+                // Method 2: Check if nose bridge luminance is much lower than cheek average
+                const cheekLum = (() => {
+                  const cx = Math.round(lm[116].x * vw), cy = Math.round(lm[116].y * vh)
+                  tctx.drawImage(video, cx - 10, cy - 10, 20, 20, 0, 0, 20, 20)
+                  const cd = tctx.getImageData(0, 0, 20, 20).data
+                  let s = 0; for (let i = 0; i < cd.length; i += 4) s += 0.299*cd[i]+0.587*cd[i+1]+0.114*cd[i+2]
+                  return s / 400
+                })()
+                const bridgeLum = (() => {
+                  tctx.drawImage(video, bridgeX - 10, bridgeY - 5, 20, 10, 0, 0, 20, 10)
+                  const bd = tctx.getImageData(0, 0, 20, 10).data
+                  let s = 0; for (let i = 0; i < bd.length; i += 4) s += 0.299*bd[i]+0.587*bd[i+1]+0.114*bd[i+2]
+                  return s / 200
+                })()
+                const lumRatio = cheekLum > 0 ? bridgeLum / cheekLum : 1
+                // Glasses detected if: strong edges on bridge OR bridge much darker than cheek
+                glassesDetectedRef.current = edgeRatio > 0.25 || lumRatio < 0.5
               }
             } else { faceDetectedRef.current = false }
           } catch { faceDetectedRef.current = false }

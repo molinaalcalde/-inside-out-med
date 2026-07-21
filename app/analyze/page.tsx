@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
+import React, { useEffect, useRef, useState, useCallback } from "react"
 import { CameraStage, type Scores } from "./camera-stage"
 
 type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "gate-quiz" | "results-2" | "error"

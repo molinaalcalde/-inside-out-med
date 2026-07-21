@@ -420,9 +420,10 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
   const accumRef     = useRef<Record<string, ZoneAccum>>(fresh9Zones())
   const phaseStartRef    = useRef(0)
   const landmarkerRef    = useRef<FaceLandmarkerInstance | null>(null)
-  const faceDetectedRef  = useRef(false)
-  const landmarkFramesRef = useRef(0)
-  const noFaceFramesRef   = useRef(0)
+  const faceDetectedRef    = useRef(false)
+  const glassesDetectedRef = useRef(false)
+  const landmarkFramesRef  = useRef(0)
+  const noFaceFramesRef    = useRef(0)
 
   const [phase, setPhase]         = useState<Phase>("init")
   const [guidance, setGuidance]   = useState<{ msg: string; sub: string; type: "neutral" | "warning" | "success" }>({ msg: "Iniciando cámara…", sub: "", type: "neutral" })
@@ -524,11 +525,43 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
               const centered = noseX > 0.3 && noseX < 0.7 && noseY > 0.25 && noseY < 0.65
               const upright = lm[10].y < lm[152].y
               faceDetectedRef.current = centered && upright
+
+              // Glasses detection: check nose bridge area for dark band
+              // Landmarks 6 (nose bridge), 168 (between eyes), 197 (upper bridge)
+              // If the area between eyes is much darker than forehead/cheeks = likely glasses
+              if (centered && upright && video.readyState >= 2) {
+                const vw = video.videoWidth || 640, vh = video.videoHeight || 480
+                const bridgeX = Math.round(lm[6].x * vw), bridgeY = Math.round(lm[6].y * vh)
+                const foreheadY = Math.round(lm[10].y * vh)
+                const tc = document.createElement("canvas"); tc.width = 30; tc.height = 10
+                const tctx = tc.getContext("2d")!
+                // Sample nose bridge (between eyes)
+                tctx.drawImage(video, bridgeX - 15, bridgeY - 5, 30, 10, 0, 0, 30, 10)
+                const bridgeData = tctx.getImageData(0, 0, 30, 10).data
+                let bridgeLum = 0
+                for (let i = 0; i < bridgeData.length; i += 4) bridgeLum += 0.299 * bridgeData[i] + 0.587 * bridgeData[i+1] + 0.114 * bridgeData[i+2]
+                bridgeLum /= (30 * 10)
+                // Sample forehead for comparison
+                tctx.drawImage(video, bridgeX - 15, foreheadY, 30, 10, 0, 0, 30, 10)
+                const fhData = tctx.getImageData(0, 0, 30, 10).data
+                let fhLum = 0
+                for (let i = 0; i < fhData.length; i += 4) fhLum += 0.299 * fhData[i] + 0.587 * fhData[i+1] + 0.114 * fhData[i+2]
+                fhLum /= (30 * 10)
+                // If bridge is significantly darker than forehead → glasses
+                glassesDetectedRef.current = fhLum > 0 && (bridgeLum / fhLum) < 0.55
+              }
             } else { faceDetectedRef.current = false }
           } catch { faceDetectedRef.current = false }
         }
 
         const faceOk = landmarkerRef.current ? faceDetectedRef.current : true
+        const hasGlasses = glassesDetectedRef.current
+        if (hasGlasses) {
+          drawOval(ctx, W, H, "warning", 0)
+          updateGuidance("Quítate las gafas", "Para un análisis preciso necesitamos ver toda tu piel", "warning")
+          phaseStartRef.current = now - 1000
+          return
+        }
         if (faceOk) {
           drawOval(ctx, W, H, "neutral", pulseRef.current * 0.5)
           updateGuidance("Centra tu rostro en el óvalo", "Sin gafas ni pelo en la cara · Mantén la cámara estable", "neutral")

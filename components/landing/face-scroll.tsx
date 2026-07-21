@@ -217,9 +217,10 @@ export function FaceScrollSection() {
               WebkitBackdropFilter: "blur(24px)",
               border: "1px solid rgba(245,237,232,0.08)",
               borderRadius: 18,
-              padding: "26px 24px",
-              width: 280,
+              padding: "28px 28px",
+              width: 320,
               marginLeft: "auto",
+              marginRight: -20,
             }}
           >
             {/* Header */}

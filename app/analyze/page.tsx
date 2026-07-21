@@ -611,64 +611,84 @@ function ProfileQuiz({ mode, onComplete, scores }: {
 
         {/* agePicker: Apple-style scroll wheel */}
         {current.type === "agePicker" && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}>
-            <div style={{ position: "relative", width: 120, height: 260, overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 104, background: "linear-gradient(to bottom, #0e0c12, transparent)", zIndex: 2, pointerEvents: "none" }} />
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 104, background: "linear-gradient(to top, #0e0c12, transparent)", zIndex: 2, pointerEvents: "none" }} />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 32 }}>
+            {/* Wheel container */}
+            <div style={{
+              position: "relative", width: 180, height: 280,
+              overflow: "hidden", borderRadius: 20,
+              background: "rgba(245,237,232,0.02)",
+            }}>
+              {/* Fade masks */}
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 112, background: "linear-gradient(to bottom, #0e0c12 20%, transparent)", zIndex: 2, pointerEvents: "none" }} />
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 112, background: "linear-gradient(to top, #0e0c12 20%, transparent)", zIndex: 2, pointerEvents: "none" }} />
+
+              {/* Selection window */}
               <div style={{
-                position: "absolute", top: 104, left: 0, right: 0, height: 52,
-                borderTop: "1px solid rgba(232,164,176,0.3)", borderBottom: "1px solid rgba(232,164,176,0.3)",
-                background: "rgba(232,164,176,0.06)", zIndex: 1, pointerEvents: "none",
+                position: "absolute", top: 112, left: 12, right: 12, height: 56,
+                border: "1.5px solid rgba(232,164,176,0.25)",
+                borderRadius: 14,
+                background: "rgba(232,164,176,0.06)",
+                zIndex: 1, pointerEvents: "none",
               }} />
+
+              {/* Scrollable list */}
               <div
                 className="age-scroll"
                 ref={(el: HTMLDivElement | null) => {
                   if (el && !pickerInitRef.current) {
                     pickerInitRef.current = true
-                    el.scrollTop = (30 - 18) * 52
+                    el.scrollTop = (30 - 18) * 56
                   }
                 }}
                 onScroll={(e) => {
-                  const idx = Math.round(e.currentTarget.scrollTop / 52)
-                  const clamped = Math.max(0, Math.min(62, idx))
-                  setPickerAge(18 + clamped)
+                  const idx = Math.round(e.currentTarget.scrollTop / 56)
+                  setPickerAge(18 + Math.max(0, Math.min(62, idx)))
                 }}
-                style={{ height: 260, overflowY: "scroll", position: "relative", zIndex: 3 }}
+                style={{ height: 280, overflowY: "scroll", position: "relative", zIndex: 3 }}
               >
-                <div style={{ height: 104 }} />
-                {Array.from({ length: 63 }, (_, i) => i + 18).map(age => (
-                  <div key={age} className="age-snap" style={{
-                    height: 52, display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <span style={{
-                      fontFamily: "var(--font-fraunces)",
-                      fontSize: age === pickerAge ? 42 : 28,
-                      fontWeight: age === pickerAge ? 400 : 300,
-                      color: age === pickerAge ? "#e8a4b0" : "#f5ede8",
-                      opacity: age === pickerAge ? 1 : Math.abs(age - pickerAge) === 1 ? 0.45 : Math.abs(age - pickerAge) === 2 ? 0.2 : 0.1,
-                      transform: `scale(${age === pickerAge ? 1 : Math.abs(age - pickerAge) === 1 ? 0.85 : 0.7})`,
-                      transition: "all 0.15s ease",
-                      lineHeight: 1,
+                <div style={{ height: 112 }} />
+                {Array.from({ length: 63 }, (_, i) => i + 18).map(age => {
+                  const dist = Math.abs(age - pickerAge)
+                  return (
+                    <div key={age} className="age-snap" style={{
+                      height: 56, display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer",
                     }}>
-                      {age}
-                    </span>
-                  </div>
-                ))}
-                <div style={{ height: 104 }} />
+                      <span style={{
+                        fontFamily: "var(--font-fraunces)",
+                        fontSize: dist === 0 ? 44 : dist === 1 ? 30 : 22,
+                        fontWeight: dist === 0 ? 400 : 300,
+                        color: dist === 0 ? "#e8a4b0" : "#f5ede8",
+                        opacity: dist === 0 ? 1 : dist === 1 ? 0.5 : dist === 2 ? 0.22 : 0.08,
+                        transition: "all 0.12s ease-out",
+                        lineHeight: 1,
+                        userSelect: "none",
+                      }}>
+                        {age}
+                      </span>
+                    </div>
+                  )
+                })}
+                <div style={{ height: 112 }} />
               </div>
             </div>
 
+            {/* Confirm */}
             <button
               onClick={() => advance({ age: String(pickerAge) })}
               style={{
-                padding: "15px 48px",
+                padding: "16px 52px",
                 background: "linear-gradient(135deg, #e8a4b0, #c97e8e)",
-                border: "none", borderRadius: 12, color: "#fff",
-                fontSize: 15, fontWeight: 700, cursor: "pointer",
-                boxShadow: "0 6px 20px rgba(232,164,176,0.3)",
+                border: "none", borderRadius: 14, color: "#fff",
+                fontSize: 16, fontWeight: 700, cursor: "pointer",
+                boxShadow: "0 8px 24px rgba(232,164,176,0.3)",
+                transition: "transform 0.15s, box-shadow 0.15s",
+                letterSpacing: "0.01em",
               }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 10px 28px rgba(232,164,176,0.4)" }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(232,164,176,0.3)" }}
             >
-              Tengo {pickerAge} años
+              Tengo {pickerAge} años →
             </button>
 
             <style>{`

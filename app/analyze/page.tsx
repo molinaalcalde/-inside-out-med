@@ -58,6 +58,19 @@ const FITZ_TILES = [
   { value: "6", color: "#5C4033", label: "Muy oscura" },
 ]
 
+// ── Result zones with zoom+pan coordinates ─────────────────────
+const RESULT_ZONES = [
+  { key: "forehead",    label: "Frente",       zoomX: 50, zoomY: 20, zoomScale: 2.2 },
+  { key: "periocularL", label: "Ojo izq.",     zoomX: 60, zoomY: 32, zoomScale: 2.8 },
+  { key: "periocularR", label: "Ojo der.",     zoomX: 40, zoomY: 32, zoomScale: 2.8 },
+  { key: "nose",        label: "Nariz",        zoomX: 50, zoomY: 45, zoomScale: 2.5 },
+  { key: "cheekL",      label: "Mejilla izq.", zoomX: 70, zoomY: 50, zoomScale: 2.2 },
+  { key: "cheekR",      label: "Mejilla der.", zoomX: 30, zoomY: 50, zoomScale: 2.2 },
+  { key: "lips",        label: "Labios",       zoomX: 50, zoomY: 60, zoomScale: 2.8 },
+  { key: "jaw",         label: "Mandíbula",    zoomX: 50, zoomY: 72, zoomScale: 2.0 },
+  { key: "neck",        label: "Cuello",       zoomX: 50, zoomY: 85, zoomScale: 1.8 },
+]
+
 // ── Zone label map ──────────────────────────────────────────────
 const ZONE_LABELS: Record<string, string> = {
   forehead:    "Frente",
@@ -944,6 +957,9 @@ export default function AnalyzePage() {
   const [gateData, setGateData] = useState<Record<string, string>>({})
   const [activeZone, setActiveZone] = useState<string | null>(null)
   const [showBiomarkers, setShowBiomarkers] = useState(false)
+  const [activeResultZone, setActiveResultZone] = useState(0)
+  const [enhancedMode, setEnhancedMode] = useState(false)
+  const [autoPlay, setAutoPlay] = useState(true)
 
   const fileRef = useRef<HTMLInputElement>(null)
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -1048,6 +1064,15 @@ export default function AnalyzePage() {
     return () => { if (scanIntervalRef.current) clearInterval(scanIntervalRef.current) }
   }, [])
 
+  // Auto-advance zones in results-2
+  useEffect(() => {
+    if (stage !== "results-2" || !autoPlay) return
+    const timer = setInterval(() => {
+      setActiveResultZone(prev => (prev + 1) % RESULT_ZONES.length)
+    }, 3500)
+    return () => clearInterval(timer)
+  }, [stage, autoPlay])
+
   const reset = () => {
     setCapturedUrl(null)
     setScanProgress(0)
@@ -1097,6 +1122,10 @@ export default function AnalyzePage() {
   // ── Gate quiz complete → results-2 ─────────────────────────────
   const handleGateComplete = (data: Record<string, string>) => {
     setGateData(data)
+    setActiveResultZone(0)
+    setAutoPlay(true)
+    setEnhancedMode(false)
+    setShowBiomarkers(false)
     // Save all data to localStorage
     try {
       localStorage.setItem("insideoutmed_profile", JSON.stringify({ ...preQuizData, ...contactData, ...data }))
@@ -1532,181 +1561,201 @@ export default function AnalyzePage() {
           <ProfileQuiz mode="gate" onComplete={handleGateComplete} scores={scores} />
         )}
 
-        {/* ── RESULTS LAYER 2 — interactive face map ── */}
+        {/* ── RESULTS LAYER 2 — cinematic face analysis ── */}
         {stage === "results-2" && scores && (() => {
           const userAge = parseInt(preQuizData.age || "30", 10)
           const skinAge = scores.ageApparent || userAge + 3
           const ageDiff = skinAge - userAge
+          const isOlder = ageDiff > 0
 
-          const hotspots: { key: string; label: string; x: number; y: number; align: "left" | "right" | "center" }[] = [
-            { key: "forehead",    label: "Frente",       x: 50, y: 18, align: "right" },
-            { key: "periocularL", label: "Ojo izq.",     x: 62, y: 32, align: "right" },
-            { key: "periocularR", label: "Ojo der.",     x: 38, y: 32, align: "left" },
-            { key: "nose",        label: "Nariz",        x: 50, y: 45, align: "right" },
-            { key: "cheekL",      label: "Mejilla izq.", x: 72, y: 50, align: "right" },
-            { key: "cheekR",      label: "Mejilla der.", x: 28, y: 50, align: "left" },
-            { key: "lips",        label: "Labios",       x: 50, y: 62, align: "left" },
-            { key: "jaw",         label: "Mandíbula",    x: 50, y: 73, align: "right" },
-            { key: "neck",        label: "Cuello",       x: 50, y: 85, align: "center" },
-          ]
+          const zone = RESULT_ZONES[activeResultZone]
+          const zoneScore = (scores.zoneScores as Record<string, number>)[zone.key] ?? 50
+          const { color: zoneColor, label: statusLabel } = getZoneStatus(zoneScore)
+          const description = getZoneDescription(zone.key, zoneScore)
 
           // Human-readable findings with year impact
-          const findingDescriptions: Record<string, { title: string; desc: string; years: string }> = {
-            "Protección solar": { title: "Protección solar insuficiente", desc: "Tu piel muestra fotodaño acumulado que acelera la pérdida de elasticidad y genera manchas.", years: "+2 años" },
-            "Control de inflamación": { title: "Inflamación activa", desc: "Rojez e irritación crónica que amplifica el envejecimiento y debilita la barrera cutánea.", years: "+1.5 años" },
-            "Salud del colágeno": { title: "Colágeno debilitado", desc: "Las fibras de colágeno se degradan más rápido de lo esperado, afectando firmeza y elasticidad.", years: "+1 año" },
-            "Luminosidad": { title: "Piel apagada", desc: "Falta de brillo natural que refleja deshidratación profunda y acumulación de células muertas.", years: "+1 año" },
-            "Hidratación": { title: "Deshidratación crónica", desc: "La barrera cutánea no retiene agua de forma óptima, acelerando la formación de líneas finas.", years: "+1.5 años" },
-            "Uniformidad de tono": { title: "Tono desigual", desc: "Manchas e irregularidades de pigmento que dan un aspecto envejecido y cansado.", years: "+1 año" },
-            "Salud vascular": { title: "Fragilidad vascular", desc: "Vasos sanguíneos visibles o rojez persistente que indican sensibilidad e inflamación subyacente.", years: "+0.5 años" },
+          const yearImpact: Record<string, string> = {
+            "Daño solar": "hasta +2 años",
+            "Inflamación": "hasta +1.5 años",
+            "Glicación": "hasta +1 año",
+            "Vascularidad": "hasta +0.5 años",
+            "Luminosidad": "hasta +1 año",
+            "Hidratación": "hasta +1 año",
+            "Uniformidad": "hasta +0.5 años",
+          }
+
+          const findingDescriptions: Record<string, { title: string; desc: string }> = {
+            "Protección solar": { title: "Protección solar insuficiente", desc: "Tu piel muestra fotodaño acumulado que acelera la pérdida de elasticidad y genera manchas." },
+            "Control de inflamación": { title: "Inflamación activa", desc: "Rojez e irritación crónica que amplifica el envejecimiento y debilita la barrera cutánea." },
+            "Salud del colágeno": { title: "Colágeno debilitado", desc: "Las fibras de colágeno se degradan más rápido de lo esperado, afectando firmeza y elasticidad." },
+            "Luminosidad": { title: "Piel apagada", desc: "Falta de brillo natural que refleja deshidratación profunda y acumulación de células muertas." },
+            "Hidratación": { title: "Deshidratación crónica", desc: "La barrera cutánea no retiene agua de forma óptima, acelerando la formación de líneas finas." },
+            "Uniformidad de tono": { title: "Tono desigual", desc: "Manchas e irregularidades de pigmento que dan un aspecto envejecido y cansado." },
+            "Salud vascular": { title: "Fragilidad vascular", desc: "Vasos sanguíneos visibles o rojez persistente que indican sensibilidad e inflamación subyacente." },
           }
 
           return (
           <div style={{ maxWidth: 560, width: "100%" }}>
             {/* Header */}
-            <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 8px rgba(126,203,161,0.8)" }} />
                 <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>Informe completo · 9 zonas · 7 biomarcadores</span>
               </div>
               <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(24px, 4vw, 34px)", fontWeight: 400, marginBottom: 8, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-                Tu análisis facial <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>completo</em>
+                Tu rostro aparenta{" "}
+                <em style={{ color: isOlder ? "#e8a4b0" : "#7ecba1", fontStyle: "italic" }}>
+                  {skinAge} años
+                </em>
               </h1>
-              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.35)", maxWidth: 380, margin: "0 auto" }}>Toca cada punto para explorar tu mapa facial.</p>
+              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", lineHeight: 1.6 }}>
+                {isOlder ? "Pero se puede revertir. Te mostramos cómo." : ageDiff === 0 ? "Buen punto de partida. Te ayudamos a mejorarlo." : "Vas por buen camino. Te ayudamos a mantenerlo."}
+              </p>
             </div>
 
-            {/* ── FACE MAP ── */}
+            {/* ── FACE VIEWER with zoom+pan ── */}
             {capturedUrl && (
-              <div style={{ position: "relative", width: "100%", maxWidth: 420, margin: "0 auto 28px", borderRadius: 20, overflow: "hidden", border: "1px solid rgba(245,237,232,0.1)", background: "#0e0c12" }}>
-                {/* User photo */}
+              <div style={{
+                position: "relative", width: "100%", maxWidth: 420, margin: "0 auto",
+                aspectRatio: "3/4", borderRadius: 20, overflow: "hidden",
+                background: "#060409",
+              }}>
+                {/* Photo with zoom+pan transform */}
                 <img
                   src={capturedUrl}
                   alt="Tu análisis facial"
-                  style={{ width: "100%", display: "block", borderRadius: 20, filter: "brightness(0.85)" }}
-                  onClick={() => setActiveZone(null)}
+                  style={{
+                    position: "absolute", inset: 0, width: "100%", height: "100%",
+                    objectFit: "cover",
+                    transform: `scale(${zone.zoomScale}) translate(${-(zone.zoomX - 50)}%, ${-(zone.zoomY - 50)}%)`,
+                    transformOrigin: `${zone.zoomX}% ${zone.zoomY}%`,
+                    transition: "transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.4s ease",
+                    filter: enhancedMode ? "contrast(1.4) saturate(1.3) brightness(1.1)" : "none",
+                  }}
                 />
 
-                {/* Scan reveal overlay */}
+                {/* Vignette overlay */}
                 <div style={{
-                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-                  background: "linear-gradient(180deg, transparent 0%, rgba(14,12,18,0.3) 100%)",
-                  borderRadius: 20, pointerEvents: "none",
-                  animation: "scanReveal 1.2s ease both",
+                  position: "absolute", inset: 0,
+                  background: "radial-gradient(circle at center, transparent 30%, rgba(14,12,18,0.6) 100%)",
+                  pointerEvents: "none",
                 }} />
 
-                {/* Score badge */}
+                {/* Glowing dot at zone position */}
                 <div style={{
-                  position: "absolute", top: 12, right: 12,
-                  background: "rgba(14,12,18,0.85)", backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(232,164,176,0.3)", borderRadius: 12,
-                  padding: "8px 14px", textAlign: "center",
+                  position: "absolute",
+                  left: `${zone.zoomX}%`, top: `${zone.zoomY}%`,
+                  width: 12, height: 12, borderRadius: "50%",
+                  background: zoneColor,
+                  boxShadow: `0 0 12px ${zoneColor}, 0 0 24px ${zoneColor}44`,
+                  transform: "translate(-50%, -50%)",
+                  animation: "hotspotPulseResult 2s ease-in-out infinite",
+                  transition: "left 0.8s ease, top 0.8s ease",
+                }} />
+
+                {/* Enhanced mode toggle */}
+                <button onClick={() => setEnhancedMode(!enhancedMode)} style={{
+                  position: "absolute", bottom: 12, right: 12,
+                  background: enhancedMode ? "rgba(126,203,161,0.2)" : "rgba(245,237,232,0.08)",
+                  border: `1px solid ${enhancedMode ? "rgba(126,203,161,0.4)" : "rgba(245,237,232,0.12)"}`,
+                  borderRadius: 10, padding: "6px 12px",
+                  color: enhancedMode ? "#7ecba1" : "rgba(245,237,232,0.5)",
+                  fontSize: 10, fontWeight: 600, cursor: "pointer",
+                  letterSpacing: "0.06em",
+                  transition: "all 0.25s ease",
                 }}>
-                  <span style={{ fontSize: 22, fontFamily: "var(--font-fraunces)", fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>{scores.overall}</span>
-                  <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)" }}>/100</span>
-                  <p style={{ fontSize: 8, color: "#7ecba1", fontWeight: 700, letterSpacing: "0.08em", margin: "2px 0 0" }}>TOP {percentile}%</p>
+                  {enhancedMode ? "~ Modo detalle" : "Modo detalle"}
+                </button>
+
+                {/* Zone label overlay (top-left) */}
+                <div style={{
+                  position: "absolute", top: 16, left: 16,
+                  background: "rgba(14,12,18,0.7)", backdropFilter: "blur(12px)",
+                  borderRadius: 10, padding: "8px 14px",
+                  transition: "all 0.3s ease",
+                }}>
+                  <span style={{ fontSize: 12, color: "#f5ede8", fontWeight: 600 }}>{zone.label}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: zoneColor, marginLeft: 8 }}>{zoneScore}/100</span>
                 </div>
-
-                {/* Hotspot dots + labels */}
-                {hotspots.map((spot, idx) => {
-                  const zoneScore = (scores.zoneScores as Record<string, number>)[spot.key] ?? 70
-                  const { color } = getZoneStatus(zoneScore)
-                  const desc = getZoneDescription(spot.key, zoneScore)
-                  const isActive = activeZone === spot.key
-                  const hasActive = activeZone !== null
-                  const delay = idx * 0.3
-
-                  // Label positioning
-                  const labelStyle: React.CSSProperties = {
-                    position: "absolute",
-                    top: `${spot.y}%`,
-                    background: isActive ? "rgba(14,12,18,0.95)" : "rgba(14,12,18,0.85)",
-                    backdropFilter: "blur(12px)",
-                    border: `1px solid ${isActive ? color : color + "44"}`,
-                    borderRadius: 10,
-                    padding: "6px 10px",
-                    minWidth: 120,
-                    maxWidth: 150,
-                    animation: `labelSlide 0.4s ease ${delay}s both`,
-                    opacity: hasActive && !isActive ? 0.3 : 1,
-                    transition: "opacity 0.25s ease, border-color 0.25s ease",
-                    transform: isActive ? "scale(1.05)" : "scale(1)",
-                    zIndex: isActive ? 10 : 1,
-                    cursor: "pointer",
-                    pointerEvents: "auto" as const,
-                  }
-
-                  if (spot.align === "right") {
-                    labelStyle.left = `${spot.x + 4}%`
-                  } else if (spot.align === "left") {
-                    labelStyle.right = `${100 - spot.x + 4}%`
-                  } else {
-                    labelStyle.left = "50%"
-                    labelStyle.transform = isActive ? "translateX(-50%) scale(1.05)" : "translateX(-50%)"
-                    labelStyle.top = `${spot.y + 4}%`
-                  }
-
-                  return (
-                    <React.Fragment key={spot.key}>
-                      {/* Glowing dot */}
-                      <div
-                        onClick={(e) => { e.stopPropagation(); setActiveZone(prev => prev === spot.key ? null : spot.key) }}
-                        style={{
-                          position: "absolute",
-                          left: `${spot.x}%`,
-                          top: `${spot.y}%`,
-                          width: 8, height: 8,
-                          borderRadius: "50%",
-                          background: color,
-                          boxShadow: `0 0 10px ${color}, 0 0 20px ${color}66`,
-                          transform: "translate(-50%, -50%)",
-                          animation: `hotspotAppear 0.5s ease ${delay}s both, hotspotPulse 2s ease-in-out ${delay + 0.5}s infinite`,
-                          zIndex: 5,
-                          cursor: "pointer",
-                          pointerEvents: "auto" as const,
-                        }}
-                      />
-                      {/* Label card */}
-                      <div
-                        onClick={(e) => { e.stopPropagation(); setActiveZone(prev => prev === spot.key ? null : spot.key) }}
-                        style={labelStyle}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 10, color: "#f5ede8", fontWeight: 600 }}>{spot.label}</span>
-                          <span style={{ fontSize: 10, fontWeight: 700, color }}>{zoneScore}</span>
-                        </div>
-                        <p style={{ fontSize: 9, color: "rgba(245,237,232,0.5)", margin: "2px 0 0", lineHeight: 1.3 }}>{desc}</p>
-                      </div>
-                    </React.Fragment>
-                  )
-                })}
               </div>
             )}
 
-            {/* ── AGE COMPARISON ── */}
-            <div style={{ textAlign: "center", padding: "24px 0", borderTop: "1px solid rgba(245,237,232,0.06)", borderBottom: "1px solid rgba(245,237,232,0.06)", marginBottom: 28 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24 }}>
-                <div>
-                  <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Tu edad</p>
-                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 36, fontWeight: 300, color: "rgba(245,237,232,0.6)", lineHeight: 1, margin: 0 }}>{userAge} <span style={{ fontSize: 14, color: "rgba(245,237,232,0.3)" }}>años</span></p>
-                </div>
-                <span style={{ fontSize: 20, color: "rgba(245,237,232,0.2)" }}>→</span>
-                <div>
-                  <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Aparentas</p>
-                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 36, fontWeight: 300, color: ageDiff > 0 ? "#e8a4b0" : "#7ecba1", lineHeight: 1, margin: 0 }}>{skinAge} <span style={{ fontSize: 14, color: "rgba(245,237,232,0.3)" }}>años</span></p>
-                </div>
-              </div>
-              {ageDiff !== 0 && (
-                <div style={{
-                  display: "inline-block", marginTop: 12,
-                  background: ageDiff > 0 ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
-                  border: `1px solid ${ageDiff > 0 ? "rgba(232,164,176,0.25)" : "rgba(126,203,161,0.25)"}`,
-                  borderRadius: 99, padding: "4px 14px",
-                }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: ageDiff > 0 ? "#e8a4b0" : "#7ecba1" }}>
-                    {ageDiff > 0 ? `+${ageDiff} años por encima` : `${Math.abs(ageDiff)} años por debajo`}
+            {/* ── ZONE DETAIL CARD ── */}
+            <div style={{
+              background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)",
+              borderRadius: 16, padding: "20px 22px", marginTop: 16,
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <h3 style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400, color: "#f5ede8", margin: 0 }}>
+                  {zone.label}
+                </h3>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 9, color: zoneColor, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                    {statusLabel}
+                  </span>
+                  <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: zoneColor }}>
+                    {zoneScore}
                   </span>
                 </div>
-              )}
+              </div>
+
+              {/* Progress bar */}
+              <div style={{ height: 3, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 12 }}>
+                <div style={{ height: "100%", width: `${zoneScore}%`, background: `linear-gradient(90deg, ${zoneColor}88, ${zoneColor})`, borderRadius: 2, transition: "width 0.6s ease" }} />
+              </div>
+
+              {/* Description */}
+              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.55)", lineHeight: 1.65, margin: 0 }}>
+                {description}
+              </p>
+              {/* Insight */}
+              <p style={{ fontSize: 12, color: "rgba(245,237,232,0.38)", lineHeight: 1.55, margin: "8px 0 0" }}>
+                {getZoneInsight(zone.key, zoneScore)}
+              </p>
+            </div>
+
+            {/* ── ZONE NAVIGATION TABS ── */}
+            <div style={{
+              display: "flex", justifyContent: "center", gap: 6, marginTop: 14,
+              overflowX: "auto", padding: "4px 0",
+            }}>
+              {RESULT_ZONES.map((z, i) => {
+                const zScore = (scores.zoneScores as Record<string, number>)[z.key] ?? 50
+                const { color } = getZoneStatus(zScore)
+                const isActive = activeResultZone === i
+                return (
+                  <button key={z.key} onClick={() => { setActiveResultZone(i); setAutoPlay(false) }} style={{
+                    padding: "8px 10px", borderRadius: 10,
+                    background: isActive ? `${color}18` : "rgba(245,237,232,0.03)",
+                    border: `1.5px solid ${isActive ? `${color}44` : "rgba(245,237,232,0.06)"}`,
+                    color: isActive ? color : "rgba(245,237,232,0.35)",
+                    fontSize: 9, fontWeight: 600, cursor: "pointer",
+                    transition: "all 0.25s ease",
+                    whiteSpace: "nowrap",
+                    letterSpacing: "0.04em",
+                  }}>
+                    {z.label.length > 8 ? z.label.slice(0, 7) + "." : z.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* ── AGE COMPARISON (compact) ── */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 24, marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tu edad: <strong style={{ color: "#f5ede8" }}>{userAge} años</strong></span>
+              <span style={{ color: "rgba(245,237,232,0.15)" }}>→</span>
+              <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Aparentas: <strong style={{ color: isOlder ? "#e8a4b0" : "#7ecba1" }}>{skinAge} años</strong></span>
+            </div>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <span style={{
+                display: "inline-block", padding: "4px 14px", borderRadius: 99,
+                fontSize: 11, fontWeight: 700,
+                color: isOlder ? "#e8a4b0" : "#7ecba1",
+                background: isOlder ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
+                border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
+              }}>
+                {isOlder ? `+${ageDiff} años por encima` : ageDiff === 0 ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
+              </span>
             </div>
 
             {/* ── TOP 3 FINDINGS ── */}
@@ -1715,10 +1764,13 @@ export default function AnalyzePage() {
               border: "1px solid rgba(245,237,232,0.08)",
               borderRadius: 16, padding: "24px 20px", marginBottom: 20,
             }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>Lo que está sumando años</p>
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>
+                {isOlder ? "Lo que está sumando años" : "Áreas de oportunidad"}
+              </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 {criticalFindings.map((b, idx) => {
-                  const fd = findingDescriptions[b.friendlyLabel] || { title: b.friendlyLabel, desc: b.insight, years: "+1 año" }
+                  const fd = findingDescriptions[b.friendlyLabel] || { title: b.friendlyLabel, desc: b.insight }
+                  const years = yearImpact[b.label] || "hasta +1 año"
                   return (
                     <div key={b.label} style={{ paddingBottom: idx < criticalFindings.length - 1 ? 20 : 0, borderBottom: idx < criticalFindings.length - 1 ? "1px solid rgba(245,237,232,0.05)" : "none" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
@@ -1727,9 +1779,10 @@ export default function AnalyzePage() {
                           fontSize: 10, fontWeight: 700, color: "#e8a4b0",
                           background: "rgba(232,164,176,0.1)", border: "1px solid rgba(232,164,176,0.2)",
                           borderRadius: 99, padding: "2px 10px", whiteSpace: "nowrap", flexShrink: 0, marginLeft: 8,
-                        }}>Suma {fd.years}</span>
+                        }}>{years}</span>
                       </div>
-                      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", lineHeight: 1.6, margin: 0 }}>{fd.desc}</p>
+                      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", lineHeight: 1.6, margin: "0 0 4px" }}>{fd.desc}</p>
+                      <p style={{ fontSize: 11, color: "rgba(245,237,232,0.3)", lineHeight: 1.5, margin: 0, fontStyle: "italic" }}>{b.insight}</p>
                     </div>
                   )
                 })}
@@ -1837,7 +1890,7 @@ export default function AnalyzePage() {
               Asesoría personalizada con especialista
             </a>
 
-            {/* Plan link + Reset */}
+            {/* Reset */}
             <div style={{ textAlign: "center", marginTop: 10 }}>
               <button onClick={reset} style={{ background: "none", border: "none", color: "rgba(245,237,232,0.28)", fontSize: 12, cursor: "pointer", padding: "8px 16px" }}>Hacer nuevo análisis</button>
             </div>
@@ -1853,6 +1906,7 @@ export default function AnalyzePage() {
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes hotspotAppear { 0% { transform: translate(-50%,-50%) scale(0); opacity: 0; } 60% { transform: translate(-50%,-50%) scale(1.5); opacity: 0.8; } 100% { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
         @keyframes hotspotPulse { 0%,100% { box-shadow: 0 0 10px currentColor, 0 0 20px rgba(255,255,255,0.1); transform: translate(-50%,-50%) scale(1); } 50% { box-shadow: 0 0 16px currentColor, 0 0 30px rgba(255,255,255,0.2); transform: translate(-50%,-50%) scale(1.25); } }
+        @keyframes hotspotPulseResult { 0%,100% { box-shadow: 0 0 8px currentColor, 0 0 16px currentColor; transform: translate(-50%,-50%) scale(1); } 50% { box-shadow: 0 0 16px currentColor, 0 0 32px currentColor; transform: translate(-50%,-50%) scale(1.3); } }
         @keyframes labelSlide { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scanReveal { from { opacity: 0; } to { opacity: 1; } }
       `}</style>

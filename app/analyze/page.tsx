@@ -648,12 +648,12 @@ function ProfileQuiz({ mode, onComplete, scores }: {
 
                 {/* Scrollable list */}
                 <div
+                  className="age-scroll"
                   ref={initScroll}
                   onScroll={handleScroll}
                   style={{
                     height: containerH, overflowY: "scroll", scrollSnapType: "y mandatory",
-                    WebkitOverflowScrolling: "touch", position: "relative", zIndex: 3,
-                    msOverflowStyle: "none", scrollbarWidth: "none",
+                    position: "relative", zIndex: 3,
                   }}
                 >
                   {/* Top padding */}
@@ -701,9 +701,9 @@ function ProfileQuiz({ mode, onComplete, scores }: {
                 Tengo {pickerAge} años
               </button>
 
-              {/* Hide scrollbar */}
               <style>{`
-                div[style*="scroll-snap-type"]::-webkit-scrollbar { display: none; }
+                .age-scroll::-webkit-scrollbar { display: none; }
+                .age-scroll { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
               `}</style>
             </div>
           )

@@ -41,11 +41,11 @@ const FITZ_CALIBRATION: Record<number, { lumBaseline: number; redThreshold: numb
   6: { lumBaseline: 110, redThreshold: 28, inflammationSensitivity: 0.55 },
 }
 
-const AGE_BASELINE: Record<string, { glycationOffset: number; ageMid: number }> = {
-  "18-25": { glycationOffset: -5, ageMid: 22 },
-  "26-35": { glycationOffset: 0,  ageMid: 30 },
-  "36-45": { glycationOffset: 5,  ageMid: 40 },
-  "46+":   { glycationOffset: 10, ageMid: 52 },
+function getAgeBaseline(age: number): { glycationOffset: number; ageMid: number } {
+  if (age <= 25) return { glycationOffset: -5, ageMid: age }
+  if (age <= 35) return { glycationOffset: 0,  ageMid: age }
+  if (age <= 45) return { glycationOffset: 5,  ageMid: age }
+  return { glycationOffset: 10, ageMid: age }
 }
 
 // ── Fitzpatrick tile config ─────────────────────────────────────
@@ -92,14 +92,9 @@ const PRE_SCAN_STEPS: QuizStep[] = [
   {
     id: "age",
     headline: "¿Cuántos años tienes?",
-    sub: "La edad transforma completamente lo que necesita tu piel",
-    type: "grid4",
-    options: [
-      { value: "18-25", label: "18–25", sub: "Piel joven" },
-      { value: "26-35", label: "26–35", sub: "Primeros cambios" },
-      { value: "36-45", label: "36–45", sub: "Madurez activa" },
-      { value: "46+",   label: "46+",   sub: "Piel experta" },
-    ],
+    sub: "Calibramos todo según tu edad exacta",
+    type: "agePicker",
+    options: [],
   },
   {
     id: "fitzpatrick",
@@ -308,7 +303,7 @@ function zoneBBox(landmarks: Array<{ x: number; y: number }>, indices: number[],
 function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)) }
 
 // ── Upload analysis — IMAGE mode MediaPipe (9 zones, calibrated) ─
-async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, ageRange: string): Promise<Scores | null> {
+async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: number): Promise<Scores | null> {
   const img = await new Promise<HTMLImageElement>((res, rej) => {
     const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl
   })
@@ -353,7 +348,7 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, ageRange:
   if (!z.forehead || !z.cheekL || !z.cheekR || !z.nose) return null
 
   const fitz = FITZ_CALIBRATION[fitzpatrick] || FITZ_CALIBRATION[3]
-  const ageCfg = AGE_BASELINE[ageRange] || AGE_BASELINE["26-35"]
+  const ageCfg = getAgeBaseline(age)
 
   // Collect zone averages
   const ZONE_NAMES = Object.keys(ZONES)
@@ -515,6 +510,8 @@ function ProfileQuiz({ mode, onComplete, scores }: {
   const [data, setData] = useState<Record<string, string>>({})
   const [inputVal, setInputVal] = useState("")
   const [animating, setAnimating] = useState(false)
+  const [pickerAge, setPickerAge] = useState(30)
+  const pickerInitRef = useRef(false)
 
   const current = steps[step]
 
@@ -611,6 +608,106 @@ function ProfileQuiz({ mode, onComplete, scores }: {
             ))}
           </div>
         )}
+
+        {/* agePicker: Apple-style scroll wheel */}
+        {current.type === "agePicker" && (() => {
+          const AGES = Array.from({ length: 63 }, (_, i) => i + 18)
+          const ITEM_H = 52
+          const VISIBLE = 5
+          const containerH = ITEM_H * VISIBLE
+
+          const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+            const scrollTop = e.currentTarget.scrollTop
+            const idx = Math.round(scrollTop / ITEM_H)
+            const clamped = Math.max(0, Math.min(AGES.length - 1, idx))
+            setPickerAge(AGES[clamped])
+          }
+
+          const initScroll = (el: HTMLDivElement | null) => {
+            if (el && !pickerInitRef.current) {
+              pickerInitRef.current = true
+              const idx = AGES.indexOf(30)
+              el.scrollTop = idx * ITEM_H
+            }
+          }
+
+          return (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}>
+              {/* Scroll wheel */}
+              <div style={{ position: "relative", width: 120, height: containerH, overflow: "hidden" }}>
+                {/* Top/bottom fade masks */}
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: ITEM_H * 2, background: "linear-gradient(to bottom, #0e0c12, transparent)", zIndex: 2, pointerEvents: "none" }} />
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: ITEM_H * 2, background: "linear-gradient(to top, #0e0c12, transparent)", zIndex: 2, pointerEvents: "none" }} />
+
+                {/* Selection highlight */}
+                <div style={{
+                  position: "absolute", top: ITEM_H * 2, left: 0, right: 0, height: ITEM_H,
+                  borderTop: "1px solid rgba(232,164,176,0.3)", borderBottom: "1px solid rgba(232,164,176,0.3)",
+                  background: "rgba(232,164,176,0.06)", zIndex: 1, pointerEvents: "none",
+                }} />
+
+                {/* Scrollable list */}
+                <div
+                  ref={initScroll}
+                  onScroll={handleScroll}
+                  style={{
+                    height: containerH, overflowY: "scroll", scrollSnapType: "y mandatory",
+                    WebkitOverflowScrolling: "touch", position: "relative", zIndex: 3,
+                    msOverflowStyle: "none", scrollbarWidth: "none",
+                  }}
+                >
+                  {/* Top padding */}
+                  <div style={{ height: ITEM_H * 2 }} />
+                  {AGES.map(age => {
+                    const isSelected = age === pickerAge
+                    const dist = Math.abs(age - pickerAge)
+                    const opacity = dist === 0 ? 1 : dist === 1 ? 0.45 : dist === 2 ? 0.2 : 0.1
+                    const scale = dist === 0 ? 1 : dist === 1 ? 0.85 : 0.7
+                    return (
+                      <div key={age} style={{
+                        height: ITEM_H, display: "flex", alignItems: "center", justifyContent: "center",
+                        scrollSnapAlign: "center",
+                      }}>
+                        <span style={{
+                          fontFamily: "var(--font-fraunces)", fontSize: isSelected ? 42 : 28,
+                          fontWeight: isSelected ? 400 : 300,
+                          color: isSelected ? "#e8a4b0" : "#f5ede8",
+                          opacity, transform: `scale(${scale})`,
+                          transition: "all 0.15s ease",
+                          lineHeight: 1,
+                        }}>
+                          {age}
+                        </span>
+                      </div>
+                    )
+                  })}
+                  {/* Bottom padding */}
+                  <div style={{ height: ITEM_H * 2 }} />
+                </div>
+              </div>
+
+              {/* Confirm button */}
+              <button
+                onClick={() => advance({ age: String(pickerAge) })}
+                style={{
+                  padding: "15px 48px",
+                  background: "linear-gradient(135deg, #e8a4b0, #c97e8e)",
+                  border: "none", borderRadius: 12, color: "#fff",
+                  fontSize: 15, fontWeight: 700, cursor: "pointer",
+                  boxShadow: "0 6px 20px rgba(232,164,176,0.3)",
+                  transition: "all 0.2s",
+                }}
+              >
+                Tengo {pickerAge} años
+              </button>
+
+              {/* Hide scrollbar */}
+              <style>{`
+                div[style*="scroll-snap-type"]::-webkit-scrollbar { display: none; }
+              `}</style>
+            </div>
+          )
+        })()}
 
         {/* grid6: 6 icon tiles */}
         {current.type === "grid6" && (
@@ -865,7 +962,7 @@ export default function AnalyzePage() {
   // ── Upload path: run analysis after capture ────────────────────
   const beginScanWithUpload = useCallback((dataUrl: string) => {
     const fitzpatrick = parseInt(preQuizData.fitzpatrick || "3", 10)
-    const ageRange = preQuizData.age || "26-35"
+    const age = parseInt(preQuizData.age || "30", 10)
 
     setStage("scanning")
     setScanProgress(0)
@@ -874,7 +971,7 @@ export default function AnalyzePage() {
     let progress = 0
     let analysisResult: Scores | null | undefined = undefined
 
-    runUploadAnalysis(dataUrl, fitzpatrick, ageRange).then(r => { analysisResult = r }).catch(() => { analysisResult = null })
+    runUploadAnalysis(dataUrl, fitzpatrick, age).then(r => { analysisResult = r }).catch(() => { analysisResult = null })
 
     scanIntervalRef.current = setInterval(() => {
       progress += 1.0 + (progress / 100) * 0.6
@@ -1135,7 +1232,7 @@ export default function AnalyzePage() {
             onCancel={reset}
             onScanError={handleScanError}
             fitzpatrick={parseInt(preQuizData.fitzpatrick || "3", 10)}
-            ageRange={preQuizData.age || "26-35"}
+            age={parseInt(preQuizData.age || "30", 10)}
           />
         )}
 

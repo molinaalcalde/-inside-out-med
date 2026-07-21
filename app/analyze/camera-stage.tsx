@@ -64,11 +64,11 @@ const FITZ_CALIBRATION: Record<number, { lumBaseline: number; redThreshold: numb
   6: { lumBaseline: 110, redThreshold: 28, inflammationSensitivity: 0.55 },
 }
 
-const AGE_BASELINE: Record<string, { glycationOffset: number; ageMid: number }> = {
-  "18-25": { glycationOffset: -5, ageMid: 22 },
-  "26-35": { glycationOffset: 0,  ageMid: 30 },
-  "36-45": { glycationOffset: 5,  ageMid: 40 },
-  "46+":   { glycationOffset: 10, ageMid: 52 },
+function getAgeBaseline(age: number): { glycationOffset: number; ageMid: number } {
+  if (age <= 25) return { glycationOffset: -5, ageMid: age }
+  if (age <= 35) return { glycationOffset: 0,  ageMid: age }
+  if (age <= 45) return { glycationOffset: 5,  ageMid: age }
+  return { glycationOffset: 10, ageMid: age }
 }
 
 // ── Zone metrics & accumulator ────────────────────────────────────
@@ -102,12 +102,12 @@ function accumulate(a: ZoneAccum, m: ZoneMetrics) {
 function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)) }
 
 // ── Scoring engine (deterministic, Fitzpatrick-calibrated) ───────
-function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, ageRange: string): Scores | null {
+function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age: number): Scores | null {
   // Require at minimum forehead, cheekL, cheekR, nose to have data
   if (!acc.forehead?.n || !acc.cheekL?.n || !acc.cheekR?.n || !acc.nose?.n) return null
 
   const fitz = FITZ_CALIBRATION[fitzpatrick] || FITZ_CALIBRATION[3]
-  const ageCfg = AGE_BASELINE[ageRange] || AGE_BASELINE["26-35"]
+  const ageCfg = getAgeBaseline(age)
 
   const avg = (a: ZoneAccum, f: 'sumLum'|'sumR'|'sumG'|'sumB'|'sumContrast'|'sumStdDev') =>
     a.n > 0 ? a[f] / a.n : 0
@@ -403,12 +403,12 @@ interface CameraStageProps {
   onCancel: () => void
   onScanError?: (reason: string) => void
   fitzpatrick: number
-  ageRange: string
+  age: number
 }
 
 type Phase = "init" | "loading-ai" | "stabilizing" | "countdown" | "done" | "error"
 
-export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, ageRange }: CameraStageProps) {
+export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age }: CameraStageProps) {
   const videoRef     = useRef<HTMLVideoElement>(null)
   const canvasRef    = useRef<HTMLCanvasElement>(null)
   const streamRef    = useRef<MediaStream | null>(null)
@@ -476,7 +476,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
       return
     }
 
-    const scores = computeScores(accumRef.current, fitzpatrick, ageRange)
+    const scores = computeScores(accumRef.current, fitzpatrick, age)
 
     const canvas = document.createElement("canvas")
     canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480
@@ -492,7 +492,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
       return
     }
     onCapture(url, scores)
-  }, [onCapture, onScanError, fitzpatrick, ageRange])
+  }, [onCapture, onScanError, fitzpatrick, age])
 
   // ── Main animation loop ────────────────────────────────────────
   useEffect(() => {

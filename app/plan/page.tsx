@@ -1112,6 +1112,21 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
 
         {/* ── Section D: Phase groups ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 32, marginBottom: 56 }}>
+          {/* AM/PM routine note for skincare */}
+          {activeTab === "skincare" && (
+            <div style={{
+              background: "rgba(232,164,176,0.05)", border: "1px solid rgba(232,164,176,0.12)",
+              borderRadius: 14, padding: "16px 18px", marginBottom: 20,
+            }}>
+              <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>
+                Tu rutina skincare se divide en{" "}
+                <span style={{ color: "#d4af88", fontWeight: 600 }}>Mañana (AM)</span> y{" "}
+                <span style={{ color: "#8fb8d4", fontWeight: 600 }}>Noche (PM)</span>.{" "}
+                El SPF va siempre en la mañana; los activos fuertes (retinol, ácidos) por la noche.
+              </p>
+            </div>
+          )}
+
           {phases.map((phaseNum, pi) => {
             const phaseIdx = phaseNum - 1
             const phaseInfo = PHASES[phaseIdx] || PHASES[4]

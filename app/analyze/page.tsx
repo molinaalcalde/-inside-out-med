@@ -83,7 +83,7 @@ interface QuizStep {
   id: string
   headline: string
   sub: string
-  type: "grid4" | "grid6" | "list3" | "fitz6" | "email" | "phone"
+  type: "grid4" | "grid6" | "list3" | "fitz6" | "email" | "phone" | "agePicker"
   options: QuizOption[]
 }
 

@@ -499,6 +499,26 @@ function getZoneInsight(key: string, score: number): string {
   return score >= 70 ? zone.high : score >= 50 ? zone.mid : zone.low
 }
 
+// ── Zone description for face map hotspots ─────────────────────
+function getZoneDescription(key: string, score: number): string {
+  const descs: Record<string, string[]> = {
+    forehead:    ["Tono uniforme, sin líneas", "Líneas finas horizontales", "Arrugas visibles, textura irregular", "Arrugas marcadas, piel apagada"],
+    periocularL: ["Sin signos de fatiga", "Patas de gallo incipientes", "Ojeras y líneas finas", "Líneas profundas, bolsas visibles"],
+    periocularR: ["Sin signos de fatiga", "Patas de gallo incipientes", "Ojeras y líneas finas", "Líneas profundas, bolsas visibles"],
+    nose:        ["Poros controlados", "Poros algo visibles, zona T activa", "Poros dilatados, posible rojez", "Poros abiertos, rojez marcada"],
+    lips:        ["Bien hidratados, contorno definido", "Leve resequedad en contorno", "Resequedad visible, pérdida de volumen", "Labios secos, líneas verticales"],
+    cheekL:      ["Tono uniforme, sin rojez", "Leve irregularidad de tono", "Rojez o textura irregular", "Rojez marcada, posible rosácea"],
+    cheekR:      ["Tono uniforme, sin rojez", "Leve irregularidad de tono", "Rojez o textura irregular", "Rojez marcada, posible rosácea"],
+    jaw:         ["Óvalo definido, firmeza óptima", "Algo de laxitud", "Pérdida de definición del óvalo", "Flacidez visible, mandíbula desdibujada"],
+    neck:        ["Sin líneas, tono parejo", "Leve deshidratación", "Líneas horizontales visibles", "Líneas marcadas, fotodaño"],
+  }
+  const d = descs[key] || ["Bien", "Aceptable", "Mejorable", "Necesita atención"]
+  if (score >= 80) return d[0]
+  if (score >= 65) return d[1]
+  if (score >= 45) return d[2]
+  return d[3]
+}
+
 // ── ProfileQuiz — multi-mode gamified questionnaire ─────────────
 function ProfileQuiz({ mode, onComplete, scores }: {
   mode: "pre-scan" | "contact" | "gate"
@@ -922,6 +942,8 @@ export default function AnalyzePage() {
   const [preQuizData, setPreQuizData] = useState<Record<string, string>>({})
   const [contactData, setContactData] = useState<Record<string, string>>({})
   const [gateData, setGateData] = useState<Record<string, string>>({})
+  const [activeZone, setActiveZone] = useState<string | null>(null)
+  const [showBiomarkers, setShowBiomarkers] = useState(false)
 
   const fileRef = useRef<HTMLInputElement>(null)
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -1510,127 +1532,259 @@ export default function AnalyzePage() {
           <ProfileQuiz mode="gate" onComplete={handleGateComplete} scores={scores} />
         )}
 
-        {/* ── RESULTS LAYER 2 — full report ── */}
-        {stage === "results-2" && scores && (
-          <div style={{ maxWidth: 900, width: "100%" }}>
-            <div style={{ textAlign: "center", marginBottom: 40 }}>
+        {/* ── RESULTS LAYER 2 — interactive face map ── */}
+        {stage === "results-2" && scores && (() => {
+          const userAge = parseInt(preQuizData.age || "30", 10)
+          const skinAge = scores.ageApparent || userAge + 3
+          const ageDiff = skinAge - userAge
+
+          const hotspots: { key: string; label: string; x: number; y: number; align: "left" | "right" | "center" }[] = [
+            { key: "forehead",    label: "Frente",       x: 50, y: 18, align: "right" },
+            { key: "periocularL", label: "Ojo izq.",     x: 62, y: 32, align: "right" },
+            { key: "periocularR", label: "Ojo der.",     x: 38, y: 32, align: "left" },
+            { key: "nose",        label: "Nariz",        x: 50, y: 45, align: "right" },
+            { key: "cheekL",      label: "Mejilla izq.", x: 72, y: 50, align: "right" },
+            { key: "cheekR",      label: "Mejilla der.", x: 28, y: 50, align: "left" },
+            { key: "lips",        label: "Labios",       x: 50, y: 62, align: "left" },
+            { key: "jaw",         label: "Mandíbula",    x: 50, y: 73, align: "right" },
+            { key: "neck",        label: "Cuello",       x: 50, y: 85, align: "center" },
+          ]
+
+          // Human-readable findings with year impact
+          const findingDescriptions: Record<string, { title: string; desc: string; years: string }> = {
+            "Protección solar": { title: "Protección solar insuficiente", desc: "Tu piel muestra fotodaño acumulado que acelera la pérdida de elasticidad y genera manchas.", years: "+2 años" },
+            "Control de inflamación": { title: "Inflamación activa", desc: "Rojez e irritación crónica que amplifica el envejecimiento y debilita la barrera cutánea.", years: "+1.5 años" },
+            "Salud del colágeno": { title: "Colágeno debilitado", desc: "Las fibras de colágeno se degradan más rápido de lo esperado, afectando firmeza y elasticidad.", years: "+1 año" },
+            "Luminosidad": { title: "Piel apagada", desc: "Falta de brillo natural que refleja deshidratación profunda y acumulación de células muertas.", years: "+1 año" },
+            "Hidratación": { title: "Deshidratación crónica", desc: "La barrera cutánea no retiene agua de forma óptima, acelerando la formación de líneas finas.", years: "+1.5 años" },
+            "Uniformidad de tono": { title: "Tono desigual", desc: "Manchas e irregularidades de pigmento que dan un aspecto envejecido y cansado.", years: "+1 año" },
+            "Salud vascular": { title: "Fragilidad vascular", desc: "Vasos sanguíneos visibles o rojez persistente que indican sensibilidad e inflamación subyacente.", years: "+0.5 años" },
+          }
+
+          return (
+          <div style={{ maxWidth: 560, width: "100%" }}>
+            {/* Header */}
+            <div style={{ textAlign: "center", marginBottom: 28 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 8px rgba(126,203,161,0.8)" }} />
                 <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>Informe completo · 9 zonas · 7 biomarcadores</span>
               </div>
-              <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 400, marginBottom: 10, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-                Tu informe <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>detallado.</em>
+              <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(24px, 4vw, 34px)", fontWeight: 400, marginBottom: 8, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
+                Tu análisis facial <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>completo</em>
               </h1>
-              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.35)", maxWidth: 420, margin: "0 auto" }}>Análisis completo: 7 biomarcadores calibrados y 9 zonas faciales medidas por separado.</p>
+              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.35)", maxWidth: 380, margin: "0 auto" }}>Toca cada punto para explorar tu mapa facial.</p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 14, marginBottom: 14 }}>
-              {/* Score + Zones card */}
-              <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px 28px 24px" }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>Score Global</p>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 6 }}>
-                  <span style={{ fontSize: 80, fontFamily: "var(--font-fraunces)", fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>{scores.overall}</span>
-                  <div style={{ paddingBottom: 10 }}>
-                    <span style={{ fontSize: 17, color: "rgba(245,237,232,0.22)" }}>/100</span>
-                    <p style={{ fontSize: 9, color: "#7ecba1", fontWeight: 700, letterSpacing: "0.08em", marginTop: 4 }}>TOP {percentile}%</p>
-                  </div>
-                </div>
-                <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 16 }}>
-                  <div style={{ height: "100%", width: `${scores.overall}%`, background: "linear-gradient(90deg,#e8a4b0,#d4af88)", borderRadius: 2 }} />
-                </div>
-                <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.42)", lineHeight: 1.7, marginBottom: 18 }}>
-                  {scores.overall >= 80 ? "Tu piel está en un estado superior a la media. Mantén la rutina." : scores.overall >= 65 ? "Hay margen de mejora claro. Con el plan correcto puedes subir 10–15 puntos en 6 semanas." : "Tu piel necesita atención prioritaria. El plan de productos es el primer paso."}
-                </p>
+            {/* ── FACE MAP ── */}
+            {capturedUrl && (
+              <div style={{ position: "relative", width: "100%", maxWidth: 420, margin: "0 auto 28px", borderRadius: 20, overflow: "hidden", border: "1px solid rgba(245,237,232,0.1)", background: "#0e0c12" }}>
+                {/* User photo */}
+                <img
+                  src={capturedUrl}
+                  alt="Tu análisis facial"
+                  style={{ width: "100%", display: "block", borderRadius: 20, filter: "brightness(0.85)" }}
+                  onClick={() => setActiveZone(null)}
+                />
 
-                {/* 9-zone analysis */}
-                <div style={{ paddingTop: 16, borderTop: "1px solid rgba(245,237,232,0.06)", marginBottom: 16 }}>
-                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.25)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>Análisis por zona · 9 zonas</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                    {(Object.entries(scores.zoneScores) as [string, number][]).map(([key, value]) => {
-                      const { label: statusLabel, color, emoji } = getZoneStatus(value)
-                      const zoneLabel = ZONE_LABELS[key] || key
-                      const insight = getZoneInsight(key, value)
-                      return (
-                        <div key={key} style={{ background: "rgba(245,237,232,0.02)", borderRadius: 10, padding: "10px 12px" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                              <span style={{ fontSize: 11, color, fontWeight: 700, width: 16, textAlign: "center" }}>{emoji}</span>
-                              <span style={{ fontSize: 12, color: "rgba(245,237,232,0.7)", fontWeight: 600 }}>{zoneLabel}</span>
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ fontSize: 9, color, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>{statusLabel}</span>
-                              <span style={{ fontSize: 13, fontWeight: 700, color, minWidth: 28, textAlign: "right" }}>{value}</span>
-                            </div>
-                          </div>
-                          <div style={{ height: 2, background: "rgba(245,237,232,0.06)", borderRadius: 1, overflow: "hidden", marginBottom: 5 }}>
-                            <div style={{ height: "100%", width: `${value}%`, background: color, borderRadius: 1 }} />
-                          </div>
-                          <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.35)", lineHeight: 1.45, margin: 0 }}>{insight}</p>
+                {/* Scan reveal overlay */}
+                <div style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  background: "linear-gradient(180deg, transparent 0%, rgba(14,12,18,0.3) 100%)",
+                  borderRadius: 20, pointerEvents: "none",
+                  animation: "scanReveal 1.2s ease both",
+                }} />
+
+                {/* Score badge */}
+                <div style={{
+                  position: "absolute", top: 12, right: 12,
+                  background: "rgba(14,12,18,0.85)", backdropFilter: "blur(12px)",
+                  border: "1px solid rgba(232,164,176,0.3)", borderRadius: 12,
+                  padding: "8px 14px", textAlign: "center",
+                }}>
+                  <span style={{ fontSize: 22, fontFamily: "var(--font-fraunces)", fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>{scores.overall}</span>
+                  <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)" }}>/100</span>
+                  <p style={{ fontSize: 8, color: "#7ecba1", fontWeight: 700, letterSpacing: "0.08em", margin: "2px 0 0" }}>TOP {percentile}%</p>
+                </div>
+
+                {/* Hotspot dots + labels */}
+                {hotspots.map((spot, idx) => {
+                  const zoneScore = (scores.zoneScores as Record<string, number>)[spot.key] ?? 70
+                  const { color } = getZoneStatus(zoneScore)
+                  const desc = getZoneDescription(spot.key, zoneScore)
+                  const isActive = activeZone === spot.key
+                  const hasActive = activeZone !== null
+                  const delay = idx * 0.3
+
+                  // Label positioning
+                  const labelStyle: React.CSSProperties = {
+                    position: "absolute",
+                    top: `${spot.y}%`,
+                    background: isActive ? "rgba(14,12,18,0.95)" : "rgba(14,12,18,0.85)",
+                    backdropFilter: "blur(12px)",
+                    border: `1px solid ${isActive ? color : color + "44"}`,
+                    borderRadius: 10,
+                    padding: "6px 10px",
+                    minWidth: 120,
+                    maxWidth: 150,
+                    animation: `labelSlide 0.4s ease ${delay}s both`,
+                    opacity: hasActive && !isActive ? 0.3 : 1,
+                    transition: "opacity 0.25s ease, border-color 0.25s ease",
+                    transform: isActive ? "scale(1.05)" : "scale(1)",
+                    zIndex: isActive ? 10 : 1,
+                    cursor: "pointer",
+                    pointerEvents: "auto" as const,
+                  }
+
+                  if (spot.align === "right") {
+                    labelStyle.left = `${spot.x + 4}%`
+                  } else if (spot.align === "left") {
+                    labelStyle.right = `${100 - spot.x + 4}%`
+                  } else {
+                    labelStyle.left = "50%"
+                    labelStyle.transform = isActive ? "translateX(-50%) scale(1.05)" : "translateX(-50%)"
+                    labelStyle.top = `${spot.y + 4}%`
+                  }
+
+                  return (
+                    <React.Fragment key={spot.key}>
+                      {/* Glowing dot */}
+                      <div
+                        onClick={(e) => { e.stopPropagation(); setActiveZone(prev => prev === spot.key ? null : spot.key) }}
+                        style={{
+                          position: "absolute",
+                          left: `${spot.x}%`,
+                          top: `${spot.y}%`,
+                          width: 8, height: 8,
+                          borderRadius: "50%",
+                          background: color,
+                          boxShadow: `0 0 10px ${color}, 0 0 20px ${color}66`,
+                          transform: "translate(-50%, -50%)",
+                          animation: `hotspotAppear 0.5s ease ${delay}s both, hotspotPulse 2s ease-in-out ${delay + 0.5}s infinite`,
+                          zIndex: 5,
+                          cursor: "pointer",
+                          pointerEvents: "auto" as const,
+                        }}
+                      />
+                      {/* Label card */}
+                      <div
+                        onClick={(e) => { e.stopPropagation(); setActiveZone(prev => prev === spot.key ? null : spot.key) }}
+                        style={labelStyle}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 10, color: "#f5ede8", fontWeight: 600 }}>{spot.label}</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color }}>{zoneScore}</span>
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Apparent age */}
-                <div style={{ paddingTop: 14, borderTop: "1px solid rgba(245,237,232,0.06)" }}>
-                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.25)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>Edad aparente</p>
-                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 22, color: "#7ecba1", fontWeight: 300 }}>{scores.ageApparent} años</p>
-                </div>
-
-                {/* Captured photo thumbnail */}
-                {capturedUrl && (
-                  <div style={{ marginTop: 14, borderTop: "1px solid rgba(245,237,232,0.06)", paddingTop: 14 }}>
-                    <div style={{ width: 60, height: 76, borderRadius: 9, overflow: "hidden", border: "1px solid rgba(245,237,232,0.1)" }}>
-                      <img src={capturedUrl} alt="Tu foto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Biomarkers card — all 7 */}
-              <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px 28px 24px" }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 6, fontWeight: 700 }}>Biomarcadores · 7 métricas</p>
-                <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.22)", marginBottom: 20, lineHeight: 1.5 }}>Todas las barras miden salud: más llena = mejor estado</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                  {biomarkers.map(b => (
-                    <div key={b.label}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 13, color: "rgba(245,237,232,0.75)", fontWeight: 600 }}>{b.friendlyLabel}</span>
-                          {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>MEJORABLE</span>}
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 9, color: "rgba(245,237,232,0.28)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{b.note}</span>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: b.color, minWidth: 36, textAlign: "right" }}>{b.value}%</span>
-                        </div>
+                        <p style={{ fontSize: 9, color: "rgba(245,237,232,0.5)", margin: "2px 0 0", lineHeight: 1.3 }}>{desc}</p>
                       </div>
-                      <div style={{ height: 4, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 7 }}>
-                        <div style={{ height: "100%", width: `${b.value}%`, background: `linear-gradient(90deg, ${b.color}88, ${b.color})`, borderRadius: 2, transition: "width 0.8s ease" }} />
-                      </div>
-                      <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.38)", lineHeight: 1.55 }}>
-                        {b.insight}
-                      </p>
-                    </div>
-                  ))}
+                    </React.Fragment>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* ── AGE COMPARISON ── */}
+            <div style={{ textAlign: "center", padding: "24px 0", borderTop: "1px solid rgba(245,237,232,0.06)", borderBottom: "1px solid rgba(245,237,232,0.06)", marginBottom: 28 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24 }}>
+                <div>
+                  <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Tu edad</p>
+                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 36, fontWeight: 300, color: "rgba(245,237,232,0.6)", lineHeight: 1, margin: 0 }}>{userAge} <span style={{ fontSize: 14, color: "rgba(245,237,232,0.3)" }}>años</span></p>
+                </div>
+                <span style={{ fontSize: 20, color: "rgba(245,237,232,0.2)" }}>→</span>
+                <div>
+                  <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Aparentas</p>
+                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 36, fontWeight: 300, color: ageDiff > 0 ? "#e8a4b0" : "#7ecba1", lineHeight: 1, margin: 0 }}>{skinAge} <span style={{ fontSize: 14, color: "rgba(245,237,232,0.3)" }}>años</span></p>
                 </div>
               </div>
+              {ageDiff !== 0 && (
+                <div style={{
+                  display: "inline-block", marginTop: 12,
+                  background: ageDiff > 0 ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
+                  border: `1px solid ${ageDiff > 0 ? "rgba(232,164,176,0.25)" : "rgba(126,203,161,0.25)"}`,
+                  borderRadius: 99, padding: "4px 14px",
+                }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: ageDiff > 0 ? "#e8a4b0" : "#7ecba1" }}>
+                    {ageDiff > 0 ? `+${ageDiff} años por encima` : `${Math.abs(ageDiff)} años por debajo`}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {/* WhatsApp CTA */}
-            <div style={{ background: "linear-gradient(135deg,rgba(232,164,176,0.07) 0%,rgba(212,175,136,0.04) 100%)", border: "1px solid rgba(232,164,176,0.14)", borderRadius: 18, padding: "26px 28px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
-              <div>
-                <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 7 }}>Sin compromiso</p>
-                <h3 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(16px,2vw,21px)", fontWeight: 400, letterSpacing: "-0.02em", marginBottom: 5, lineHeight: 1.25 }}>¿Quieres que analicemos tus resultados juntos?</h3>
-                <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.42)", lineHeight: 1.6 }}>20 minutos con un especialista. Te explicamos cada número y qué hacer exactamente.</p>
+            {/* ── TOP 3 FINDINGS ── */}
+            <div style={{
+              background: "rgba(245,237,232,0.03)",
+              border: "1px solid rgba(245,237,232,0.08)",
+              borderRadius: 16, padding: "24px 20px", marginBottom: 20,
+            }}>
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>Lo que está sumando años</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                {criticalFindings.map((b, idx) => {
+                  const fd = findingDescriptions[b.friendlyLabel] || { title: b.friendlyLabel, desc: b.insight, years: "+1 año" }
+                  return (
+                    <div key={b.label} style={{ paddingBottom: idx < criticalFindings.length - 1 ? 20 : 0, borderBottom: idx < criticalFindings.length - 1 ? "1px solid rgba(245,237,232,0.05)" : "none" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                        <span style={{ fontSize: 14, color: "rgba(245,237,232,0.8)", fontWeight: 600, fontFamily: "var(--font-fraunces)" }}>{fd.title}</span>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, color: "#e8a4b0",
+                          background: "rgba(232,164,176,0.1)", border: "1px solid rgba(232,164,176,0.2)",
+                          borderRadius: 99, padding: "2px 10px", whiteSpace: "nowrap", flexShrink: 0, marginLeft: 8,
+                        }}>Suma {fd.years}</span>
+                      </div>
+                      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", lineHeight: 1.6, margin: 0 }}>{fd.desc}</p>
+                    </div>
+                  )
+                })}
               </div>
-              <a href={`https://wa.me/TUTELEFONO?text=${encodeURIComponent(`Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100.`)}`} target="_blank" rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#e8a4b0 0%,#c97e8e 100%)", color: "#fff", borderRadius: 12, padding: "13px 24px", fontSize: 13, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 6px 20px rgba(232,164,176,0.28)", flexShrink: 0 }}>
-                Agendar consulta
-              </a>
             </div>
 
-            {/* Plan CTA */}
+            {/* ── BIOMARKERS (collapsible) ── */}
+            <div style={{ marginBottom: 24 }}>
+              <button
+                onClick={() => setShowBiomarkers(prev => !prev)}
+                style={{
+                  width: "100%", padding: "14px 20px",
+                  background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
+                  borderRadius: showBiomarkers ? "14px 14px 0 0" : 14,
+                  color: "rgba(245,237,232,0.6)", fontSize: 13, fontWeight: 600,
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between",
+                  transition: "all 0.2s",
+                }}
+              >
+                <span>Ver biomarcadores detallados</span>
+                <span style={{ fontSize: 14, transition: "transform 0.2s", transform: showBiomarkers ? "rotate(180deg)" : "rotate(0)" }}>▾</span>
+              </button>
+              {showBiomarkers && (
+                <div style={{
+                  background: "rgba(245,237,232,0.03)",
+                  border: "1px solid rgba(245,237,232,0.08)", borderTop: "none",
+                  borderRadius: "0 0 14px 14px", padding: "20px",
+                }}>
+                  <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.22)", marginBottom: 20, lineHeight: 1.5 }}>Todas las barras miden salud: más llena = mejor estado</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                    {biomarkers.map(b => (
+                      <div key={b.label}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 13, color: "rgba(245,237,232,0.75)", fontWeight: 600 }}>{b.friendlyLabel}</span>
+                            {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>MEJORABLE</span>}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 9, color: "rgba(245,237,232,0.28)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{b.note}</span>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: b.color, minWidth: 36, textAlign: "right" }}>{b.value}%</span>
+                          </div>
+                        </div>
+                        <div style={{ height: 4, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 7 }}>
+                          <div style={{ height: "100%", width: `${b.value}%`, background: `linear-gradient(90deg, ${b.color}88, ${b.color})`, borderRadius: 2, transition: "width 0.8s ease" }} />
+                        </div>
+                        <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.38)", lineHeight: 1.55 }}>{b.insight}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── CTAs ── */}
+            {/* Free plan CTA */}
             <button
               onClick={() => {
                 try {
@@ -1650,22 +1804,46 @@ export default function AnalyzePage() {
                 } catch {}
                 window.location.href = "/plan"
               }}
-              style={{ width: "100%", padding: "17px 28px", background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.1)", borderRadius: 14, color: "#f5ede8", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", marginBottom: 24 }}
-              onMouseEnter={e=>{e.currentTarget.style.background="rgba(245,237,232,0.08)";e.currentTarget.style.borderColor="rgba(245,237,232,0.18)"}}
-              onMouseLeave={e=>{e.currentTarget.style.background="rgba(245,237,232,0.04)";e.currentTarget.style.borderColor="rgba(245,237,232,0.1)"}}
+              style={{
+                width: "100%", padding: "17px 28px", marginBottom: 12,
+                background: "linear-gradient(135deg,#e8a4b0,#c97e8e)",
+                border: "none", borderRadius: 14, color: "#fff",
+                fontSize: 15, fontWeight: 700, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                boxShadow: "0 6px 24px rgba(232,164,176,0.3)",
+              }}
             >
-              <div style={{ textAlign: "left" }}>
-                <p style={{ fontSize: 11, color: "rgba(245,237,232,0.38)", marginBottom: 2 }}>Basado en tus biomarcadores reales</p>
-                <span>Ver plan personalizado →</span>
-              </div>
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Ver mi plan gratuito →
             </button>
 
-            <div style={{ textAlign: "center" }}>
+            {/* Gold CTA — consultation */}
+            <a
+              href={`https://wa.me/TUTELEFONO?text=${encodeURIComponent(`Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100.`)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                width: "100%", padding: "18px 28px",
+                background: "linear-gradient(135deg, rgba(212,175,136,0.12) 0%, rgba(232,164,176,0.08) 100%)",
+                border: "1.5px solid rgba(212,175,136,0.3)",
+                borderRadius: 14, color: "#d4af88",
+                fontSize: 14, fontWeight: 700, textDecoration: "none",
+                boxShadow: "0 4px 20px rgba(212,175,136,0.15)",
+                transition: "all 0.2s", marginBottom: 12,
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+              </svg>
+              Asesoría personalizada con especialista
+            </a>
+
+            {/* Plan link + Reset */}
+            <div style={{ textAlign: "center", marginTop: 10 }}>
               <button onClick={reset} style={{ background: "none", border: "none", color: "rgba(245,237,232,0.28)", fontSize: 12, cursor: "pointer", padding: "8px 16px" }}>Hacer nuevo análisis</button>
             </div>
           </div>
-        )}
+          )
+        })()}
       </main>
 
       <style>{`
@@ -1673,6 +1851,10 @@ export default function AnalyzePage() {
         @keyframes pulseDot { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.4); } }
         @keyframes scanFlash { 0% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes hotspotAppear { 0% { transform: translate(-50%,-50%) scale(0); opacity: 0; } 60% { transform: translate(-50%,-50%) scale(1.5); opacity: 0.8; } 100% { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
+        @keyframes hotspotPulse { 0%,100% { box-shadow: 0 0 10px currentColor, 0 0 20px rgba(255,255,255,0.1); transform: translate(-50%,-50%) scale(1); } 50% { box-shadow: 0 0 16px currentColor, 0 0 30px rgba(255,255,255,0.2); transform: translate(-50%,-50%) scale(1.25); } }
+        @keyframes labelSlide { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scanReveal { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
     </div>
   )

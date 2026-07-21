@@ -610,104 +610,74 @@ function ProfileQuiz({ mode, onComplete, scores }: {
         )}
 
         {/* agePicker: Apple-style scroll wheel */}
-        {current.type === "agePicker" && (() => {
-          const AGES = Array.from({ length: 63 }, (_, i) => i + 18)
-          const ITEM_H = 52
-          const VISIBLE = 5
-          const containerH = ITEM_H * VISIBLE
-
-          const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-            const scrollTop = e.currentTarget.scrollTop
-            const idx = Math.round(scrollTop / ITEM_H)
-            const clamped = Math.max(0, Math.min(AGES.length - 1, idx))
-            setPickerAge(AGES[clamped])
-          }
-
-          const initScroll = (el: HTMLDivElement | null) => {
-            if (el && !pickerInitRef.current) {
-              pickerInitRef.current = true
-              const idx = AGES.indexOf(30)
-              el.scrollTop = idx * ITEM_H
-            }
-          }
-
-          return (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}>
-              {/* Scroll wheel */}
-              <div style={{ position: "relative", width: 120, height: containerH, overflow: "hidden" }}>
-                {/* Top/bottom fade masks */}
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: ITEM_H * 2, background: "linear-gradient(to bottom, #0e0c12, transparent)", zIndex: 2, pointerEvents: "none" }} />
-                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: ITEM_H * 2, background: "linear-gradient(to top, #0e0c12, transparent)", zIndex: 2, pointerEvents: "none" }} />
-
-                {/* Selection highlight */}
-                <div style={{
-                  position: "absolute", top: ITEM_H * 2, left: 0, right: 0, height: ITEM_H,
-                  borderTop: "1px solid rgba(232,164,176,0.3)", borderBottom: "1px solid rgba(232,164,176,0.3)",
-                  background: "rgba(232,164,176,0.06)", zIndex: 1, pointerEvents: "none",
-                }} />
-
-                {/* Scrollable list */}
-                <div
-                  className="age-scroll"
-                  ref={initScroll}
-                  onScroll={handleScroll}
-                  style={{
-                    height: containerH, overflowY: "scroll", scrollSnapType: "y mandatory",
-                    position: "relative", zIndex: 3,
-                  }}
-                >
-                  {/* Top padding */}
-                  <div style={{ height: ITEM_H * 2 }} />
-                  {AGES.map(age => {
-                    const isSelected = age === pickerAge
-                    const dist = Math.abs(age - pickerAge)
-                    const opacity = dist === 0 ? 1 : dist === 1 ? 0.45 : dist === 2 ? 0.2 : 0.1
-                    const scale = dist === 0 ? 1 : dist === 1 ? 0.85 : 0.7
-                    return (
-                      <div key={age} style={{
-                        height: ITEM_H, display: "flex", alignItems: "center", justifyContent: "center",
-                        scrollSnapAlign: "center",
-                      }}>
-                        <span style={{
-                          fontFamily: "var(--font-fraunces)", fontSize: isSelected ? 42 : 28,
-                          fontWeight: isSelected ? 400 : 300,
-                          color: isSelected ? "#e8a4b0" : "#f5ede8",
-                          opacity, transform: `scale(${scale})`,
-                          transition: "all 0.15s ease",
-                          lineHeight: 1,
-                        }}>
-                          {age}
-                        </span>
-                      </div>
-                    )
-                  })}
-                  {/* Bottom padding */}
-                  <div style={{ height: ITEM_H * 2 }} />
-                </div>
-              </div>
-
-              {/* Confirm button */}
-              <button
-                onClick={() => advance({ age: String(pickerAge) })}
-                style={{
-                  padding: "15px 48px",
-                  background: "linear-gradient(135deg, #e8a4b0, #c97e8e)",
-                  border: "none", borderRadius: 12, color: "#fff",
-                  fontSize: 15, fontWeight: 700, cursor: "pointer",
-                  boxShadow: "0 6px 20px rgba(232,164,176,0.3)",
-                  transition: "all 0.2s",
+        {current.type === "agePicker" && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}>
+            <div style={{ position: "relative", width: 120, height: 260, overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 104, background: "linear-gradient(to bottom, #0e0c12, transparent)", zIndex: 2, pointerEvents: "none" }} />
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 104, background: "linear-gradient(to top, #0e0c12, transparent)", zIndex: 2, pointerEvents: "none" }} />
+              <div style={{
+                position: "absolute", top: 104, left: 0, right: 0, height: 52,
+                borderTop: "1px solid rgba(232,164,176,0.3)", borderBottom: "1px solid rgba(232,164,176,0.3)",
+                background: "rgba(232,164,176,0.06)", zIndex: 1, pointerEvents: "none",
+              }} />
+              <div
+                className="age-scroll"
+                ref={(el: HTMLDivElement | null) => {
+                  if (el && !pickerInitRef.current) {
+                    pickerInitRef.current = true
+                    el.scrollTop = (30 - 18) * 52
+                  }
                 }}
+                onScroll={(e) => {
+                  const idx = Math.round(e.currentTarget.scrollTop / 52)
+                  const clamped = Math.max(0, Math.min(62, idx))
+                  setPickerAge(18 + clamped)
+                }}
+                style={{ height: 260, overflowY: "scroll", position: "relative", zIndex: 3 }}
               >
-                Tengo {pickerAge} años
-              </button>
-
-              <style>{`
-                .age-scroll::-webkit-scrollbar { display: none; }
-                .age-scroll { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-              `}</style>
+                <div style={{ height: 104 }} />
+                {Array.from({ length: 63 }, (_, i) => i + 18).map(age => (
+                  <div key={age} className="age-snap" style={{
+                    height: 52, display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <span style={{
+                      fontFamily: "var(--font-fraunces)",
+                      fontSize: age === pickerAge ? 42 : 28,
+                      fontWeight: age === pickerAge ? 400 : 300,
+                      color: age === pickerAge ? "#e8a4b0" : "#f5ede8",
+                      opacity: age === pickerAge ? 1 : Math.abs(age - pickerAge) === 1 ? 0.45 : Math.abs(age - pickerAge) === 2 ? 0.2 : 0.1,
+                      transform: `scale(${age === pickerAge ? 1 : Math.abs(age - pickerAge) === 1 ? 0.85 : 0.7})`,
+                      transition: "all 0.15s ease",
+                      lineHeight: 1,
+                    }}>
+                      {age}
+                    </span>
+                  </div>
+                ))}
+                <div style={{ height: 104 }} />
+              </div>
             </div>
-          )
-        })()}
+
+            <button
+              onClick={() => advance({ age: String(pickerAge) })}
+              style={{
+                padding: "15px 48px",
+                background: "linear-gradient(135deg, #e8a4b0, #c97e8e)",
+                border: "none", borderRadius: 12, color: "#fff",
+                fontSize: 15, fontWeight: 700, cursor: "pointer",
+                boxShadow: "0 6px 20px rgba(232,164,176,0.3)",
+              }}
+            >
+              Tengo {pickerAge} años
+            </button>
+
+            <style>{`
+              .age-scroll::-webkit-scrollbar { display: none; }
+              .age-scroll { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: y mandatory; }
+              .age-snap { scroll-snap-align: center; }
+            `}</style>
+          </div>
+        )}
 
         {/* grid6: 6 icon tiles */}
         {current.type === "grid6" && (

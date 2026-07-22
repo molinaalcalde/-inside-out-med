@@ -101,7 +101,7 @@ export function FaceScrollSection() {
     <section
       ref={sectionRef}
       id="results"
-      style={{ position: "relative", height: "600vh", background: "#0e0c12" }}
+      style={{ position: "relative", height: "600vh", background: "#111118" }}
     >
       {/* ── Sticky container ── */}
       <div style={{
@@ -113,7 +113,7 @@ export function FaceScrollSection() {
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
-        background: "#0e0c12",
+        background: "#111118",
       }}>
 
         {/* ── Video — contained, soft edge fade into background ── */}
@@ -146,7 +146,7 @@ export function FaceScrollSection() {
         <div style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(to right, rgba(14,12,18,0.75) 0%, rgba(14,12,18,0.2) 35%, transparent 55%, rgba(14,12,18,0.2) 75%, rgba(14,12,18,0.6) 100%)",
+          background: "linear-gradient(to right, rgba(17,17,24,0.75) 0%, rgba(17,17,24,0.2) 35%, transparent 55%, rgba(17,17,24,0.2) 75%, rgba(17,17,24,0.6) 100%)",
           pointerEvents: "none",
         }} />
 

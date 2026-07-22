@@ -116,7 +116,7 @@ export function FaceScrollSection() {
         background: "#1a1c22",
       }}>
 
-        {/* ── Video — full face visible, blended into background ── */}
+        {/* ── Video — fills section, face centered ── */}
         <video
           ref={videoRef}
           muted
@@ -127,8 +127,9 @@ export function FaceScrollSection() {
             inset: 0,
             width: "100%",
             height: "100%",
-            objectFit: "contain",
-            objectPosition: "center center",
+            objectFit: "cover",
+            objectPosition: "center 35%",
+            transform: "scale(1.02)",
           }}
         >
           <source src="/face-scan.mp4" type="video/mp4" />

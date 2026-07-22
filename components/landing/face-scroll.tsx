@@ -115,7 +115,7 @@ export function FaceScrollSection() {
         overflow: "hidden",
       }}>
 
-        {/* ── Video — centered face, no cropping ── */}
+        {/* ── Video — dark bg, centered face ── */}
         <video
           ref={videoRef}
           muted
@@ -123,31 +123,27 @@ export function FaceScrollSection() {
           preload="auto"
           style={{
             position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            height: "95%",
-            width: "auto",
-            maxWidth: "none",
-            objectFit: "contain",
-            filter: "brightness(0.85) contrast(1.05)",
-            mixBlendMode: "luminosity",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center 30%",
           }}
         >
           <source src="/face-scan.mp4" type="video/mp4" />
         </video>
 
-        {/* Subtle dark overlay on the face — keeps text readable on sides */}
+        {/* Light overlay — just enough for text readability, face stays visible */}
         <div style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(to right, rgba(14,12,18,0.92) 0%, rgba(14,12,18,0.35) 28%, rgba(14,12,18,0.15) 50%, rgba(14,12,18,0.35) 72%, rgba(14,12,18,0.88) 100%)",
+          background: "linear-gradient(to right, rgba(14,12,18,0.8) 0%, rgba(14,12,18,0.15) 30%, rgba(14,12,18,0.05) 50%, rgba(14,12,18,0.15) 70%, rgba(14,12,18,0.7) 100%)",
           pointerEvents: "none",
         }} />
         <div style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(to bottom, rgba(14,12,18,0.6) 0%, rgba(14,12,18,0.15) 15%, rgba(14,12,18,0.1) 50%, rgba(14,12,18,0.5) 75%, rgba(14,12,18,1) 93%)",
+          background: "linear-gradient(to bottom, rgba(14,12,18,0.4) 0%, transparent 15%, transparent 60%, rgba(14,12,18,0.5) 80%, rgba(14,12,18,1) 95%)",
           pointerEvents: "none",
         }} />
 

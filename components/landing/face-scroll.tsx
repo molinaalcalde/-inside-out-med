@@ -116,15 +116,15 @@ export function FaceScrollSection() {
         background: "#0e0c12",
       }}>
 
-        {/* ── Video — contained, fades into background via mask ── */}
+        {/* ── Video — contained, soft edge fade into background ── */}
         <div style={{
           position: "absolute",
           top: "50%", left: "50%",
           transform: "translate(-50%, -50%)",
-          width: "min(65vw, 720px)",
-          height: "min(85vh, 900px)",
-          WebkitMaskImage: "radial-gradient(ellipse 50% 48% at 50% 45%, black 35%, transparent 72%)",
-          maskImage: "radial-gradient(ellipse 50% 48% at 50% 45%, black 35%, transparent 72%)",
+          width: "min(90vw, 1100px)",
+          height: "95vh",
+          WebkitMaskImage: "radial-gradient(ellipse 70% 65% at 50% 45%, black 50%, transparent 90%)",
+          maskImage: "radial-gradient(ellipse 70% 65% at 50% 45%, black 50%, transparent 90%)",
         }}>
           <video
             ref={videoRef}
@@ -142,11 +142,11 @@ export function FaceScrollSection() {
           </video>
         </div>
 
-        {/* Subtle overlay for text readability */}
+        {/* Light gradient for text readability on the left */}
         <div style={{
           position: "absolute",
           inset: 0,
-          background: "radial-gradient(ellipse 45% 45% at 50% 45%, rgba(14,12,18,0.1) 0%, rgba(14,12,18,0.7) 60%, rgba(14,12,18,0.95) 85%)",
+          background: "linear-gradient(to right, rgba(14,12,18,0.75) 0%, rgba(14,12,18,0.2) 35%, transparent 55%, rgba(14,12,18,0.2) 75%, rgba(14,12,18,0.6) 100%)",
           pointerEvents: "none",
         }} />
 

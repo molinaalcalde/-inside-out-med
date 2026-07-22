@@ -1740,7 +1740,7 @@ export default function AnalyzePage() {
                 </span>
               ))}
             </div>
-          </div>
+
             {/* Disclaimer */}
             <p style={{ fontSize: 10, color: "rgba(245,237,232,0.2)", textAlign: "center", marginTop: 24, lineHeight: 1.6 }}>
               Estimación educativa basada en geometría facial y biomarcadores visuales. No es diagnóstico médico ni reemplaza la valoración de un profesional de la salud.

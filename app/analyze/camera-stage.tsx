@@ -204,8 +204,8 @@ function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age:
   const agingScore = agingMarkers.reduce((a, b) => a + b, 0) / agingMarkers.length
   // Map agingScore (30-95) to visible age (22-64) — purely from the face, not user input
   const ageApparent = Math.round(
-    clamp(22 + (95 - agingScore) / (95 - 35) * 42, 19, 68) * 10
-  ) / 10
+    clamp(22 + (95 - agingScore) / (95 - 35) * 42, 19, 68)
+  )
 
   return {
     overall, luminosity, hydration, uniformity, glycation, inflammation, sunDamage, vascularity,

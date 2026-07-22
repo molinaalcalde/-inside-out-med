@@ -556,8 +556,8 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
   const agingScore = agingMarkers.reduce((a, b) => a + b, 0) / agingMarkers.length
   // Map agingScore (30-95 range) to visible age (22-64 range) — INDEPENDENT of declared age
   const ageApparent = Math.round(
-    clamp(22 + (95 - agingScore) / (95 - 35) * 42, 19, 68) * 10
-  ) / 10
+    clamp(22 + (95 - agingScore) / (95 - 35) * 42, 19, 68)
+  )
 
   return {
     overall, luminosity, hydration, uniformity, glycation, inflammation, sunDamage, vascularity,
@@ -1672,8 +1672,8 @@ export default function AnalyzePage() {
         {stage === "results-1" && scores && (() => {
           const userName = preQuizData.name || ""
           const userAge = parseInt(preQuizData.age || "30", 10)
-          const skinAge = scores.ageApparent || userAge + 3
-          const ageDiff = skinAge - userAge
+          const skinAge = Math.round(scores.ageApparent || userAge + 3)
+          const ageDiff = Math.round(skinAge - userAge)
           const isOlder = ageDiff > 0
           const isSame = ageDiff === 0
           const isYounger = ageDiff < 0
@@ -1841,8 +1841,8 @@ export default function AnalyzePage() {
         {stage === "results-2" && scores && (() => {
           const userName = preQuizData.name || ""
           const userAge = parseInt(preQuizData.age || "30", 10)
-          const skinAge = scores.ageApparent || userAge + 3
-          const ageDiff = skinAge - userAge
+          const skinAge = Math.round(scores.ageApparent || userAge + 3)
+          const ageDiff = Math.round(skinAge - userAge)
           const isOlder = ageDiff > 0
 
           const zone = RESULT_ZONES[activeResultZone]

@@ -2,6 +2,9 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react"
 import { CameraStage, type Scores } from "./camera-stage"
+import { generateCrossRefInsights } from "../../lib/analysis/cross-reference"
+import { trackFunnelEvent, updateLead } from "../../lib/tracking/funnel"
+import type { UserProfile } from "../../lib/types"
 
 type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "gate-quiz" | "results-2" | "error"
 
@@ -71,6 +74,18 @@ const RESULT_ZONES = [
   { key: "neck",        label: "Cuello",       dotX: 50, dotY: 82 },
 ]
 
+// ── Accordion zone metadata for results-2 ─────────────────────
+const ACCORDION_META: Record<string, { label: string; emoji: string }> = {
+  frente:     { label: "Frente",      emoji: "\u{1F7E4}" },
+  periocular: { label: "Periocular",  emoji: "\u{1F441}\uFE0F" },
+  nariz:      { label: "Nariz",       emoji: "\u{1F443}" },
+  labios:     { label: "Labios",      emoji: "\u{1F48B}" },
+  mejillas:   { label: "Mejillas",    emoji: "\u{1F60A}" },
+  mandibula:  { label: "Mandibula",   emoji: "\u{1F9B4}" },
+  cuello:     { label: "Cuello",      emoji: "\u{1F9E3}" },
+  piel:       { label: "Piel global", emoji: "\u2728" },
+}
+
 // ── Zone label map ──────────────────────────────────────────────
 const ZONE_LABELS: Record<string, string> = {
   forehead:    "Frente",
@@ -96,12 +111,19 @@ interface QuizStep {
   id: string
   headline: string
   sub: string
-  type: "grid4" | "grid6" | "list3" | "fitz6" | "email" | "phone" | "agePicker"
+  type: "grid4" | "grid6" | "list3" | "fitz6" | "email" | "phone" | "agePicker" | "text" | "multiSelect" | "consent"
   options: QuizOption[]
 }
 
-// ── Pre-scan steps (4 questions before scan) ────────────────────
+// ── Pre-scan steps (13 questions before scan) ────────────────────
 const PRE_SCAN_STEPS: QuizStep[] = [
+  {
+    id: "name",
+    headline: "¿Cómo te llamas?",
+    sub: "Para personalizar tu análisis y tu plan",
+    type: "text",
+    options: [],
+  },
   {
     id: "age",
     headline: "¿Cuántos años tienes?",
@@ -110,59 +132,68 @@ const PRE_SCAN_STEPS: QuizStep[] = [
     options: [],
   },
   {
+    id: "email",
+    headline: "¿A dónde enviamos tu informe?",
+    sub: "Tu análisis completo + plan personalizado directo a tu correo",
+    type: "email",
+    options: [],
+  },
+  {
+    id: "goals",
+    headline: "¿Qué quieres mejorar?",
+    sub: "Selecciona todo lo que aplique — priorizamos tu plan según esto",
+    type: "multiSelect",
+    options: [
+      { value: "edad",       label: "Edad visible",   icon: "⏳" },
+      { value: "piel",       label: "Piel",           icon: "✨" },
+      { value: "mandibula",  label: "Mandíbula",      icon: "🦴" },
+      { value: "ojos",       label: "Ojos",           icon: "👁️" },
+      { value: "cabello",    label: "Cabello",        icon: "💇" },
+      { value: "labios",     label: "Labios",         icon: "💋" },
+      { value: "longevidad", label: "Longevidad",     icon: "🧬" },
+      { value: "evento",     label: "Evento pronto",  icon: "📅" },
+    ],
+  },
+  {
+    id: "sensitivity",
+    headline: "¿Qué tan sensible es tu piel?",
+    sub: "Para ajustar la intensidad de los activos que te recomendamos",
+    type: "list3",
+    options: [
+      { value: "baja",  label: "Baja",  sub: "Tolero casi todo sin problema" },
+      { value: "media", label: "Media", sub: "Algunos productos me irritan" },
+      { value: "alta",  label: "Alta",  sub: "Mi piel reacciona con facilidad" },
+    ],
+  },
+  {
+    id: "budget",
+    headline: "¿Cuánto inviertes en skincare al mes?",
+    sub: "Para recomendarte productos dentro de tu rango",
+    type: "list3",
+    options: [
+      { value: "gratis",  label: "Lo mínimo ($0–30)",  sub: "Solo lo esencial" },
+      { value: "medio",   label: "Intermedio ($30–100)", sub: "Dispuesto a invertir" },
+      { value: "premium", label: "Premium ($100+)",     sub: "Lo mejor disponible" },
+    ],
+  },
+  {
+    id: "invasive",
+    headline: "¿Qué tipo de tratamientos considerarías?",
+    sub: "Para filtrar las recomendaciones según tu tolerancia",
+    type: "list3",
+    options: [
+      { value: "casa",     label: "Solo en casa",     sub: "Cremas, serums, hábitos" },
+      { value: "no-aguja", label: "Consultorio sin agujas", sub: "Peels, LED, láser" },
+      { value: "todo",     label: "Todo, incluso agujas", sub: "Botox, rellenos, PRP" },
+    ],
+  },
+  {
     id: "fitzpatrick",
     headline: "¿Cuál es tu tono de piel?",
     sub: "Calibramos el análisis según tu fototipo para resultados precisos",
     type: "fitz6",
     options: FITZ_TILES,
   },
-  {
-    id: "concern",
-    headline: "¿Qué te preocupa más?",
-    sub: "Elige tu prioridad ahora — puedes cambiarla después",
-    type: "grid6",
-    options: [
-      { value: "manchas",     label: "Manchas",     icon: "🌑" },
-      { value: "arrugas",     label: "Arrugas",     icon: "〰️" },
-      { value: "poros",       label: "Poros",       icon: "⊙" },
-      { value: "acne",        label: "Acné",        icon: "●" },
-      { value: "hidratacion", label: "Hidratación", icon: "💧" },
-      { value: "luminosidad", label: "Luminosidad", icon: "✦" },
-    ],
-  },
-  {
-    id: "routine",
-    headline: "¿Qué usas en tu cara ahora mismo?",
-    sub: "Sin juicios — cada punto de partida es válido",
-    type: "list3",
-    options: [
-      { value: "ninguna",  label: "Nada todavía",          sub: "Empezamos desde cero" },
-      { value: "basica",   label: "Limpiador + hidratante", sub: "Base sólida" },
-      { value: "completa", label: "Rutina completa",        sub: "Serum, SPF y más" },
-    ],
-  },
-]
-
-// ── Contact steps (2 obligatory after scan) ─────────────────────
-const CONTACT_STEPS: QuizStep[] = [
-  {
-    id: "email",
-    headline: "¿A dónde enviamos tu informe?",
-    sub: "Tu análisis completo + plan de productos personalizado",
-    type: "email",
-    options: [],
-  },
-  {
-    id: "phone",
-    headline: "Tu WhatsApp para recomendaciones",
-    sub: "Te avisamos cuando encontremos productos para tu perfil exacto",
-    type: "phone",
-    options: [],
-  },
-]
-
-// ── Gate steps (6 questions to unlock full report) ──────────────
-const GATE_STEPS: QuizStep[] = [
   {
     id: "sleep",
     headline: "¿Cuántas horas duermes?",
@@ -187,17 +218,6 @@ const GATE_STEPS: QuizStep[] = [
     ],
   },
   {
-    id: "sun",
-    headline: "¿Cuánta exposición solar tienes?",
-    sub: "El sol es el factor #1 de envejecimiento prematuro",
-    type: "list3",
-    options: [
-      { value: "baja",  label: "Baja",  sub: "Mayormente en interiores" },
-      { value: "media", label: "Media", sub: "Algo de sol diario" },
-      { value: "alta",  label: "Alta",  sub: "Exposición frecuente o prolongada" },
-    ],
-  },
-  {
     id: "exercise",
     headline: "¿Con qué frecuencia haces ejercicio?",
     sub: "La circulación impacta la oxigenación y el brillo de tu piel",
@@ -209,26 +229,79 @@ const GATE_STEPS: QuizStep[] = [
     ],
   },
   {
-    id: "diet",
-    headline: "¿Cómo es tu alimentación?",
-    sub: "Lo que comes se refleja en tu piel",
+    id: "sun",
+    headline: "¿Cuánta exposición solar tienes?",
+    sub: "El sol es el factor #1 de envejecimiento prematuro",
     type: "list3",
     options: [
-      { value: "omnivora",         label: "Omnívora",           sub: "Dieta variada" },
-      { value: "vegetariana",      label: "Vegetariana / vegana", sub: "Sin carne o productos animales" },
-      { value: "keto",             label: "Keto / otra",        sub: "Dieta específica o restrictiva" },
+      { value: "baja",  label: "Baja",  sub: "Mayormente en interiores" },
+      { value: "media", label: "Media", sub: "Algo de sol diario" },
+      { value: "alta",  label: "Alta",  sub: "Exposición frecuente o prolongada" },
     ],
   },
   {
-    id: "budget",
-    headline: "¿Cuánto inviertes en skincare al mes?",
-    sub: "Para recomendarte productos dentro de tu rango",
-    type: "grid4",
+    id: "conditions",
+    headline: "¿Tienes alguna condición de piel?",
+    sub: "Para evitar recomendarte algo que pueda irritar o empeorar — selecciona todo lo que aplique",
+    type: "multiSelect",
     options: [
-      { value: "<30",        label: "<$30 USD",         sub: "Esencial" },
-      { value: "30-80",      label: "$30–80 USD",       sub: "Intermedio" },
-      { value: "80-200",     label: "$80–200 USD",      sub: "Premium" },
-      { value: "200+",       label: "$200+ USD",        sub: "Luxury" },
+      { value: "rosacea",    label: "Rosácea",         icon: "🔴" },
+      { value: "melasma",    label: "Melasma",         icon: "🟤" },
+      { value: "acne",       label: "Acné activo",     icon: "●" },
+      { value: "dermatitis", label: "Dermatitis/eccema",icon: "🩹" },
+      { value: "psoriasis",  label: "Psoriasis",       icon: "⬜" },
+      { value: "ninguna",    label: "Ninguna",         icon: "✓" },
+    ],
+  },
+]
+
+// ── Contact steps (after scan — just phone/WhatsApp) ────────────
+const CONTACT_STEPS: QuizStep[] = [
+  {
+    id: "phone",
+    headline: "Tu WhatsApp para recomendaciones",
+    sub: "Te avisamos cuando encontremos productos para tu perfil exacto",
+    type: "phone",
+    options: [],
+  },
+]
+
+// ── Gate steps (lifestyle deep-dive to unlock full report) ──────
+const GATE_STEPS: QuizStep[] = [
+  {
+    id: "diet",
+    headline: "¿Cómo es tu alimentación?",
+    sub: "Lo que comes se refleja en tu piel — el azúcar acelera el envejecimiento",
+    type: "list3",
+    options: [
+      { value: "omnivora",    label: "Omnívora",             sub: "Dieta variada" },
+      { value: "vegetariana", label: "Vegetariana / vegana",  sub: "Sin carne o productos animales" },
+      { value: "keto",        label: "Keto / otra",          sub: "Dieta específica o restrictiva" },
+    ],
+  },
+  {
+    id: "concern",
+    headline: "¿Qué te preocupa más de tu cara?",
+    sub: "Elige tu prioridad #1 — esto define el orden de tu plan",
+    type: "grid6",
+    options: [
+      { value: "manchas",     label: "Manchas",     icon: "🌑" },
+      { value: "arrugas",     label: "Arrugas",     icon: "〰️" },
+      { value: "poros",       label: "Poros",       icon: "⊙" },
+      { value: "acne",        label: "Acné",        icon: "●" },
+      { value: "hidratacion", label: "Hidratación", icon: "💧" },
+      { value: "luminosidad", label: "Luminosidad", icon: "✦" },
+    ],
+  },
+  {
+    id: "routine",
+    headline: "¿Qué usas en tu cara ahora mismo?",
+    sub: "Sin juicios — cada punto de partida es válido",
+    type: "list3",
+    options: [
+      { value: "ninguna",  label: "Nada todavía",          sub: "Empezamos desde cero" },
+      { value: "basica",   label: "Limpiador + hidratante", sub: "Base sólida" },
+      { value: "completa", label: "Rutina completa",        sub: "Serum, SPF y más" },
     ],
   },
 ]
@@ -879,6 +952,105 @@ function ProfileQuiz({ mode, onComplete, scores }: {
           )
         })()}
 
+        {/* text input — name, etc */}
+        {current.type === "text" && (() => {
+          const val = inputVal.trim()
+          const isValid = val.length >= 2
+          return (
+          <div>
+            <div style={{ position: "relative", marginBottom: 16 }}>
+              <input
+                type="text"
+                placeholder={current.id === "name" ? "Tu nombre" : "Escribe aquí..."}
+                value={inputVal}
+                onChange={e => setInputVal(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && isValid) advance({ [current.id]: val }) }}
+                autoFocus
+                style={{
+                  width: "100%", padding: "20px 22px",
+                  background: "rgba(245,237,232,0.04)",
+                  border: "1.5px solid rgba(245,237,232,0.15)",
+                  borderRadius: 14, color: "#f5ede8",
+                  fontSize: 24, fontFamily: "var(--font-fraunces)", fontWeight: 400,
+                  textAlign: "center",
+                  outline: "none", transition: "border-color 0.2s",
+                }}
+                onFocus={e => { e.target.style.borderColor = "rgba(232,164,176,0.5)" }}
+                onBlur={e => { e.target.style.borderColor = "rgba(245,237,232,0.15)" }}
+              />
+            </div>
+            <button
+              onClick={() => { if (isValid) advance({ [current.id]: val }) }}
+              disabled={!isValid}
+              style={{
+                width: "100%", padding: "15px",
+                background: isValid ? "linear-gradient(135deg,#e8a4b0,#c97e8e)" : "rgba(245,237,232,0.06)",
+                border: "none", borderRadius: 12, color: isValid ? "#fff" : "rgba(245,237,232,0.3)",
+                fontSize: 14, fontWeight: 700, cursor: isValid ? "pointer" : "not-allowed",
+                transition: "all 0.3s",
+              }}
+            >
+              Continuar →
+            </button>
+          </div>
+          )
+        })()}
+
+        {/* multiSelect — toggle multiple options */}
+        {current.type === "multiSelect" && (() => {
+          const selected = (data[current.id] || "").split(",").filter(Boolean)
+          const toggle = (val: string) => {
+            // "ninguna" clears others; selecting others clears "ninguna"
+            if (val === "ninguna") {
+              setData(d => ({ ...d, [current.id]: "ninguna" }))
+              return
+            }
+            const without = selected.filter(s => s !== "ninguna")
+            const next = without.includes(val)
+              ? without.filter(s => s !== val)
+              : [...without, val]
+            setData(d => ({ ...d, [current.id]: next.join(",") }))
+          }
+          const hasSelection = selected.length > 0 && selected[0] !== ""
+          return (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+              {current.options.map(opt => {
+                const isOn = selected.includes(opt.value)
+                return (
+                  <button key={opt.value} onClick={() => toggle(opt.value)}
+                    style={{
+                      padding: "16px 10px",
+                      background: isOn ? "rgba(232,164,176,0.10)" : "rgba(245,237,232,0.03)",
+                      border: `1.5px solid ${isOn ? "rgba(232,164,176,0.5)" : "rgba(245,237,232,0.10)"}`,
+                      borderRadius: 14, cursor: "pointer", color: isOn ? "#e8a4b0" : "#f5ede8",
+                      textAlign: "center", transition: "all 0.18s",
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                    }}
+                  >
+                    {opt.icon && <span style={{ fontSize: 20 }}>{opt.icon}</span>}
+                    <span style={{ fontSize: 11, fontWeight: 600, color: isOn ? "#e8a4b0" : "rgba(245,237,232,0.65)" }}>{opt.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              onClick={() => { if (hasSelection) advance({ [current.id]: data[current.id] || selected.join(",") }) }}
+              disabled={!hasSelection}
+              style={{
+                width: "100%", padding: "15px",
+                background: hasSelection ? "linear-gradient(135deg,#e8a4b0,#c97e8e)" : "rgba(245,237,232,0.06)",
+                border: "none", borderRadius: 12, color: hasSelection ? "#fff" : "rgba(245,237,232,0.3)",
+                fontSize: 14, fontWeight: 700, cursor: hasSelection ? "pointer" : "not-allowed",
+                transition: "all 0.3s",
+              }}
+            >
+              Continuar →
+            </button>
+          </div>
+          )
+        })()}
+
         {/* phone input — numbers only, required, min 8 digits */}
         {current.type === "phone" && (() => {
           const digitsOnly = inputVal.replace(/\D/g, "")
@@ -966,6 +1138,7 @@ export default function AnalyzePage() {
 
   // ── Camera path: scores arrive pre-computed ────────────────────
   const beginScanWithScores = useCallback((dataUrl: string, preScores: Scores) => {
+    trackFunnelEvent("scan_started")
     setStage("scanning")
     setScanProgress(0)
     setActiveZoneIdx(-1)
@@ -1000,6 +1173,7 @@ export default function AnalyzePage() {
     const fitzpatrick = parseInt(preQuizData.fitzpatrick || "3", 10)
     const age = parseInt(preQuizData.age || "30", 10)
 
+    trackFunnelEvent("scan_started")
     setStage("scanning")
     setScanProgress(0)
     setActiveZoneIdx(-1)
@@ -1064,6 +1238,10 @@ export default function AnalyzePage() {
     return () => { if (scanIntervalRef.current) clearInterval(scanIntervalRef.current) }
   }, [])
 
+  useEffect(() => {
+    trackFunnelEvent("started")
+  }, [])
+
   // Auto-advance zones in results-2
   useEffect(() => {
     if (stage !== "results-2" || !autoPlay) return
@@ -1089,6 +1267,8 @@ export default function AnalyzePage() {
   // ── Pre-quiz complete → go to camera or upload ─────────────────
   const handlePreQuizComplete = (data: Record<string, string>) => {
     setPreQuizData(data)
+    trackFunnelEvent("quiz_complete", data)
+    updateLead({ name: data.name, age: parseInt(data.age), email: data.email, profileData: data, funnelStage: "quiz_complete" })
     if (captureMode === "camera") {
       setStage("camera")
     } else {
@@ -1099,6 +1279,8 @@ export default function AnalyzePage() {
   // ── Contact complete → results-1 ──────────────────────────────
   const handleContactComplete = (data: Record<string, string>) => {
     setContactData(data)
+    trackFunnelEvent("contact_complete", { email: data.email, phone: data.phone })
+    updateLead({ phone: data.phone, funnelStage: "contact_complete" })
     // Save to localStorage
     try {
       localStorage.setItem("insideoutmed_profile", JSON.stringify({ ...preQuizData, ...data }))
@@ -1116,12 +1298,16 @@ export default function AnalyzePage() {
         }))
       }
     } catch {}
+    trackFunnelEvent("results_viewed", { overall: scores?.overall, ageApparent: scores?.ageApparent })
+    updateLead({ scanData: scores, funnelStage: "results_viewed" })
     setStage("results-1")
   }
 
   // ── Gate quiz complete → results-2 ─────────────────────────────
   const handleGateComplete = (data: Record<string, string>) => {
     setGateData(data)
+    trackFunnelEvent("full_results_viewed", data)
+    updateLead({ funnelStage: "full_results_viewed" })
     setActiveResultZone(0)
     setAutoPlay(true)
     setEnhancedMode(false)
@@ -1401,6 +1587,7 @@ export default function AnalyzePage() {
 
         {/* ── RESULTS LAYER 1 — top 3 critical findings ── */}
         {stage === "results-1" && scores && (() => {
+          const userName = preQuizData.name || ""
           const userAge = parseInt(preQuizData.age || "30", 10)
           const skinAge = scores.ageApparent || userAge + 3
           const ageDiff = skinAge - userAge
@@ -1417,12 +1604,13 @@ export default function AnalyzePage() {
                 <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>Análisis completado · 9 zonas</span>
               </div>
               <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 400, marginBottom: 10, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
+                {userName ? `${userName}, ` : ""}
                 {isOlder ? (
-                  <>Tu rostro aparenta <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{Math.abs(ageDiff)} {Math.abs(ageDiff) === 1 ? "año" : "años"} más.</em></>
+                  <>tu rostro aparenta <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{Math.abs(ageDiff)} {Math.abs(ageDiff) === 1 ? "año" : "años"} más.</em></>
                 ) : isYounger ? (
-                  <>Tu rostro aparenta <em style={{ color: "#7ecba1", fontStyle: "italic" }}>{Math.abs(ageDiff)} {Math.abs(ageDiff) === 1 ? "año" : "años"} menos.</em></>
+                  <>tu rostro aparenta <em style={{ color: "#7ecba1", fontStyle: "italic" }}>{Math.abs(ageDiff)} {Math.abs(ageDiff) === 1 ? "año" : "años"} menos.</em></>
                 ) : (
-                  <>Tu rostro aparenta <em style={{ color: "#7ecba1", fontStyle: "italic" }}>tu edad exacta.</em></>
+                  <>tu rostro aparenta <em style={{ color: "#7ecba1", fontStyle: "italic" }}>tu edad exacta.</em></>
                 )}
               </h1>
               <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", lineHeight: 1.6 }}>
@@ -1553,16 +1741,22 @@ export default function AnalyzePage() {
               ))}
             </div>
           </div>
+            {/* Disclaimer */}
+            <p style={{ fontSize: 10, color: "rgba(245,237,232,0.2)", textAlign: "center", marginTop: 24, lineHeight: 1.6 }}>
+              Estimación educativa basada en geometría facial y biomarcadores visuales. No es diagnóstico médico ni reemplaza la valoración de un profesional de la salud.
+            </p>
+          </div>
           )
         })()}
 
-        {/* ── GATE QUIZ — 6 questions to unlock full report ── */}
+        {/* ── GATE QUIZ — 3 questions to unlock full report ── */}
         {stage === "gate-quiz" && (
           <ProfileQuiz mode="gate" onComplete={handleGateComplete} scores={scores} />
         )}
 
         {/* ── RESULTS LAYER 2 — cinematic face analysis ── */}
         {stage === "results-2" && scores && (() => {
+          const userName = preQuizData.name || ""
           const userAge = parseInt(preQuizData.age || "30", 10)
           const skinAge = scores.ageApparent || userAge + 3
           const ageDiff = skinAge - userAge
@@ -1572,6 +1766,89 @@ export default function AnalyzePage() {
           const zoneScore = (scores.zoneScores as Record<string, number>)[zone.key] ?? 50
           const { color: zoneColor, label: statusLabel } = getZoneStatus(zoneScore)
           const description = getZoneDescription(zone.key, zoneScore)
+
+          // ── Derive sub-metrics from zone scores ──
+          const s = scores.zoneScores as Record<string, number>
+          const derivedSubMetrics: Record<string, {label: string, score: number}[]> = {
+            frente: [
+              { label: "Líneas horizontales", score: Math.round(clamp(s.forehead * 0.85, 15, 95)) },
+              { label: "Glabela / entrecejo", score: Math.round(clamp(s.forehead * 0.80 + 5, 15, 95)) },
+              { label: "Simetría de cejas", score: Math.round(clamp(s.forehead * 0.6 + 35, 40, 99)) },
+              { label: "Posición de cejas", score: Math.round(clamp(s.forehead * 0.5 + 40, 40, 100)) },
+            ],
+            periocular: [
+              { label: "Apertura ocular", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.9 + 5, 20, 95)) },
+              { label: "Simetría L/R", score: Math.round(clamp(100 - Math.abs(s.periocularL - s.periocularR) * 3, 50, 99)) },
+              { label: "Ojeras / pigmento", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.75, 15, 95)) },
+              { label: "Bolsas / hinchazón", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.80 - 5, 15, 90)) },
+              { label: "Patas de gallo", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.85, 15, 90)) },
+              { label: "Densidad de pestañas", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.5 + 40, 40, 99)) },
+            ],
+            nariz: [
+              { label: "Proporción", score: Math.round(clamp(s.nose * 0.9 + 5, 30, 98)) },
+              { label: "Simetría de narinas", score: Math.round(clamp(s.nose * 0.7 + 25, 40, 99)) },
+            ],
+            labios: [
+              { label: "Volumen", score: Math.round(clamp(s.lips * 0.85 + 5, 20, 95)) },
+              { label: "Ratio superior/inferior", score: Math.round(clamp(s.lips * 0.6 + 30, 40, 99)) },
+              { label: "Arco de Cupido", score: Math.round(clamp(s.lips * 0.7 + 20, 30, 98)) },
+              { label: "Hidratación", score: Math.round(clamp(s.lips * 0.9, 20, 98)) },
+              { label: "Líneas peribucales", score: Math.round(clamp(s.lips * 0.75 - 5, 15, 90)) },
+              { label: "Color / saturación", score: Math.round(clamp(s.lips * 0.65 + 15, 20, 95)) },
+            ],
+            mejillas: [
+              { label: "Proyección de pómulos", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.85, 20, 90)) },
+              { label: "Volumen", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.80 + 5, 20, 90)) },
+              { label: "Textura", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.75, 15, 90)) },
+              { label: "Surco nasogeniano", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.85 + 5, 20, 95)) },
+              { label: "Drenaje / rojez", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.7 + 20, 30, 98)) },
+            ],
+            mandibula: [
+              { label: "Definición mandibular", score: Math.round(clamp(s.jaw * 0.9, 20, 95)) },
+              { label: "Ángulo gonial", score: Math.round(clamp(s.jaw * 0.85 + 5, 20, 95)) },
+              { label: "Flacidez (jowl)", score: Math.round(clamp(s.jaw * 0.80, 20, 90)) },
+              { label: "Simetría L/R", score: Math.round(clamp(s.jaw * 0.6 + 35, 40, 99)) },
+            ],
+            cuello: [
+              { label: "Definición submentoniana", score: Math.round(clamp(s.neck * 0.85, 20, 90)) },
+              { label: "Líneas horizontales", score: Math.round(clamp(s.neck * 0.80 - 5, 15, 90)) },
+              { label: "Postura", score: 70 },
+            ],
+            piel: [
+              { label: "Suavidad", score: Math.round(clamp(scores.overall * 0.85, 15, 95)) },
+              { label: "Poros / textura", score: Math.round(clamp(scores.uniformity * 0.80, 15, 90)) },
+              { label: "Glicación", score: Math.round(clamp(100 - scores.glycation, 10, 95)) },
+              { label: "Manchas / uniformidad", score: Math.round(scores.uniformity) },
+              { label: "Luminosidad", score: Math.round(scores.luminosity) },
+              { label: "Daño solar", score: Math.round(clamp(100 - scores.sunDamage, 10, 95)) },
+            ],
+          }
+
+          // ── Build UserProfile for cross-reference insights ──
+          const userProfile: UserProfile = {
+            name: preQuizData.name || "",
+            age: userAge,
+            email: preQuizData.email || "",
+            phone: contactData.phone || "",
+            goals: (preQuizData.goals || "").split(",").filter(Boolean),
+            sensitivity: preQuizData.sensitivity || "",
+            budget: preQuizData.budget || "",
+            invasive: preQuizData.invasive || "",
+            fitzpatrick: parseInt(preQuizData.fitzpatrick || "3", 10),
+            sleep: preQuizData.sleep || "",
+            stress: preQuizData.stress || "",
+            exercise: preQuizData.exercise || "",
+            sun: preQuizData.sun || "",
+            diet: gateData.diet || "",
+            concern: gateData.concern || "",
+            routine: gateData.routine || "",
+            conditions: (preQuizData.conditions || "").split(",").filter(Boolean),
+            consent: true,
+          }
+
+          // Build scores with subMetrics for cross-reference engine
+          const scoresWithSubs = { ...scores, subMetrics: derivedSubMetrics }
+          const crossRefInsights = generateCrossRefInsights(scoresWithSubs as any, userProfile)
 
           // Human-readable findings with year impact
           const yearImpact: Record<string, string> = {
@@ -1603,7 +1880,7 @@ export default function AnalyzePage() {
                 <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>Informe completo · 9 zonas · 7 biomarcadores</span>
               </div>
               <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(24px, 4vw, 34px)", fontWeight: 400, marginBottom: 8, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-                Tu rostro aparenta{" "}
+                {userName ? `${userName}, tu` : "Tu"} rostro aparenta{" "}
                 <em style={{ color: isOlder ? "#e8a4b0" : "#7ecba1", fontStyle: "italic" }}>
                   {skinAge} años
                 </em>
@@ -1639,10 +1916,10 @@ export default function AnalyzePage() {
                   pointerEvents: "none",
                 }} />
 
-                {/* ALL 9 dots — active one is highlighted */}
+                {/* ALL 9 dots — solid green/yellow/red */}
                 {RESULT_ZONES.map((z, i) => {
-                  const s = (scores.zoneScores as Record<string, number>)[z.key] ?? 50
-                  const { color } = getZoneStatus(s)
+                  const dotScore = (scores.zoneScores as Record<string, number>)[z.key] ?? 50
+                  const dotColor = dotScore >= 75 ? "#22c55e" : dotScore >= 55 ? "#eab308" : "#ef4444"
                   const isActive = activeResultZone === i
                   return (
                     <button
@@ -1652,12 +1929,12 @@ export default function AnalyzePage() {
                         position: "absolute",
                         left: `${z.dotX}%`, top: `${z.dotY}%`,
                         transform: "translate(-50%, -50%)",
-                        width: isActive ? 14 : 8,
-                        height: isActive ? 14 : 8,
+                        width: isActive ? 18 : 14,
+                        height: isActive ? 18 : 14,
                         borderRadius: "50%",
-                        background: isActive ? color : `${color}88`,
-                        border: isActive ? `2px solid ${color}` : "1.5px solid rgba(245,237,232,0.3)",
-                        boxShadow: isActive ? `0 0 14px ${color}, 0 0 28px ${color}44` : "0 0 4px rgba(0,0,0,0.5)",
+                        background: dotColor,
+                        border: isActive ? `2.5px solid #fff` : `2px solid rgba(255,255,255,0.5)`,
+                        boxShadow: isActive ? `0 0 14px ${dotColor}, 0 0 28px ${dotColor}66` : `0 0 6px ${dotColor}88`,
                         cursor: "pointer",
                         transition: "all 0.4s ease",
                         animation: isActive ? "hotspotPulseResult 2s ease-in-out infinite" : "none",
@@ -1695,62 +1972,84 @@ export default function AnalyzePage() {
               </div>
             )}
 
-            {/* ── ZONE DETAIL CARD ── */}
-            <div style={{
-              background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)",
-              borderRadius: 16, padding: "20px 22px", marginTop: 16,
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                <h3 style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400, color: "#f5ede8", margin: 0 }}>
-                  {zone.label}
-                </h3>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 9, color: zoneColor, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    {statusLabel}
-                  </span>
-                  <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: zoneColor }}>
-                    {zoneScore}
-                  </span>
+            {/* ── CROSS-REFERENCE INSIGHTS — lifestyle x analysis ── */}
+            {crossRefInsights.length > 0 && (
+              <div style={{ marginTop: 20, marginBottom: 8 }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>
+                  Tu estilo de vida en tu cara
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {crossRefInsights.map((insight, idx) => {
+                    const severityColor = insight.severity === "critical" ? "#ef4444" : insight.severity === "warning" ? "#eab308" : "#22c55e"
+                    const severityBg = insight.severity === "critical" ? "rgba(239,68,68,0.08)" : insight.severity === "warning" ? "rgba(234,179,8,0.06)" : "rgba(34,197,94,0.06)"
+                    const severityBorder = insight.severity === "critical" ? "rgba(239,68,68,0.2)" : insight.severity === "warning" ? "rgba(234,179,8,0.15)" : "rgba(34,197,94,0.15)"
+                    return (
+                      <div key={idx} style={{
+                        background: severityBg, border: `1px solid ${severityBorder}`,
+                        borderRadius: 14, padding: "16px 18px",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <span style={{ fontSize: 18 }}>{insight.icon}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: severityColor }}>{insight.title}</span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.65, margin: 0 }}>
+                          {insight.text}
+                        </p>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
+            )}
 
-              {/* Progress bar */}
-              <div style={{ height: 3, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 12 }}>
-                <div style={{ height: "100%", width: `${zoneScore}%`, background: `linear-gradient(90deg, ${zoneColor}88, ${zoneColor})`, borderRadius: 2, transition: "width 0.6s ease" }} />
-              </div>
-
-              {/* Description */}
-              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.55)", lineHeight: 1.65, margin: 0 }}>
-                {description}
-              </p>
-              {/* Insight */}
-              <p style={{ fontSize: 12, color: "rgba(245,237,232,0.38)", lineHeight: 1.55, margin: "8px 0 0" }}>
-                {getZoneInsight(zone.key, zoneScore)}
-              </p>
-            </div>
-
-            {/* ── ZONE NAVIGATION TABS ── */}
-            <div style={{
-              display: "flex", justifyContent: "center", gap: 6, marginTop: 14,
-              overflowX: "auto", padding: "4px 0",
-            }}>
-              {RESULT_ZONES.map((z, i) => {
-                const zScore = (scores.zoneScores as Record<string, number>)[z.key] ?? 50
-                const { color } = getZoneStatus(zScore)
-                const isActive = activeResultZone === i
+            {/* ── ZONE ACCORDION — sub-metrics per zone ── */}
+            <div style={{ marginTop: 24 }}>
+              <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: 22, fontWeight: 400, marginBottom: 16 }}>
+                Analisis por zona
+              </h2>
+              {Object.entries(ACCORDION_META).map(([key, meta]) => {
+                const subs = derivedSubMetrics[key]
+                const accScore = subs ? Math.round(subs.reduce((a, sm) => a + sm.score, 0) / subs.length) : 50
+                const isOpen = activeZone === key
+                const statusColor = accScore >= 75 ? "#22c55e" : accScore >= 55 ? "#eab308" : "#ef4444"
                 return (
-                  <button key={z.key} onClick={() => { setActiveResultZone(i); setAutoPlay(false) }} style={{
-                    padding: "8px 10px", borderRadius: 10,
-                    background: isActive ? `${color}18` : "rgba(245,237,232,0.03)",
-                    border: `1.5px solid ${isActive ? `${color}44` : "rgba(245,237,232,0.06)"}`,
-                    color: isActive ? color : "rgba(245,237,232,0.35)",
-                    fontSize: 9, fontWeight: 600, cursor: "pointer",
-                    transition: "all 0.25s ease",
-                    whiteSpace: "nowrap",
-                    letterSpacing: "0.04em",
+                  <div key={key} style={{
+                    background: "rgba(245,237,232,0.03)", border: `1px solid ${isOpen ? "rgba(232,164,176,0.2)" : "rgba(245,237,232,0.06)"}`,
+                    borderRadius: 16, marginBottom: 10, overflow: "hidden", transition: "all 0.3s",
                   }}>
-                    {z.label.length > 8 ? z.label.slice(0, 7) + "." : z.label}
-                  </button>
+                    <button onClick={() => setActiveZone(isOpen ? null : key)} style={{
+                      width: "100%", padding: "16px 20px", background: "none", border: "none", cursor: "pointer", color: "#f5ede8",
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 18 }}>{meta.emoji}</span>
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>{meta.label}</span>
+                        {key === "cuello" && <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)", fontStyle: "italic" }}>estimado</span>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400, color: statusColor }}>{accScore}</span>
+                        <span style={{ fontSize: 12, color: "rgba(245,237,232,0.3)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>&#x25BE;</span>
+                      </div>
+                    </button>
+                    {isOpen && subs && (
+                      <div style={{ padding: "0 20px 20px" }}>
+                        {subs.map((sub, i) => {
+                          const barColor = sub.score >= 75 ? "#22c55e" : sub.score >= 55 ? "#eab308" : "#ef4444"
+                          return (
+                            <div key={i} style={{ marginBottom: 14 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                                <span style={{ fontSize: 13, color: "rgba(245,237,232,0.65)" }}>{sub.label}</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: barColor }}>{sub.score}</span>
+                              </div>
+                              <div style={{ height: 4, borderRadius: 2, background: "rgba(245,237,232,0.06)" }}>
+                                <div style={{ height: "100%", borderRadius: 2, background: barColor, width: `${sub.score}%`, transition: "width 0.5s ease" }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </div>
@@ -1909,6 +2208,11 @@ export default function AnalyzePage() {
             <div style={{ textAlign: "center", marginTop: 10 }}>
               <button onClick={reset} style={{ background: "none", border: "none", color: "rgba(245,237,232,0.28)", fontSize: 12, cursor: "pointer", padding: "8px 16px" }}>Hacer nuevo análisis</button>
             </div>
+
+            {/* ── DISCLAIMER ── */}
+            <p style={{ fontSize: 10, color: "rgba(245,237,232,0.2)", textAlign: "center", marginTop: 32, lineHeight: 1.6, paddingBottom: 40 }}>
+              Estimacion educativa basada en geometria facial y biomarcadores visuales. No es diagnostico medico ni reemplaza la valoracion de un profesional de la salud.
+            </p>
           </div>
           )
         })()}

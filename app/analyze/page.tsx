@@ -5,7 +5,7 @@ import { CameraStage, type Scores } from "./camera-stage"
 import { generateCrossRefInsights } from "../../lib/analysis/cross-reference"
 import { trackFunnelEvent, updateLead } from "../../lib/tracking/funnel"
 import type { UserProfile } from "../../lib/types"
-import { CircleDot, Bandage, ScanFace } from "lucide-react"
+import { Hourglass, Sparkles, ScanFace, Eye, Waves, Heart, Leaf, CalendarHeart, CircleDot, Bandage, Sun, Square, Check, Droplets, Star, Camera, Focus, Ban } from "lucide-react"
 
 type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "gate-quiz" | "results-2" | "error"
 
@@ -100,39 +100,40 @@ const ZONE_LABELS: Record<string, string> = {
   neck:        "Cuello",
 }
 
-// ── Custom SVG icons — elegant thin-line style ──────────────────
-const I = (d: string, s = 24) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">{d.split("|").map((p,i) => <path key={i} d={p} />)}</svg>
+// ── Quiz icons — Lucide React (professional, consistent) ────────
+const S = { size: 24, strokeWidth: 1.3 } as const
+const Ss = { size: 18, strokeWidth: 1.3 } as const
 
 const QUIZ_ICONS: Record<string, React.ReactNode> = {
-  // Goals — each icon visually represents the concept
-  "edad":        I("M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2|M12 6v6l4 2"),
-  "piel":        I("M12 3C7 3 3 7.5 3 12.5S7 22 12 22s9-4.5 9-9.5S17 3 12 3|M8 14c1.5 2 6.5 2 8 0|M9 9.5h.01|M15 9.5h.01"),
-  "mandibula_g": I("M4 8c0-2 2-5 8-5s8 3 8 5|M4 8c0 5 3.5 10 8 13 4.5-3 8-8 8-13"),
-  "ojos":        I("M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7|M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6"),
-  "cabello":     I("M12 2c-3 0-5.5 2-6 5-.5 3 .5 6 2 8|M12 2c3 0 5.5 2 6 5 .5 3-.5 6-2 8|M8 22c1-3 2.5-5 4-7|M16 22c-1-3-2.5-5-4-7"),
-  "labios":      I("M3 12c2-3 5-4 9-4s7 1 9 4|M3 12c2 3 5 5 9 5s7-2 9-5|M7 12h10"),
-  "longevidad":  I("M3 12c0-3 2.5-5 5-5s4 1.5 4 4-1.5 4-4 4|M21 12c0 3-2.5 5-5 5s-4-1.5-4-4 1.5-4 4-4"),
-  "evento":      I("M8 2v4|M16 2v4|M3 10h18|M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2|M12 14l-1 3h2l-1 3"),
+  // Goals
+  "edad":        <Hourglass {...S} />,
+  "piel":        <Sparkles {...S} />,
+  "mandibula_g": <ScanFace {...S} />,
+  "ojos":        <Eye {...S} />,
+  "cabello":     <Waves {...S} />,
+  "labios":      <Heart {...S} />,
+  "longevidad":  <Leaf {...S} />,
+  "evento":      <CalendarHeart {...S} />,
   // Conditions
-  "rosacea":     <CircleDot size={22} strokeWidth={1.2} />,
-  "melasma":     I("M12 3v1|M18.4 5.6l-.7.7|M21 12h-1|M18.4 18.4l-.7-.7|M12 21v-1|M5.6 18.4l.7-.7|M3 12h1|M5.6 5.6l.7.7|M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0"),
-  "acne_c":      <ScanFace size={22} strokeWidth={1.2} />,
-  "dermatitis":  <Bandage size={22} strokeWidth={1.2} />,
-  "psoriasis":   I("M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7|M8 12h8|M12 8v8"),
-  "ninguna":     I("M5 12l5 5L20 7"),
+  "rosacea":     <CircleDot {...S} />,
+  "melasma":     <Sun {...S} />,
+  "acne_c":      <ScanFace {...S} />,
+  "dermatitis":  <Bandage {...S} />,
+  "psoriasis":   <Square {...S} />,
+  "ninguna":     <Check {...S} />,
   // Concerns
-  "manchas":     I("M12 3v1|M18.4 5.6l-.7.7|M21 12h-1|M18.4 18.4l-.7-.7|M12 21v-1|M5.6 18.4l.7-.7|M3 12h1|M5.6 5.6l.7.7|M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0"),
-  "arrugas":     I("M3 8c3-2 6 0 9-2s6 0 9-2|M3 13c3-2 6 0 9-2s6 0 9-2|M3 18c3-2 6 0 9-2s6 0 9-2"),
-  "poros":       I("M12 12m-9 0a9 9 0 1 0 18 0 9 9 0 1 0-18 0|M12 12m-4 0a4 4 0 1 0 8 0 4 4 0 1 0-8 0|M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0"),
-  "acne":        <ScanFace size={22} strokeWidth={1.2} />,
-  "hidratacion": I("M12 2l-5.5 9c-1.5 2.5-.5 6 2.5 7.5s6.5 1 8-1.5L12 2|M8 16h8"),
-  "luminosidad": I("M12 2l2.1 6.5H21l-5.5 4 2.1 6.5L12 15l-5.6 4 2.1-6.5L3 8.5h6.9L12 2"),
+  "manchas":     <Sun {...S} />,
+  "arrugas":     <Waves {...S} />,
+  "poros":       <Focus {...S} />,
+  "acne":        <ScanFace {...S} />,
+  "hidratacion": <Droplets {...S} />,
+  "luminosidad": <Star {...S} />,
   // Upload guide
-  "luz":         I("M12 3v1|M18.4 5.6l-.7.7|M21 12h-1|M18.4 18.4l-.7-.7|M12 21v-1|M5.6 18.4l.7-.7|M3 12h1|M5.6 5.6l.7.7|M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0", 18),
-  "rostro":      I("M9 10h.01|M15 10h.01|M3 8c0-3 4-6 9-6s9 3 9 6v4c0 5-4 10-9 10S3 17 3 12V8", 18),
-  "sin":         I("M18.4 18.4L5.6 5.6|M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", 18),
-  "camara":      I("M3 7h3l2-3h8l2 3h3v12H3V7|M12 10a3 3 0 1 0 0 6 3 3 0 0 0 0-6", 18),
-  "nitida":      I("M2 12h3|M19 12h3|M12 2v3|M12 19v3|M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8", 18),
+  "luz":         <Sun {...Ss} />,
+  "rostro":      <ScanFace {...Ss} />,
+  "sin":         <Ban {...Ss} />,
+  "camara":      <Camera {...Ss} />,
+  "nitida":      <Focus {...Ss} />,
 }
 
 // ── Quiz step types ─────────────────────────────────────────────

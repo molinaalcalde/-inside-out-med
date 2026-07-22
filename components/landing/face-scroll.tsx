@@ -115,7 +115,7 @@ export function FaceScrollSection() {
         overflow: "hidden",
       }}>
 
-        {/* ── Video — dark bg, face visible without excessive zoom ── */}
+        {/* ── Video — full face visible, no zoom ── */}
         <video
           ref={videoRef}
           muted
@@ -123,15 +123,11 @@ export function FaceScrollSection() {
           preload="auto"
           style={{
             position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            minWidth: "100%",
-            minHeight: "100%",
-            width: "auto",
-            height: "115%",
-            objectFit: "cover",
-            objectPosition: "center 40%",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            objectPosition: "center center",
           }}
         >
           <source src="/face-scan.mp4" type="video/mp4" />

@@ -101,7 +101,7 @@ export function FaceScrollSection() {
     <section
       ref={sectionRef}
       id="results"
-      style={{ position: "relative", height: "600vh", background: "#0e0c12" }}
+      style={{ position: "relative", height: "600vh", background: "#1a1c22" }}
     >
       {/* ── Sticky container ── */}
       <div style={{
@@ -113,9 +113,10 @@ export function FaceScrollSection() {
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
+        background: "#1a1c22",
       }}>
 
-        {/* ── Video — full face visible, no zoom ── */}
+        {/* ── Video — full face visible, blended into background ── */}
         <video
           ref={videoRef}
           muted

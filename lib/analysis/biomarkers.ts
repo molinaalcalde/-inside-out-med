@@ -1,9 +1,9 @@
 // ── Biomarker display helpers ─────────────────────────────────
 
 export function getStatusColor(score: number): string {
-  if (score >= 75) return "#22c55e"
-  if (score >= 55) return "#eab308"
-  return "#ef4444"
+  if (score >= 75) return "#7ecba1"
+  if (score >= 55) return "#d4af88"
+  return "#e8a4b0"
 }
 
 export function getStatusLabel(score: number): { label: string; emoji: string } {

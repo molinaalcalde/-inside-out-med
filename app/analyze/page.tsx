@@ -5,7 +5,7 @@ import { CameraStage, type Scores } from "./camera-stage"
 import { generateCrossRefInsights } from "../../lib/analysis/cross-reference"
 import { trackFunnelEvent, updateLead } from "../../lib/tracking/funnel"
 import type { UserProfile } from "../../lib/types"
-import { Hourglass, Sparkles, ScanFace, Eye, Waves, Heart, Leaf, CalendarHeart, CircleDot, Bandage, Sun, Square, Check, Droplets, Star, Camera, Focus, Ban } from "lucide-react"
+import { ScanFace, Bandage } from "lucide-react"
 
 type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "gate-quiz" | "results-2" | "error"
 
@@ -100,40 +100,166 @@ const ZONE_LABELS: Record<string, string> = {
   neck:        "Cuello",
 }
 
-// ── Quiz icons — Lucide React (professional, consistent) ────────
-const S = { size: 24, strokeWidth: 1.3 } as const
-const Ss = { size: 18, strokeWidth: 1.3 } as const
-
+// ── Quiz SVG icons ─────────────────────────────────────────────
 const QUIZ_ICONS: Record<string, React.ReactNode> = {
-  // Goals
-  "edad":        <Hourglass {...S} />,
-  "piel":        <Sparkles {...S} />,
-  "mandibula_g": <ScanFace {...S} />,
-  "ojos":        <Eye {...S} />,
-  "cabello":     <Waves {...S} />,
-  "labios":      <Heart {...S} />,
-  "longevidad":  <Leaf {...S} />,
-  "evento":      <CalendarHeart {...S} />,
   // Conditions
-  "rosacea":     <CircleDot {...S} />,
-  "melasma":     <Sun {...S} />,
-  "acne_c":      <ScanFace {...S} />,
-  "dermatitis":  <Bandage {...S} />,
-  "psoriasis":   <Square {...S} />,
-  "ninguna":     <Check {...S} />,
+  rosacea: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 10c1 1.5 2 2 4 2s3-.5 4-2" />
+      <path d="M9 14c.5.8 1.5 1.2 3 1.2s2.5-.4 3-1.2" />
+      <line x1="7" y1="12" x2="8" y2="13" />
+      <line x1="17" y1="12" x2="16" y2="13" />
+    </svg>
+  ),
+  melasma: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <ellipse cx="8.5" cy="10" rx="2" ry="1.5" />
+      <ellipse cx="15" cy="11" rx="2.5" ry="1.8" />
+      <ellipse cx="11" cy="15" rx="1.8" ry="1.2" />
+    </svg>
+  ),
+  acne_c: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="9" cy="9" r="1.2" />
+      <circle cx="15" cy="10" r="1" />
+      <circle cx="10" cy="14" r="0.8" />
+      <circle cx="14" cy="15" r="1.1" />
+    </svg>
+  ),
+  dermatitis: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M7 10c2 1 4-1 6 0s3 1 5-0.5" />
+      <path d="M7 13c2 1 4-1 6 0s3 1 5-0.5" />
+      <path d="M8 16c1.5.8 3-.5 4.5.3" />
+    </svg>
+  ),
+  psoriasis: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 8l2 2-2 2 2 2" />
+      <path d="M14 8l2 2-2 2 2 2" />
+      <path d="M11 10l1.5 1.5-1.5 1.5" />
+    </svg>
+  ),
+  ninguna: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 12.5l2.5 2.5 5-5" />
+    </svg>
+  ),
   // Concerns
-  "manchas":     <Sun {...S} />,
-  "arrugas":     <Waves {...S} />,
-  "poros":       <Focus {...S} />,
-  "acne":        <ScanFace {...S} />,
-  "hidratacion": <Droplets {...S} />,
-  "luminosidad": <Star {...S} />,
-  // Upload guide
-  "luz":         <Sun {...Ss} />,
-  "rostro":      <ScanFace {...Ss} />,
-  "sin":         <Ban {...Ss} />,
-  "camara":      <Camera {...Ss} />,
-  "nitida":      <Focus {...Ss} />,
+  manchas: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="9" cy="10" r="1.5" fill="currentColor" fillOpacity="0.2" />
+      <circle cx="14" cy="9" r="1" fill="currentColor" fillOpacity="0.2" />
+      <circle cx="11" cy="15" r="1.8" fill="currentColor" fillOpacity="0.2" />
+      <circle cx="16" cy="14" r="1.2" fill="currentColor" fillOpacity="0.2" />
+    </svg>
+  ),
+  arrugas: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 7c4 1 6-1 10 0s4 1 4 0" />
+      <path d="M5 11c3 1.2 7-1 10 0.5s4 .5 4-.5" />
+      <path d="M5 15c4 1.5 6-1.5 10 0s4 1 4 0" />
+      <path d="M6 19c3 .8 5-.8 8 0" />
+    </svg>
+  ),
+  poros: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="8" cy="9" r="0.8" />
+      <circle cx="11" cy="8" r="0.7" />
+      <circle cx="14" cy="9.5" r="0.8" />
+      <circle cx="9" cy="12" r="0.7" />
+      <circle cx="12" cy="11.5" r="0.9" />
+      <circle cx="15" cy="12" r="0.7" />
+      <circle cx="10" cy="15" r="0.8" />
+      <circle cx="13" cy="14.5" r="0.7" />
+      <circle cx="16" cy="15" r="0.8" />
+    </svg>
+  ),
+  acne: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="8" cy="9" r="1.5" />
+      <circle cx="14" cy="8" r="1" />
+      <circle cx="16" cy="12" r="1.3" />
+      <circle cx="10" cy="14" r="1.2" />
+      <circle cx="14" cy="16" r="0.9" />
+    </svg>
+  ),
+  hidratacion: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3c-4 5.5-7 8.5-7 12a7 7 0 0014 0c0-3.5-3-6.5-7-12z" />
+      <path d="M9.5 16a3 3 0 004.5 1" />
+    </svg>
+  ),
+  luminosidad: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4" />
+      <line x1="12" y1="2" x2="12" y2="5" />
+      <line x1="12" y1="19" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="5" y2="12" />
+      <line x1="19" y1="12" x2="22" y2="12" />
+      <line x1="4.93" y1="4.93" x2="7.05" y2="7.05" />
+      <line x1="16.95" y1="16.95" x2="19.07" y2="19.07" />
+      <line x1="4.93" y1="19.07" x2="7.05" y2="16.95" />
+      <line x1="16.95" y1="7.05" x2="19.07" y2="4.93" />
+    </svg>
+  ),
+  // Upload guide icons
+  luz: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="4" />
+      <line x1="12" y1="20" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="6.34" y2="6.34" />
+      <line x1="17.66" y1="17.66" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="4" y2="12" />
+      <line x1="20" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" />
+      <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" />
+    </svg>
+  ),
+  rostro: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <ellipse cx="12" cy="12" rx="8" ry="10" />
+      <circle cx="9" cy="10" r="1" />
+      <circle cx="15" cy="10" r="1" />
+      <path d="M9 15c1.5 1.5 4.5 1.5 6 0" />
+    </svg>
+  ),
+  sin: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <line x1="5.5" y1="5.5" x2="18.5" y2="18.5" />
+    </svg>
+  ),
+  camara: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  ),
+  nitida: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2v3" />
+      <path d="M12 19v3" />
+      <path d="M5 5l2 2" />
+      <path d="M17 17l2 2" />
+      <path d="M2 12h3" />
+      <path d="M19 12h3" />
+      <path d="M5 19l2-2" />
+      <path d="M17 7l2-2" />
+      <path d="M15 9l1.5-1.5" />
+      <path d="M7.5 16.5L9 15" />
+    </svg>
+  ),
 }
 
 // ── Quiz step types ─────────────────────────────────────────────
@@ -181,14 +307,14 @@ const PRE_SCAN_STEPS: QuizStep[] = [
     sub: "Selecciona todo lo que aplique — priorizamos tu plan según esto",
     type: "multiSelect",
     options: [
-      { value: "edad",       label: "Edad visible",   icon: "edad" },
-      { value: "piel",       label: "Piel",           icon: "piel" },
-      { value: "mandibula",  label: "Mandíbula",      icon: "mandibula_g" },
-      { value: "ojos",       label: "Ojos",           icon: "ojos" },
-      { value: "cabello",    label: "Cabello",        icon: "cabello" },
-      { value: "labios",     label: "Labios",         icon: "labios" },
-      { value: "longevidad", label: "Longevidad",     icon: "longevidad" },
-      { value: "evento",     label: "Evento pronto",  icon: "evento" },
+      { value: "edad",       label: "Edad visible" },
+      { value: "piel",       label: "Piel" },
+      { value: "mandibula",  label: "Mandíbula" },
+      { value: "ojos",       label: "Ojos" },
+      { value: "cabello",    label: "Cabello" },
+      { value: "labios",     label: "Labios" },
+      { value: "longevidad", label: "Longevidad" },
+      { value: "evento",     label: "Evento pronto" },
     ],
   },
   {
@@ -618,7 +744,7 @@ function getZoneStatus(score: number): { label: string; color: string; emoji: st
   if (score >= 80) return { label: "Excelente", color: "#7ecba1", emoji: "✓" }
   if (score >= 65) return { label: "Bien", color: "#d4af88", emoji: "~" }
   if (score >= 45) return { label: "Mejorable", color: "#e8a4b0", emoji: "!" }
-  return { label: "Prioridad", color: "#ef4444", emoji: "!!" }
+  return { label: "Prioridad", color: "#e8a4b0", emoji: "!!" }
 }
 
 function getZoneInsight(key: string, score: number): string {
@@ -1182,8 +1308,11 @@ export default function AnalyzePage() {
   const [activeZone, setActiveZone] = useState<string | null>(null)
   const [showBiomarkers, setShowBiomarkers] = useState(false)
   const [activeResultZone, setActiveResultZone] = useState(0)
-  const [enhancedMode, setEnhancedMode] = useState(false)
   const [autoPlay, setAutoPlay] = useState(true)
+  const [revealPhase, setRevealPhase] = useState(0)
+  const [revealedZones, setRevealedZones] = useState<number[]>([])
+  const [counterAge, setCounterAge] = useState(0)
+  const [revealedFindings, setRevealedFindings] = useState(0)
 
   const fileRef = useRef<HTMLInputElement>(null)
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -1303,6 +1432,42 @@ export default function AnalyzePage() {
     return () => clearInterval(timer)
   }, [stage, autoPlay])
 
+  // ── Cinematic reveal sequence for results-1 ─────────────────────
+  useEffect(() => {
+    if (stage !== "results-1") { setRevealPhase(0); return }
+    setRevealPhase(0); setRevealedZones([]); setCounterAge(0); setRevealedFindings(0)
+    const t1 = setTimeout(() => setRevealPhase(1), 500)
+    const zoneTimers = RESULT_ZONES.map((_, i) =>
+      setTimeout(() => setRevealedZones(prev => [...prev, i]), 700 + i * 220)
+    )
+    const t2 = setTimeout(() => setRevealPhase(2), 2900)
+    const t3 = setTimeout(() => setRevealPhase(3), 4200)
+    const f1 = setTimeout(() => setRevealedFindings(1), 4400)
+    const f2 = setTimeout(() => setRevealedFindings(2), 4750)
+    const f3 = setTimeout(() => setRevealedFindings(3), 5100)
+    const t4 = setTimeout(() => setRevealPhase(4), 5400)
+    return () => { [t1, t2, t3, t4, f1, f2, f3, ...zoneTimers].forEach(clearTimeout) }
+  }, [stage])
+
+  // Age counter animation
+  useEffect(() => {
+    if (revealPhase < 2 || !scores) return
+    const target = Math.round(scores.ageApparent || parseInt(preQuizData.age || "30") + 3)
+    const start = Math.max(18, target - 12)
+    const duration = 1200
+    let startTime: number | undefined
+    let raf: number
+    function animate(ts: number) {
+      if (startTime === undefined) startTime = ts
+      const progress = Math.min((ts - startTime) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setCounterAge(Math.round(start + (target - start) * eased))
+      if (progress < 1) raf = requestAnimationFrame(animate)
+    }
+    raf = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(raf)
+  }, [revealPhase, scores, preQuizData.age])
+
   const reset = () => {
     setCapturedUrl(null)
     setScanProgress(0)
@@ -1313,6 +1478,10 @@ export default function AnalyzePage() {
     setPreQuizData({})
     setContactData({})
     setGateData({})
+    setRevealPhase(0)
+    setRevealedZones([])
+    setCounterAge(0)
+    setRevealedFindings(0)
     setStage("choose")
   }
 
@@ -1362,7 +1531,6 @@ export default function AnalyzePage() {
     updateLead({ funnelStage: "full_results_viewed" })
     setActiveResultZone(0)
     setAutoPlay(true)
-    setEnhancedMode(false)
     setShowBiomarkers(false)
     // Save all data to localStorage
     try {
@@ -1677,158 +1845,232 @@ export default function AnalyzePage() {
           const ageDiff = Math.round(skinAge - userAge)
           const isOlder = ageDiff > 0
           const isSame = ageDiff === 0
-          const isYounger = ageDiff < 0
+
+          const humanFindings = criticalFindings.slice(0, 3).map(b => {
+            const yearMap: Record<string, string> = {
+              "Daño solar": "~2 años", "Inflamación": "~1.5 años", "Glicación": "~1 año",
+              "Vascularidad": "~0.5 años", "Luminosidad": "~1 año", "Hidratación": "~1 año", "Uniformidad": "~0.5 años",
+            }
+            const descMap: Record<string, string> = {
+              "Daño solar": "Fotodaño acumulado — textura irregular y manchas",
+              "Inflamación": "Rojez activa en mejillas — irritación crónica",
+              "Glicación": "Colágeno debilitado por azúcar — pérdida de firmeza",
+              "Vascularidad": "Vasos dilatados visibles en mejillas y nariz",
+              "Luminosidad": "Piel apagada — sin brillo ni reflejo natural",
+              "Hidratación": "Deshidratación — líneas finas más marcadas",
+              "Uniformidad": "Tono desigual — manchas y rojez visible",
+            }
+            return { desc: descMap[b.label] || b.friendlyLabel, years: yearMap[b.label] || "~1 año", color: b.color }
+          })
 
           return (
-          <div style={{ maxWidth: 520, width: "100%" }}>
-            {/* Header */}
-            <div style={{ textAlign: "center", marginBottom: 32 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 8px rgba(126,203,161,0.8)" }} />
-                <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>Análisis completado · 9 zonas</span>
-              </div>
-              <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 400, marginBottom: 10, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-                {userName ? `${userName}, ` : ""}
-                {isOlder ? (
-                  <>tu rostro aparenta <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{Math.abs(ageDiff)} {Math.abs(ageDiff) === 1 ? "año" : "años"} más.</em></>
-                ) : isYounger ? (
-                  <>tu rostro aparenta <em style={{ color: "#7ecba1", fontStyle: "italic" }}>{Math.abs(ageDiff)} {Math.abs(ageDiff) === 1 ? "año" : "años"} menos.</em></>
-                ) : (
-                  <>tu rostro aparenta <em style={{ color: "#7ecba1", fontStyle: "italic" }}>tu edad exacta.</em></>
-                )}
-              </h1>
-              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", lineHeight: 1.6 }}>
-                {isOlder ? "Pero se puede revertir. Te mostramos cómo." : isYounger ? "Vas por buen camino. Te ayudamos a mantenerlo." : "Buen punto de partida. Te ayudamos a mejorarlo."}
-              </p>
-            </div>
+          <div style={{ maxWidth: 480, width: "100%" }}>
 
-            {/* Age comparison card */}
-            <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px", marginBottom: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginBottom: 16 }}>
-                {/* Photo */}
-                {capturedUrl && (
-                  <div style={{ width: 72, height: 90, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(245,237,232,0.1)", flexShrink: 0 }}>
-                    <img src={capturedUrl} alt="Tu foto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  </div>
-                )}
-                {/* Age comparison */}
-                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <div style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: 9, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4, fontWeight: 600 }}>Tu edad</p>
-                    <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 36, fontWeight: 300, color: "rgba(245,237,232,0.5)", lineHeight: 1 }}>{userAge}</p>
-                  </div>
-                  <span style={{ fontSize: 18, color: "rgba(245,237,232,0.15)", marginTop: 14 }}>→</span>
-                  <div style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: 9, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4, fontWeight: 600 }}>Aparentas</p>
-                    <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 36, fontWeight: 300, color: isOlder ? "#e8a4b0" : "#7ecba1", lineHeight: 1 }}>{skinAge}</p>
-                  </div>
-                </div>
-              </div>
+            {/* ── PHOTO — protagonist, full-width with zone reveals ── */}
+            {capturedUrl && (
+              <div style={{
+                position: "relative", width: "100%", aspectRatio: "3/4", borderRadius: 24,
+                overflow: "hidden", marginBottom: 32,
+                opacity: revealPhase >= 0 ? 1 : 0,
+                transform: revealPhase >= 0 ? "scale(1)" : "scale(0.96)",
+                transition: "opacity 0.8s ease, transform 0.8s ease",
+              }}>
+                <img src={capturedUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
 
-              {/* Delta badge */}
-              <div style={{ textAlign: "center", marginBottom: 14 }}>
-                <span style={{
-                  display: "inline-block", padding: "5px 16px", borderRadius: 99,
-                  fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
-                  color: isOlder ? "#e8a4b0" : "#7ecba1",
-                  background: isOlder ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
-                  border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
-                }}>
-                  {isOlder ? `+${ageDiff} años por encima` : isSame ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
-                </span>
-              </div>
+                {/* Vignette */}
+                <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at center, transparent 45%, rgba(14,12,18,0.5) 100%)", pointerEvents: "none" }} />
 
-              {/* Score bar */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)", letterSpacing: "0.08em" }}>SCORE GLOBAL</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#e8a4b0" }}>{scores.overall}/100</span>
-                </div>
-                <div style={{ height: 3, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${scores.overall}%`, background: "linear-gradient(90deg,#e8a4b0,#d4af88)", borderRadius: 2 }} />
-                </div>
-              </div>
+                {/* Zone glow dots */}
+                {RESULT_ZONES.map((z, i) => {
+                  const isRevealed = revealedZones.includes(i)
+                  const dotScore = (scores.zoneScores as Record<string, number>)[z.key] ?? 50
+                  const glowColor = dotScore >= 75 ? "126,203,161" : dotScore >= 55 ? "212,175,136" : "232,164,176"
+                  const labelSide = z.dotX > 55 ? "left" : "right"
 
-              <p style={{ fontSize: 12, color: "rgba(245,237,232,0.38)", lineHeight: 1.6, textAlign: "center" }}>
-                {isOlder
-                  ? `Con el plan correcto puedes recuperar esos ${ageDiff} años en 12 semanas.`
-                  : "Mantén tu rutina y sigue mejorando con nuestras recomendaciones."}
-              </p>
-            </div>
-
-            {/* Top 3 critical findings */}
-            <div style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "28px", marginBottom: 16 }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>
-                {isOlder ? "Lo que está sumando años" : "Áreas de oportunidad"}
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {criticalFindings.map(b => (
-                  <div key={b.label}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 13, color: "rgba(245,237,232,0.7)", fontWeight: 500 }}>{b.friendlyLabel}</span>
-                        {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>MEJORABLE</span>}
+                  return (
+                    <div key={z.key} style={{
+                      position: "absolute", left: `${z.dotX}%`, top: `${z.dotY}%`,
+                      transform: "translate(-50%, -50%)", zIndex: 5,
+                      opacity: isRevealed ? 1 : 0, transition: "opacity 0.4s ease",
+                    }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: "50%",
+                        border: `1.5px solid rgba(${glowColor}, 0.7)`,
+                        background: `rgba(${glowColor}, 0.12)`,
+                        boxShadow: `0 0 16px rgba(${glowColor}, 0.5), 0 0 32px rgba(${glowColor}, 0.15)`,
+                        animation: isRevealed ? "revealPulse 2.5s ease-in-out infinite" : "none",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: `rgb(${glowColor})` }} />
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: b.color }}>{b.value}%</span>
+                      <span style={{
+                        position: "absolute", top: "50%",
+                        ...(labelSide === "left"
+                          ? { right: "calc(100% + 8px)", left: "auto" }
+                          : { left: "calc(100% + 8px)", right: "auto" }),
+                        transform: "translateY(-50%)", whiteSpace: "nowrap",
+                        fontSize: 9, fontWeight: 700, letterSpacing: "0.05em",
+                        color: `rgba(${glowColor}, 0.9)`,
+                        textShadow: "0 1px 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.6)",
+                        opacity: isRevealed ? 1 : 0, transition: "opacity 0.3s ease 0.15s",
+                      }}>
+                        {z.label}
+                      </span>
                     </div>
-                    <div style={{ height: 3, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 6 }}>
-                      <div style={{ height: "100%", width: `${b.value}%`, background: `linear-gradient(90deg, ${b.color}88, ${b.color})`, borderRadius: 2 }} />
-                    </div>
-                    <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.36)", lineHeight: 1.55 }}>{b.insight}</p>
+                  )
+                })}
+
+                {/* Scanning beam during zone reveal */}
+                {revealPhase === 1 && revealedZones.length < RESULT_ZONES.length && (
+                  <div style={{
+                    position: "absolute", left: 0, right: 0, height: 2,
+                    top: `${RESULT_ZONES[Math.min(revealedZones.length, RESULT_ZONES.length - 1)]?.dotY ?? 30}%`,
+                    background: "linear-gradient(90deg, transparent 5%, rgba(126,203,161,0.5) 30%, rgba(126,203,161,0.8) 50%, rgba(126,203,161,0.5) 70%, transparent 95%)",
+                    boxShadow: "0 0 18px rgba(126,203,161,0.25)",
+                    transition: "top 0.22s ease", pointerEvents: "none", zIndex: 4,
+                  }} />
+                )}
+
+                {/* "9 zonas analizadas" badge */}
+                {revealPhase >= 2 && (
+                  <div style={{
+                    position: "absolute", bottom: 16, left: "50%",
+                    transform: "translateX(-50%)",
+                    background: "rgba(14,12,18,0.65)", backdropFilter: "blur(12px)",
+                    borderRadius: 99, padding: "6px 16px",
+                    border: "1px solid rgba(126,203,161,0.25)",
+                    display: "flex", alignItems: "center", gap: 6,
+                    animation: "fadeSlideUp 0.5s ease",
+                  }}>
+                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 6px #7ecba1" }} />
+                    <span style={{ fontSize: 9, color: "#7ecba1", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>9 zonas analizadas</span>
                   </div>
-                ))}
+                )}
+              </div>
+            )}
+
+            {/* ── AGE REVEAL — counter animation ── */}
+            <div style={{
+              textAlign: "center", marginBottom: 28,
+              opacity: revealPhase >= 2 ? 1 : 0,
+              transform: revealPhase >= 2 ? "translateY(0)" : "translateY(20px)",
+              transition: "all 0.6s ease",
+            }}>
+              <p style={{ fontSize: 10, letterSpacing: "0.18em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 6, fontWeight: 600 }}>
+                Tu rostro aparenta
+              </p>
+              <p style={{
+                fontFamily: "var(--font-fraunces)", fontSize: "clamp(64px, 14vw, 96px)",
+                fontWeight: 300, lineHeight: 1, marginBottom: 10,
+                color: isOlder ? "#e8a4b0" : isSame ? "#f5ede8" : "#7ecba1",
+                textShadow: isOlder ? "0 0 40px rgba(232,164,176,0.25)" : "0 0 40px rgba(126,203,161,0.25)",
+              }}>
+                {counterAge || skinAge}
+              </p>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 10 }}>
+                <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tienes <strong style={{ color: "rgba(245,237,232,0.7)" }}>{userAge}</strong></span>
+                <span style={{ color: "rgba(245,237,232,0.12)", fontSize: 14 }}>→</span>
+                <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tu cara dice <strong style={{ color: isOlder ? "#e8a4b0" : "#7ecba1" }}>{skinAge}</strong></span>
+              </div>
+              <span style={{
+                display: "inline-block", padding: "5px 18px", borderRadius: 99,
+                fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+                color: isOlder ? "#e8a4b0" : "#7ecba1",
+                background: isOlder ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
+                border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
+              }}>
+                {isOlder ? `+${ageDiff} años por encima` : isSame ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
+              </span>
+              <h2 style={{
+                fontFamily: "var(--font-fraunces)", fontSize: "clamp(18px, 3.5vw, 26px)",
+                fontWeight: 400, marginTop: 18, letterSpacing: "-0.02em", lineHeight: 1.2,
+                color: "rgba(245,237,232,0.85)",
+              }}>
+                {userName ? `${userName}, ` : ""}{isOlder ? "se puede revertir." : isSame ? "buen punto de partida." : "vas por buen camino."}
+              </h2>
+            </div>
+
+            {/* ── FINDINGS — human language, no bars ── */}
+            <div style={{
+              marginBottom: 24,
+              opacity: revealPhase >= 3 ? 1 : 0,
+              transform: revealPhase >= 3 ? "translateY(0)" : "translateY(12px)",
+              transition: "all 0.4s ease",
+            }}>
+              <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "24px 20px" }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>
+                  {isOlder ? "Lo que está sumando años" : "Áreas de oportunidad"}
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {humanFindings.map((f, idx) => (
+                    <div key={idx} style={{
+                      opacity: revealedFindings > idx ? 1 : 0,
+                      transform: revealedFindings > idx ? "translateX(0)" : "translateX(-10px)",
+                      transition: "all 0.35s ease",
+                      display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12,
+                      paddingBottom: idx < humanFindings.length - 1 ? 14 : 0,
+                      borderBottom: idx < humanFindings.length - 1 ? "1px solid rgba(245,237,232,0.05)" : "none",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: f.color, marginTop: 6, flexShrink: 0, boxShadow: `0 0 8px ${f.color}` }} />
+                        <span style={{ fontSize: 14, color: "rgba(245,237,232,0.7)", lineHeight: 1.45 }}>{f.desc}</span>
+                      </div>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, color: "#e8a4b0", whiteSpace: "nowrap", flexShrink: 0,
+                        background: "rgba(232,164,176,0.08)", border: "1px solid rgba(232,164,176,0.15)",
+                        borderRadius: 99, padding: "3px 10px", marginTop: 2,
+                      }}>
+                        +{f.years}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Free plan CTA */}
-            <button
-              onClick={() => setStage("gate-quiz")}
-              style={{
-                width: "100%", padding: "17px 28px", marginBottom: 12,
-                background: "linear-gradient(135deg,#e8a4b0,#c97e8e)",
-                border: "none", borderRadius: 14, color: "#fff",
-                fontSize: 15, fontWeight: 700, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                boxShadow: "0 6px 24px rgba(232,164,176,0.3)",
-              }}
-            >
-              Ver mi plan gratuito →
-            </button>
-
-            {/* Paid CTA — highlighted */}
-            <a
-              href="https://wa.me/TUTELEFONO?text=Hola%2C%20quiero%20una%20asesor%C3%ADa%20personalizada.%20Mi%20score%20fue%20"
-              target="_blank" rel="noopener noreferrer"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                width: "100%", padding: "18px 28px",
-                background: "linear-gradient(135deg, rgba(212,175,136,0.12) 0%, rgba(232,164,176,0.08) 100%)",
-                border: "1.5px solid rgba(212,175,136,0.3)",
-                borderRadius: 14, color: "#d4af88",
-                fontSize: 14, fontWeight: 700, textDecoration: "none",
-                boxShadow: "0 4px 20px rgba(212,175,136,0.15)",
-                transition: "all 0.2s",
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-              </svg>
-              Asesoría personalizada con especialista
-            </a>
+            {/* ── CTAs ── */}
             <div style={{
-              display: "flex", justifyContent: "center", gap: 16, marginTop: 10, flexWrap: "wrap",
+              opacity: revealPhase >= 4 ? 1 : 0,
+              transform: revealPhase >= 4 ? "translateY(0)" : "translateY(14px)",
+              transition: "all 0.5s ease",
             }}>
-              {["Consulta 1:1 por video", "Plan a tu medida", "Seguimiento mensual"].map(item => (
-                <span key={item} style={{ fontSize: 10, color: "rgba(212,175,136,0.5)", letterSpacing: "0.04em" }}>
-                  {item}
-                </span>
-              ))}
-            </div>
+              <button
+                onClick={() => setStage("gate-quiz")}
+                style={{
+                  width: "100%", padding: "17px 28px", marginBottom: 12,
+                  background: "linear-gradient(135deg,#e8a4b0,#c97e8e)",
+                  border: "none", borderRadius: 14, color: "#fff",
+                  fontSize: 15, fontWeight: 700, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  boxShadow: "0 6px 24px rgba(232,164,176,0.3)",
+                }}
+              >
+                Ver mi plan gratuito →
+              </button>
 
-            {/* Disclaimer */}
-            <p style={{ fontSize: 10, color: "rgba(245,237,232,0.2)", textAlign: "center", marginTop: 24, lineHeight: 1.6 }}>
-              Estimación educativa basada en geometría facial y biomarcadores visuales. No es diagnóstico médico ni reemplaza la valoración de un profesional de la salud.
-            </p>
+              <a
+                href="https://wa.me/TUTELEFONO?text=Hola%2C%20quiero%20una%20asesor%C3%ADa%20personalizada.%20Mi%20score%20fue%20"
+                target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                  width: "100%", padding: "18px 28px",
+                  background: "linear-gradient(135deg, rgba(212,175,136,0.12) 0%, rgba(232,164,176,0.08) 100%)",
+                  border: "1.5px solid rgba(212,175,136,0.3)",
+                  borderRadius: 14, color: "#d4af88",
+                  fontSize: 14, fontWeight: 700, textDecoration: "none",
+                  boxShadow: "0 4px 20px rgba(212,175,136,0.15)",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+                Asesoría personalizada con especialista
+              </a>
+
+              <p style={{ fontSize: 10, color: "rgba(245,237,232,0.2)", textAlign: "center", marginTop: 20, lineHeight: 1.6 }}>
+                Estimación educativa basada en geometría facial y biomarcadores visuales. No es diagnóstico médico.
+              </p>
+            </div>
           </div>
           )
         })()}
@@ -1989,7 +2231,7 @@ export default function AnalyzePage() {
                     position: "absolute", inset: 0, width: "100%", height: "100%",
                     objectFit: "cover",
                     transition: "filter 0.4s ease",
-                    filter: enhancedMode ? "contrast(1.4) saturate(1.3) brightness(1.1)" : "none",
+                    filter: "none",
                   }}
                 />
 
@@ -2000,18 +2242,11 @@ export default function AnalyzePage() {
                   pointerEvents: "none",
                 }} />
 
-                {/* Zone area overlays — semi-transparent regions */}
+                {/* Zone dots — subtle pulsing indicators */}
                 {RESULT_ZONES.map((z, i) => {
                   const dotScore = (scores.zoneScores as Record<string, number>)[z.key] ?? 50
-                  const areaColor = dotScore >= 75 ? "34,197,94" : dotScore >= 55 ? "234,179,8" : "239,68,68"
+                  const glowColor = dotScore >= 75 ? "126,203,161" : dotScore >= 55 ? "212,175,136" : "232,164,176"
                   const isActive = activeResultZone === i
-
-                  // Area dimensions vary by zone
-                  const areaW = ["forehead","jaw","neck"].includes(z.key) ? 50 :
-                                ["cheekL","cheekR"].includes(z.key) ? 22 :
-                                ["periocularL","periocularR"].includes(z.key) ? 20 : 18
-                  const areaH = z.key === "forehead" ? 14 : z.key === "neck" ? 12 :
-                                ["jaw"].includes(z.key) ? 10 : 10
 
                   return (
                     <button
@@ -2019,7 +2254,6 @@ export default function AnalyzePage() {
                       onClick={() => {
                         setActiveResultZone(i)
                         setAutoPlay(false)
-                        // Open the corresponding accordion section
                         const accKey = z.key === "periocularL" || z.key === "periocularR" ? "periocular"
                                      : z.key === "cheekL" || z.key === "cheekR" ? "mejillas"
                                      : z.key === "forehead" ? "frente"
@@ -2031,17 +2265,46 @@ export default function AnalyzePage() {
                       }}
                       style={{
                         position: "absolute",
-                        left: `${z.dotX - areaW / 2}%`, top: `${z.dotY - areaH / 2}%`,
-                        width: `${areaW}%`, height: `${areaH}%`,
-                        borderRadius: z.key === "forehead" ? "40% 40% 20% 20%" : "50%",
-                        background: isActive ? `rgba(${areaColor}, 0.25)` : `rgba(${areaColor}, 0.12)`,
-                        border: isActive ? `1.5px solid rgba(${areaColor}, 0.6)` : `1px solid rgba(${areaColor}, 0.3)`,
+                        left: `${z.dotX}%`, top: `${z.dotY}%`,
+                        transform: "translate(-50%, -50%)",
+                        width: isActive ? 28 : 24, height: isActive ? 28 : 24,
+                        borderRadius: "50%",
+                        border: `1.5px solid rgba(${glowColor}, ${isActive ? 0.8 : 0.5})`,
+                        background: `rgba(${glowColor}, ${isActive ? 0.15 : 0.08})`,
+                        boxShadow: isActive
+                          ? `0 0 16px rgba(${glowColor}, 0.6), 0 0 32px rgba(${glowColor}, 0.2)`
+                          : `0 0 10px rgba(${glowColor}, 0.35), 0 0 20px rgba(${glowColor}, 0.1)`,
                         cursor: "pointer",
                         transition: "all 0.3s ease",
                         zIndex: isActive ? 5 : 3,
                         padding: 0,
+                        animation: "zoneDotPulse 2.8s ease-in-out infinite",
+                        display: "flex", alignItems: "center", justifyContent: "center",
                       }}
-                    />
+                    >
+                      <div style={{
+                        width: isActive ? 7 : 5, height: isActive ? 7 : 5,
+                        borderRadius: "50%",
+                        background: `rgb(${glowColor})`,
+                        transition: "all 0.3s ease",
+                      }} />
+                      {/* Label on hover / active */}
+                      {isActive && (
+                        <span style={{
+                          position: "absolute",
+                          top: "calc(100% + 6px)", left: "50%",
+                          transform: "translateX(-50%)",
+                          whiteSpace: "nowrap",
+                          fontSize: 9, fontWeight: 700, letterSpacing: "0.05em",
+                          color: `rgba(${glowColor}, 0.95)`,
+                          textShadow: "0 1px 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.6)",
+                          animation: "labelSlide 0.25s ease forwards",
+                          pointerEvents: "none",
+                        }}>
+                          {z.label}
+                        </span>
+                      )}
+                    </button>
                   )
                 })}
 
@@ -2057,18 +2320,6 @@ export default function AnalyzePage() {
                   <span style={{ fontSize: 12, fontWeight: 700, color: zoneColor, marginLeft: 8 }}>{zoneScore}</span>
                 </div>
 
-                {/* Enhanced mode toggle */}
-                <button onClick={() => setEnhancedMode(!enhancedMode)} style={{
-                  position: "absolute", bottom: 12, right: 12,
-                  background: enhancedMode ? "rgba(126,203,161,0.2)" : "rgba(245,237,232,0.08)",
-                  border: `1px solid ${enhancedMode ? "rgba(126,203,161,0.4)" : "rgba(245,237,232,0.12)"}`,
-                  borderRadius: 10, padding: "6px 12px",
-                  color: enhancedMode ? "#7ecba1" : "rgba(245,237,232,0.5)",
-                  fontSize: 10, fontWeight: 600, cursor: "pointer",
-                  transition: "all 0.25s ease",
-                }}>
-                  {enhancedMode ? "Modo detalle activo" : "Modo detalle"}
-                </button>
               </div>
             )}
 
@@ -2080,9 +2331,9 @@ export default function AnalyzePage() {
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {crossRefInsights.map((insight, idx) => {
-                    const severityColor = insight.severity === "critical" ? "#ef4444" : insight.severity === "warning" ? "#eab308" : "#22c55e"
-                    const severityBg = insight.severity === "critical" ? "rgba(239,68,68,0.08)" : insight.severity === "warning" ? "rgba(234,179,8,0.06)" : "rgba(34,197,94,0.06)"
-                    const severityBorder = insight.severity === "critical" ? "rgba(239,68,68,0.2)" : insight.severity === "warning" ? "rgba(234,179,8,0.15)" : "rgba(34,197,94,0.15)"
+                    const severityColor = insight.severity === "critical" ? "#e8a4b0" : insight.severity === "warning" ? "#d4af88" : "#7ecba1"
+                    const severityBg = insight.severity === "critical" ? "rgba(232,164,176,0.08)" : insight.severity === "warning" ? "rgba(212,175,136,0.06)" : "rgba(126,203,161,0.06)"
+                    const severityBorder = insight.severity === "critical" ? "rgba(232,164,176,0.2)" : insight.severity === "warning" ? "rgba(212,175,136,0.15)" : "rgba(126,203,161,0.15)"
                     return (
                       <div key={idx} style={{
                         background: severityBg, border: `1px solid ${severityBorder}`,
@@ -2111,7 +2362,7 @@ export default function AnalyzePage() {
                 const subs = derivedSubMetrics[key]
                 const accScore = subs ? Math.round(subs.reduce((a, sm) => a + sm.score, 0) / subs.length) : 50
                 const isOpen = activeZone === key
-                const statusColor = accScore >= 75 ? "#22c55e" : accScore >= 55 ? "#eab308" : "#ef4444"
+                const statusColor = accScore >= 75 ? "#7ecba1" : accScore >= 55 ? "#d4af88" : "#e8a4b0"
                 return (
                   <div key={key} style={{
                     background: "rgba(245,237,232,0.03)", border: `1px solid ${isOpen ? "rgba(232,164,176,0.2)" : "rgba(245,237,232,0.06)"}`,
@@ -2141,7 +2392,7 @@ export default function AnalyzePage() {
                     {isOpen && subs && (
                       <div style={{ padding: "0 20px 20px" }}>
                         {subs.map((sub, i) => {
-                          const barColor = sub.score >= 75 ? "#22c55e" : sub.score >= 55 ? "#eab308" : "#ef4444"
+                          const barColor = sub.score >= 75 ? "#7ecba1" : sub.score >= 55 ? "#d4af88" : "#e8a4b0"
                           return (
                             <div key={i} style={{ marginBottom: 14 }}>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
@@ -2333,8 +2584,11 @@ export default function AnalyzePage() {
         @keyframes hotspotAppear { 0% { transform: translate(-50%,-50%) scale(0); opacity: 0; } 60% { transform: translate(-50%,-50%) scale(1.5); opacity: 0.8; } 100% { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
         @keyframes hotspotPulse { 0%,100% { box-shadow: 0 0 10px currentColor, 0 0 20px rgba(255,255,255,0.1); transform: translate(-50%,-50%) scale(1); } 50% { box-shadow: 0 0 16px currentColor, 0 0 30px rgba(255,255,255,0.2); transform: translate(-50%,-50%) scale(1.25); } }
         @keyframes hotspotPulseResult { 0%,100% { box-shadow: 0 0 8px currentColor, 0 0 16px currentColor; transform: translate(-50%,-50%) scale(1); } 50% { box-shadow: 0 0 16px currentColor, 0 0 32px currentColor; transform: translate(-50%,-50%) scale(1.3); } }
-        @keyframes labelSlide { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes labelSlide { from { opacity: 0; transform: translateX(-50%) translateY(4px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes zoneDotPulse { 0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.85; } 50% { transform: translate(-50%,-50%) scale(1.12); opacity: 1; } }
         @keyframes scanReveal { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes revealPulse { 0%,100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 1; } }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
       `}</style>
     </div>
   )

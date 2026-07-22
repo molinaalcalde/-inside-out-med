@@ -911,9 +911,9 @@ function renderRecCard(
         {rec.timing && (
           <span style={{
             fontSize: 9, letterSpacing: "0.08em", fontWeight: 600,
-            color: rec.timing === "AM" ? "#d4af88" : "#8fb8d4",
-            background: rec.timing === "AM" ? "rgba(212,175,136,0.08)" : "rgba(143,184,212,0.08)",
-            border: `1px solid ${rec.timing === "AM" ? "rgba(212,175,136,0.2)" : "rgba(143,184,212,0.2)"}`,
+            color: rec.timing === "AM" ? "#d4af88" : "#7ecba1",
+            background: rec.timing === "AM" ? "rgba(212,175,136,0.08)" : "rgba(126,203,161,0.08)",
+            border: `1px solid ${rec.timing === "AM" ? "rgba(212,175,136,0.2)" : "rgba(126,203,161,0.2)"}`,
             padding: "3px 8px", borderRadius: 99, marginLeft: "auto",
           }}>
             {rec.timing}
@@ -922,8 +922,8 @@ function renderRecCard(
         {rec.isNew && (
           <span style={{
             fontSize: 9, letterSpacing: "0.08em", fontWeight: 600,
-            color: "#b39ddb", background: "rgba(179,157,219,0.08)",
-            border: "1px solid rgba(179,157,219,0.2)",
+            color: "#d4af88", background: "rgba(212,175,136,0.08)",
+            border: "1px solid rgba(212,175,136,0.2)",
             padding: "3px 8px", borderRadius: 99,
           }}>
             NUEVO
@@ -1268,7 +1268,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             const pmItems = tabItems.filter(r => r.timing === "PM")
             const routineGroups = [
               { key: "am", title: "Rutina de ma\u00f1ana (AM)", color: "#d4af88", items: amItems },
-              { key: "pm", title: "Rutina de noche (PM)", color: "#8fb8d4", items: pmItems },
+              { key: "pm", title: "Rutina de noche (PM)", color: "#7ecba1", items: pmItems },
             ]
             return (
               <>
@@ -1280,7 +1280,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                   <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>
                     Tu rutina skincare se divide en{" "}
                     <span style={{ color: "#d4af88", fontWeight: 600 }}>Ma{"\u00f1"}ana (AM)</span> y{" "}
-                    <span style={{ color: "#8fb8d4", fontWeight: 600 }}>Noche (PM)</span>.{" "}
+                    <span style={{ color: "#7ecba1", fontWeight: 600 }}>Noche (PM)</span>.{" "}
                     El SPF va siempre en la ma{"\u00f1"}ana; los activos fuertes (retinol, {"\u00e1"}cidos) por la noche.
                   </p>
                 </div>
@@ -1318,7 +1318,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             const suppGroups = [
               { key: "empieza", title: "Empieza con estos", subtitle: "Tu base de suplementaci\u00f3n desde el d\u00eda 1.", color: "#7ecba1", items: empiezaItems, additive: false },
               { key: "suma", title: "Suma en el mes 2", subtitle: "Mant\u00e9n todo lo anterior + suma estos.", color: "#d4af88", items: sumaItems, additive: true },
-              { key: "avanzados", title: "Avanzados", subtitle: "Mant\u00e9n todo lo anterior + suma estos cuando est\u00e9s listo.", color: "#b39ddb", items: avanzadoItems, additive: true },
+              { key: "avanzados", title: "Avanzados", subtitle: "Mant\u00e9n todo lo anterior + suma estos cuando est\u00e9s listo.", color: "#d4af88", items: avanzadoItems, additive: true },
             ]
             return (
               <>
@@ -1396,7 +1396,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             const avanzados = tabItems.filter(r => !noInvasiveNames.some(n => r.name.toLowerCase().includes(n)))
             const treatGroups = [
               { key: "no-invasivos", title: "No invasivos", subtitle: "Tratamientos en consultorio sin agujas. Resultados con cero tiempo de recuperaci\u00f3n.", color: "#7ecba1", items: noInvasivos },
-              { key: "avanzados", title: "Avanzados", subtitle: "Procedimientos con microagujas o inyectables. Resultados m\u00e1s potentes, requieren profesional certificado.", color: "#8fb8d4", items: avanzados },
+              { key: "avanzados", title: "Avanzados", subtitle: "Procedimientos con microagujas o inyectables. Resultados m\u00e1s potentes, requieren profesional certificado.", color: "#7ecba1", items: avanzados },
             ]
             return treatGroups.map((group, gi) => group.items.length > 0 && (
               <div key={group.key} style={{ animation: `cardIn 0.55s ease ${0.3 + gi * 0.06}s both` }}>

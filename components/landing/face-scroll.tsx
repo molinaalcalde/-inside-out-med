@@ -101,7 +101,7 @@ export function FaceScrollSection() {
     <section
       ref={sectionRef}
       id="results"
-      style={{ position: "relative", height: "600vh", background: "#1a1c22" }}
+      style={{ position: "relative", height: "600vh", background: "#0e0c12" }}
     >
       {/* ── Sticky container ── */}
       <div style={{
@@ -113,7 +113,7 @@ export function FaceScrollSection() {
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
-        background: "#1a1c22",
+        background: "#0e0c12",
       }}>
 
         {/* ── Video — fills section, face centered ── */}
@@ -129,7 +129,6 @@ export function FaceScrollSection() {
             height: "100%",
             objectFit: "cover",
             objectPosition: "center 35%",
-            transform: "scale(1.02)",
           }}
         >
           <source src="/face-scan.mp4" type="video/mp4" />

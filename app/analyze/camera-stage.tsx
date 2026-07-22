@@ -186,11 +186,26 @@ function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age:
     return Math.round(lumScore * 0.35 + redScore * 0.35 + texScore * 0.30)
   }
 
-  // ── Apparent age ────────────────────────────────────────────────
-  const ageApparent = clamp(
-    ageCfg.ageMid + Math.round((100 - overall) * 0.15 + glycation * 0.08 - 5),
-    17, 65
-  )
+  // ── Apparent age — INDEPENDENT of declared age ─────────────────
+  // Uses 11 aging-relevant markers from actual pixel analysis
+  const agingMarkers = [
+    clamp(Math.round(100 - avgContrast * 2.4), 10, 99),          // skin smoothness
+    uniformity,                                                     // tone evenness
+    clamp(Math.round(100 - sunDamage), 10, 95),                   // sun damage inverted
+    luminosity,                                                     // skin luminosity
+    zoneScore('periocularL'),                                      // left eye area
+    zoneScore('periocularR'),                                      // right eye area
+    zoneScore('cheekL'),                                           // left cheek
+    zoneScore('cheekR'),                                           // right cheek
+    zoneScore('jaw'),                                              // jaw sagging
+    zoneScore('lips'),                                             // perioral lines
+    zoneScore('forehead'),                                         // forehead lines
+  ]
+  const agingScore = agingMarkers.reduce((a, b) => a + b, 0) / agingMarkers.length
+  // Map agingScore (30-95) to visible age (22-64) — purely from the face, not user input
+  const ageApparent = Math.round(
+    clamp(22 + (95 - agingScore) / (95 - 35) * 42, 19, 68) * 10
+  ) / 10
 
   return {
     overall, luminosity, hydration, uniformity, glycation, inflammation, sunDamage, vascularity,
@@ -742,7 +757,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
           <div style={{ position: "absolute", inset: 0, background: phase === "init" ? "rgba(6,4,9,0.78)" : "rgba(6,4,9,0.45)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)", transition: "background 0.5s" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
               <div style={{ width: 40, height: 40, borderRadius: "50%", border: "2px solid rgba(245,237,232,0.1)", borderTop: `2px solid ${phase === "loading-ai" ? "#7ecba1" : "#e8a4b0"}`, animation: "spin 1s linear infinite" }} />
-              <span style={{ fontSize: 11, color: "rgba(245,237,232,0.35)", letterSpacing: "0.1em" }}>{phase === "init" ? "Iniciando…" : "Cargando IA…"}</span>
+              <span style={{ fontSize: 11, color: "rgba(245,237,232,0.35)", letterSpacing: "0.1em" }}>{phase === "init" ? "Iniciando cámara…" : "Calibrando análisis…"}</span>
             </div>
           </div>
         )}

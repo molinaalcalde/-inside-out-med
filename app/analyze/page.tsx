@@ -5,6 +5,7 @@ import { CameraStage, type Scores } from "./camera-stage"
 import { generateCrossRefInsights } from "../../lib/analysis/cross-reference"
 import { trackFunnelEvent, updateLead } from "../../lib/tracking/funnel"
 import type { UserProfile } from "../../lib/types"
+import { Timer, Sparkles, Diamond, Eye, Scissors, Smile, Infinity, CalendarDays, CircleDot, Bandage, Square, Check, Sun, ScanFace, Ban, Ruler, Focus, Droplets, Star } from "lucide-react"
 
 type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "gate-quiz" | "results-2" | "error"
 
@@ -99,6 +100,39 @@ const ZONE_LABELS: Record<string, string> = {
   neck:        "Cuello",
 }
 
+// ── SVG icon map for quiz options ────────────────────────────────
+const QUIZ_ICONS: Record<string, React.ReactNode> = {
+  // Goals
+  "edad":        <Timer size={22} strokeWidth={1.5} />,
+  "piel":        <Sparkles size={22} strokeWidth={1.5} />,
+  "mandibula_g": <Diamond size={22} strokeWidth={1.5} />,
+  "ojos":        <Eye size={22} strokeWidth={1.5} />,
+  "cabello":     <Scissors size={22} strokeWidth={1.5} />,
+  "labios":      <Smile size={22} strokeWidth={1.5} />,
+  "longevidad":  <Infinity size={22} strokeWidth={1.5} />,
+  "evento":      <CalendarDays size={22} strokeWidth={1.5} />,
+  // Conditions
+  "rosacea":     <CircleDot size={22} strokeWidth={1.5} />,
+  "melasma":     <Sun size={22} strokeWidth={1.5} />,
+  "acne_c":      <ScanFace size={22} strokeWidth={1.5} />,
+  "dermatitis":  <Bandage size={22} strokeWidth={1.5} />,
+  "psoriasis":   <Square size={22} strokeWidth={1.5} />,
+  "ninguna":     <Check size={22} strokeWidth={1.5} />,
+  // Concerns
+  "manchas":     <Sun size={22} strokeWidth={1.5} />,
+  "arrugas":     <Ruler size={22} strokeWidth={1.5} />,
+  "poros":       <Focus size={22} strokeWidth={1.5} />,
+  "acne":        <ScanFace size={22} strokeWidth={1.5} />,
+  "hidratacion": <Droplets size={22} strokeWidth={1.5} />,
+  "luminosidad": <Star size={22} strokeWidth={1.5} />,
+  // Upload guide
+  "luz":         <Sun size={18} strokeWidth={1.5} />,
+  "rostro":      <ScanFace size={18} strokeWidth={1.5} />,
+  "sin":         <Ban size={18} strokeWidth={1.5} />,
+  "camara":      <Ruler size={18} strokeWidth={1.5} />,
+  "nitida":      <Focus size={18} strokeWidth={1.5} />,
+}
+
 // ── Quiz step types ─────────────────────────────────────────────
 interface QuizOption {
   value: string
@@ -144,14 +178,14 @@ const PRE_SCAN_STEPS: QuizStep[] = [
     sub: "Selecciona todo lo que aplique — priorizamos tu plan según esto",
     type: "multiSelect",
     options: [
-      { value: "edad",       label: "Edad visible",   icon: "◷" },
-      { value: "piel",       label: "Piel",           icon: "◈" },
-      { value: "mandibula",  label: "Mandíbula",      icon: "△" },
-      { value: "ojos",       label: "Ojos",           icon: "◎" },
-      { value: "cabello",    label: "Cabello",        icon: "∿" },
-      { value: "labios",     label: "Labios",         icon: "◡" },
-      { value: "longevidad", label: "Longevidad",     icon: "∞" },
-      { value: "evento",     label: "Evento pronto",  icon: "◇" },
+      { value: "edad",       label: "Edad visible",   icon: "edad" },
+      { value: "piel",       label: "Piel",           icon: "piel" },
+      { value: "mandibula",  label: "Mandíbula",      icon: "mandibula_g" },
+      { value: "ojos",       label: "Ojos",           icon: "ojos" },
+      { value: "cabello",    label: "Cabello",        icon: "cabello" },
+      { value: "labios",     label: "Labios",         icon: "labios" },
+      { value: "longevidad", label: "Longevidad",     icon: "longevidad" },
+      { value: "evento",     label: "Evento pronto",  icon: "evento" },
     ],
   },
   {
@@ -245,12 +279,12 @@ const PRE_SCAN_STEPS: QuizStep[] = [
     sub: "Para evitar recomendarte algo que pueda irritar o empeorar — selecciona todo lo que aplique",
     type: "multiSelect",
     options: [
-      { value: "rosacea",    label: "Rosácea",         icon: "◉" },
-      { value: "melasma",    label: "Melasma",         icon: "◐" },
-      { value: "acne",       label: "Acné activo",     icon: "●" },
-      { value: "dermatitis", label: "Dermatitis/eccema",icon: "◌" },
-      { value: "psoriasis",  label: "Psoriasis",       icon: "▫" },
-      { value: "ninguna",    label: "Ninguna",         icon: "✓" },
+      { value: "rosacea",    label: "Rosácea",         icon: "rosacea" },
+      { value: "melasma",    label: "Melasma",         icon: "melasma" },
+      { value: "acne",       label: "Acné activo",     icon: "acne_c" },
+      { value: "dermatitis", label: "Dermatitis/eccema",icon: "dermatitis" },
+      { value: "psoriasis",  label: "Psoriasis",       icon: "psoriasis" },
+      { value: "ninguna",    label: "Ninguna",         icon: "ninguna" },
     ],
   },
 ]
@@ -285,12 +319,12 @@ const GATE_STEPS: QuizStep[] = [
     sub: "Elige tu prioridad #1 — esto define el orden de tu plan",
     type: "grid6",
     options: [
-      { value: "manchas",     label: "Manchas",     icon: "◐" },
-      { value: "arrugas",     label: "Arrugas",     icon: "≈" },
-      { value: "poros",       label: "Poros",       icon: "⊙" },
-      { value: "acne",        label: "Acné",        icon: "●" },
-      { value: "hidratacion", label: "Hidratación", icon: "◦" },
-      { value: "luminosidad", label: "Luminosidad", icon: "✦" },
+      { value: "manchas",     label: "Manchas",     icon: "manchas" },
+      { value: "arrugas",     label: "Arrugas",     icon: "arrugas" },
+      { value: "poros",       label: "Poros",       icon: "poros" },
+      { value: "acne",        label: "Acné",        icon: "acne" },
+      { value: "hidratacion", label: "Hidratación", icon: "hidratacion" },
+      { value: "luminosidad", label: "Luminosidad", icon: "luminosidad" },
     ],
   },
   {
@@ -502,11 +536,26 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
     return Math.round(lumScore * 0.35 + redScore * 0.35 + texScore * 0.30)
   }
 
-  // Apparent age
-  const ageApparent = clamp(
-    ageCfg.ageMid + Math.round((100 - overall) * 0.15 + glycation * 0.08 - 5),
-    17, 65
-  )
+  // Apparent age — INDEPENDENT of declared age (legacy formula)
+  // Uses 7 aging-relevant markers from actual pixel analysis
+  const agingMarkers = [
+    clamp(Math.round(100 - avgContrast * 2.4), 10, 99),          // skin smoothness (texture)
+    uniformity,                                                     // tone evenness (spots)
+    clamp(Math.round(100 - sunDamage), 10, 95),                   // sun damage (inverted)
+    luminosity,                                                     // skin luminosity
+    zoneScore("periocularL"),                                      // left eye area
+    zoneScore("periocularR"),                                      // right eye area
+    zoneScore("cheekL"),                                           // left cheek (nasolabial)
+    zoneScore("cheekR"),                                           // right cheek
+    zoneScore("jaw"),                                              // jaw definition/sagging
+    zoneScore("lips"),                                             // perioral lines
+    zoneScore("forehead"),                                         // forehead lines
+  ]
+  const agingScore = agingMarkers.reduce((a, b) => a + b, 0) / agingMarkers.length
+  // Map agingScore (30-95 range) to visible age (22-64 range) — INDEPENDENT of declared age
+  const ageApparent = Math.round(
+    clamp(22 + (95 - agingScore) / (95 - 35) * 42, 19, 68) * 10
+  ) / 10
 
   return {
     overall, luminosity, hydration, uniformity, glycation, inflammation, sunDamage, vascularity,
@@ -529,33 +578,33 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
 function getBiomarkerInsight(label: string, value: number): string {
   switch (label) {
     case "Luminosidad":
-      if (value >= 70) return "Tu piel refleja bien la luz. Luce descansada, nutrida y con buen tono."
-      if (value >= 50) return "Piel algo apagada. La vitamina C y una buena exfoliación pueden recuperar el brillo."
-      return "Piel opaca. El daño acumulado está afectando directamente la reflexión de la luz."
+      if (value >= 70) return "Tu piel refleja bien la luz — se ve descansada y con vida. Esto te quita años de encima."
+      if (value >= 50) return "Tu cara se ve apagada, como cansada aunque hayas dormido. Eso te envejece visualmente porque la piel no refleja luz. Una vitamina C en la mañana puede cambiar esto en 4 semanas."
+      return "Tu piel perdió brillo por completo — se ve gris, sin vida. Esto es lo primero que la gente nota. Te puede sumar 2-3 años visibles. Necesita renovación celular urgente."
     case "Hidratación":
-      if (value >= 75) return "Tu barrera cutánea retiene bien la humedad. Mantén tu hidratante actual."
-      if (value >= 55) return "Tu piel pierde agua más rápido de lo que la repone. Refuerza la hidratación."
-      return "Deshidratación crítica — tu piel está bajo estrés constante y eso amplifica todos los demás daños."
+      if (value >= 75) return "Tu piel retiene bien el agua — se ve jugosa y firme. Esto es clave para prevenir líneas finas."
+      if (value >= 55) return "Tu piel se siente tirante después de lavarte la cara? Eso es porque pierde agua más rápido de lo normal. Las líneas finas se marcan más y la textura se vuelve áspera. Un hidratante con ácido hialurónico lo corrige."
+      return "Tu piel está deshidratada — cada línea fina se ve el doble de profunda, y la textura es rugosa al tacto. Esto amplifica TODOS los demás problemas. Es la primera prioridad a resolver."
     case "Uniformidad":
-      if (value >= 75) return "Tono parejo entre zonas. Tu piel refleja la luz de forma consistente."
-      if (value >= 55) return "Hay variaciones de tono entre zonas. Una rutina unificadora puede equilibrarlo."
-      return "Diferencias marcadas entre zonas faciales. Manchas o rojeces generan un tono desigual."
+      if (value >= 75) return "Tu tono es parejo — sin manchas ni zonas rojas visibles. Eso da una apariencia limpia y joven."
+      if (value >= 55) return "Se ven zonas más oscuras o rojas en tu cara, probablemente en mejillas y frente. El ojo lo percibe como 'piel cansada'. Con niacinamida y SPF diario se emparejan en 6-8 semanas."
+      return "Tu cara tiene manchas, rojeces o zonas oscuras muy visibles. El cerebro humano asocia tono desparejo con edad avanzada — esto te puede sumar 3-4 años de golpe. Es tratable con despigmentantes + protección solar."
     case "Glicación":
-      if (value <= 15) return "Sin signos de glicación. El colágeno no muestra daño por azúcar."
-      if (value <= 30) return "Glicación leve detectada. Reducir azúcar refinada puede frenar este proceso."
-      return "Glicación elevada — el azúcar está dañando las fibras de colágeno, acelerando el envejecimiento."
+      if (value <= 15) return "Tu colágeno está sano — flexible y firme. Mantén bajo el consumo de azúcar para preservarlo."
+      if (value <= 30) return "El azúcar que comes está endureciendo tu colágeno lentamente. El resultado: la piel pierde elasticidad, se vuelve opaca y amarillenta. Reducir azúcares refinados frena este proceso."
+      return "Detectamos señales claras de glicación — tu colágeno se está endureciendo por exceso de azúcar en sangre. Esto hace que la piel pierda firmeza, se ponga amarillenta y las arrugas se fijen más rápido. Te puede sumar 2-3 años. Dieta anti-glicación + péptidos ayudan."
     case "Inflamación":
-      if (value <= 15) return "Piel calmada, sin signos de estrés visible. Buen punto de partida."
-      if (value <= 30) return "Inflamación silenciosa activa. Se puede expresar como rojez, sensibilidad o poros dilatados."
-      return "Inflamación elevada — es el factor que amplifica el envejecimiento y daña la barrera cutánea."
+      if (value <= 15) return "Tu piel está calmada — no hay rojez ni sensibilidad visible. Buen punto de partida."
+      if (value <= 30) return "Hay rojez activa en tu cara que probablemente no notas en el espejo pero la cámara sí detecta. Es inflamación silenciosa — puede venir del estrés, la dieta o productos irritantes. Acelera el envejecimiento de fondo."
+      return "Detectamos inflamación visible en tu rostro — rojez en mejillas, nariz o frente. Esto es el acelerador #1 del envejecimiento: degrada colágeno, dilata poros y genera manchas. Te está sumando años ahora mismo. Necesita atención urgente con ingredientes calmantes."
     case "Daño solar":
-      if (value <= 15) return "Mínimo daño solar acumulado. Tu protección UV está funcionando."
-      if (value <= 30) return "Daño solar moderado. El SPF diario y antioxidantes pueden revertir parte de este daño."
-      return "Daño solar significativo. Sin protección activa, las manchas y la textura irregular seguirán avanzando."
+      if (value <= 15) return "Tu protección solar funciona — no hay manchas ni textura por fotodaño. Sigue así."
+      if (value <= 30) return "Hay señales de sol acumulado en tu piel — textura irregular, manchas incipientes. El sol explica el 80% del envejecimiento visible. Un SPF 50 diario + antioxidantes empiezan a revertirlo en semanas."
+      return "Tu piel tiene daño solar significativo — manchas, textura irregular, pérdida de firmeza. El sol es el enemigo #1 de tu cara y ya dejó huella. Sin protección activa, seguirá avanzando. Te suma fácilmente 3-5 años visibles."
     case "Vascularidad":
-      if (value <= 12) return "Red vascular estable. Sin signos de cuperosis ni rojez persistente."
-      if (value <= 25) return "Algo de actividad vascular visible. Puede manifestarse como rojez en mejillas y nariz."
-      return "Vascularidad elevada — tendencia a rojez, cuperosis o rosácea. Necesita ingredientes calmantes."
+      if (value <= 12) return "No hay rojez persistente — tu circulación facial está estable."
+      if (value <= 25) return "Detectamos rojez en mejillas y nariz que indica actividad vascular elevada. Puede ser rosácea temprana, sensibilidad o reacción a temperaturas extremas. Ingredientes calmantes como centella asiática ayudan."
+      return "Hay rojez marcada en tu cara — vasos dilatados visibles, especialmente en mejillas y nariz. Esto da una apariencia de piel irritada y sensible que envejece tu aspecto. Evita agua caliente en la cara, alcohol y picante. Necesita tratamiento calmante específico."
     default:
       return ""
   }
@@ -830,7 +879,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(212,175,136,0.5)"; e.currentTarget.style.background = "rgba(212,175,136,0.06)" }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(245,237,232,0.10)"; e.currentTarget.style.background = "rgba(245,237,232,0.03)" }}
               >
-                {opt.icon && <span style={{ fontSize: 22 }}>{opt.icon}</span>}
+                {opt.icon && <span style={{ color: "rgba(232,164,176,0.7)" }}>{QUIZ_ICONS[opt.icon] || opt.icon}</span>}
                 <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(245,237,232,0.75)" }}>{opt.label}</span>
               </button>
             ))}
@@ -1028,7 +1077,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
                       display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
                     }}
                   >
-                    {opt.icon && <span style={{ fontSize: 20 }}>{opt.icon}</span>}
+                    {opt.icon && <span style={{ color: isOn ? "#e8a4b0" : "rgba(245,237,232,0.5)" }}>{QUIZ_ICONS[opt.icon] || opt.icon}</span>}
                     <span style={{ fontSize: 11, fontWeight: 600, color: isOn ? "#e8a4b0" : "rgba(245,237,232,0.65)" }}>{opt.label}</span>
                   </button>
                 )
@@ -1336,13 +1385,13 @@ export default function AnalyzePage() {
   // For "lower is better" metrics, we show a HEALTH score (100 - raw)
   // so all bars read left-to-right = better, more intuitive for the user
   const biomarkers = scores ? [
-    { label: "Luminosidad",      rawValue: scores.luminosity,    higherBetter: true,  friendlyLabel: "Luminosidad" },
+    { label: "Luminosidad",      rawValue: scores.luminosity,    higherBetter: true,  friendlyLabel: "Brillo de tu piel" },
     { label: "Hidratación",      rawValue: scores.hydration,     higherBetter: true,  friendlyLabel: "Hidratación" },
-    { label: "Uniformidad",      rawValue: scores.uniformity,    higherBetter: true,  friendlyLabel: "Uniformidad de tono" },
-    { label: "Glicación",        rawValue: scores.glycation,     higherBetter: false, friendlyLabel: "Salud del colágeno" },
-    { label: "Inflamación",      rawValue: scores.inflammation,  higherBetter: false, friendlyLabel: "Control de inflamación" },
-    { label: "Daño solar",       rawValue: scores.sunDamage,     higherBetter: false, friendlyLabel: "Protección solar" },
-    { label: "Vascularidad",     rawValue: scores.vascularity,   higherBetter: false, friendlyLabel: "Salud vascular" },
+    { label: "Uniformidad",      rawValue: scores.uniformity,    higherBetter: true,  friendlyLabel: "Tono parejo" },
+    { label: "Glicación",        rawValue: scores.glycation,     higherBetter: false, friendlyLabel: "Daño por azúcar" },
+    { label: "Inflamación",      rawValue: scores.inflammation,  higherBetter: false, friendlyLabel: "Rojez e inflamación" },
+    { label: "Daño solar",       rawValue: scores.sunDamage,     higherBetter: false, friendlyLabel: "Daño por sol" },
+    { label: "Vascularidad",     rawValue: scores.vascularity,   higherBetter: false, friendlyLabel: "Rojez vascular" },
   ].map(b => {
     // Display value: always "higher = better" for intuitive reading
     const displayValue = b.higherBetter ? b.rawValue : (100 - b.rawValue)
@@ -1437,14 +1486,14 @@ export default function AnalyzePage() {
               <p style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "#7ecba1", fontWeight: 700, marginBottom: 10 }}>Asi funciona</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                 {[
-                  { icon: "◐", text: "Luz natural frontal — ventana o lámpara apuntando a tu cara, sin contraluz" },
-                  { icon: "◎", text: "Rostro centrado y completo — frente, mejillas, nariz y mentón visibles" },
-                  { icon: "✕", text: "Sin maquillaje, filtros, gafas ni cabello tapando la cara" },
-                  { icon: "▱", text: "Cámara al nivel de los ojos, a 30–50 cm de distancia" },
-                  { icon: "◈", text: "Imagen nítida y bien expuesta" },
+                  { icon: "luz", text: "Luz natural frontal — ventana o lámpara apuntando a tu cara, sin contraluz" },
+                  { icon: "rostro", text: "Rostro centrado y completo — frente, mejillas, nariz y mentón visibles" },
+                  { icon: "sin", text: "Sin maquillaje, filtros, gafas ni cabello tapando la cara" },
+                  { icon: "camara", text: "Cámara al nivel de los ojos, a 30–50 cm de distancia" },
+                  { icon: "nitida", text: "Imagen nítida y bien expuesta" },
                 ].map((item,i)=>(
                   <div key={i} style={{ display: "flex", gap: 12, padding: "11px 14px", background: "rgba(126,203,161,0.04)", border: "1px solid rgba(126,203,161,0.1)", borderRadius: 11 }}>
-                    <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
+                    <span style={{ flexShrink: 0, color: "rgba(232,164,176,0.6)" }}>{QUIZ_ICONS[item.icon] || item.icon}</span>
                     <span style={{ fontSize: 13, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>{item.text}</span>
                   </div>
                 ))}
@@ -1478,85 +1527,117 @@ export default function AnalyzePage() {
               Analizando 9 zonas faciales
             </p>
 
-            {/* Face image with animated zone overlays */}
-            <div style={{ position: "relative", width: "100%", paddingBottom: "125%", borderRadius: 22, overflow: "hidden", marginBottom: 20, border: "1px solid rgba(232,164,176,0.12)" }}>
+            {/* Face image with cinematic scan overlay */}
+            <div style={{ position: "relative", width: "100%", paddingBottom: "125%", borderRadius: 22, overflow: "hidden", marginBottom: 20, border: "1px solid rgba(232,164,176,0.15)" }}>
               <img src={capturedUrl} alt="análisis" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
 
-              {/* Dark vignette */}
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(14,12,18,0.3) 0%,transparent 20%,transparent 70%,rgba(14,12,18,0.6) 100%)", pointerEvents: "none" }} />
+              {/* Dark cinematic overlay */}
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(14,12,18,0.4) 0%,rgba(14,12,18,0.15) 30%,rgba(14,12,18,0.15) 60%,rgba(14,12,18,0.5) 100%)", pointerEvents: "none" }} />
 
-              {/* Scan beam */}
-              <div style={{
-                position: "absolute", left: 0, right: 0, height: 3,
-                background: "linear-gradient(90deg,transparent,#e8a4b0 20%,#d4af88 50%,#7ecba1 80%,transparent)",
-                boxShadow: "0 0 20px rgba(232,164,176,0.8), 0 0 40px rgba(232,164,176,0.4)",
-                top: `${Math.min(scanProgress, 95)}%`,
-                transition: "top 0.12s linear",
-                opacity: scanProgress < 99 ? 1 : 0,
-              }} />
+              {/* Grid lines overlay — subtle medical/tech feel */}
+              <div style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.12 }}>
+                {[20,40,60,80].map(p => (
+                  <div key={`h${p}`} style={{ position: "absolute", left: 0, right: 0, top: `${p}%`, height: 1, background: "rgba(232,164,176,0.6)" }} />
+                ))}
+                {[25,50,75].map(p => (
+                  <div key={`v${p}`} style={{ position: "absolute", top: 0, bottom: 0, left: `${p}%`, width: 1, background: "rgba(232,164,176,0.6)" }} />
+                ))}
+              </div>
 
-              {/* Zone labels — appear as they're scanned */}
-              {SCAN_ZONES_ANIM.map((zone, i) => {
-                const isActive  = activeZoneIdx === i
-                const isDone    = completedZones.includes(i)
-                const shouldShow = (scanProgress / 100) * SCAN_ZONES_ANIM.length > i
-                if (!shouldShow) return null
-                return (
-                  <div key={i} style={{
-                    position: "absolute", left: 12, top: `${zone.yPct}%`,
-                    display: "flex", alignItems: "center", gap: 6,
-                    animation: "scanZonePop 0.3s ease forwards",
-                  }}>
-                    <div style={{
-                      width: 6, height: 6, borderRadius: "50%",
-                      background: isDone ? zone.color : isActive ? zone.color : "rgba(245,237,232,0.3)",
-                      boxShadow: isActive ? `0 0 10px ${zone.color}` : "none",
-                      animation: isActive ? "pulseDot 0.8s ease-in-out infinite" : "none",
-                      transition: "all 0.3s",
-                    }} />
-                    <span style={{
-                      fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700,
-                      color: isDone ? zone.color : isActive ? zone.color : "rgba(245,237,232,0.4)",
-                      transition: "color 0.3s",
-                      textShadow: isActive ? `0 0 8px ${zone.color}` : "none",
-                    }}>
-                      {zone.icon} {zone.label}
-                    </span>
-                    {isDone && (
-                      <span style={{ fontSize: 9, color: zone.color, fontWeight: 700 }}>✓</span>
-                    )}
-                  </div>
-                )
-              })}
+              {/* Main scan beam — horizontal sweep */}
+              {scanProgress < 99 && (
+                <div style={{
+                  position: "absolute", left: 0, right: 0, height: 2,
+                  background: "linear-gradient(90deg, transparent 0%, rgba(232,164,176,0.9) 30%, #fff 50%, rgba(126,203,161,0.9) 70%, transparent 100%)",
+                  boxShadow: "0 0 30px rgba(232,164,176,0.6), 0 -8px 20px rgba(232,164,176,0.15), 0 8px 20px rgba(232,164,176,0.15)",
+                  top: `${Math.min(scanProgress, 95)}%`,
+                  transition: "top 0.15s linear",
+                }} />
+              )}
 
-              {/* Scan complete flash */}
+              {/* Scanning zone highlight — transparent rectangle on active zone */}
+              {activeZoneIdx >= 0 && activeZoneIdx < SCAN_ZONES_ANIM.length && scanProgress < 99 && (
+                <div style={{
+                  position: "absolute",
+                  left: "10%", right: "10%",
+                  top: `${Math.max(0, SCAN_ZONES_ANIM[activeZoneIdx].yPct - 6)}%`,
+                  height: "14%",
+                  border: "1px solid rgba(232,164,176,0.3)",
+                  borderRadius: 8,
+                  background: "rgba(232,164,176,0.06)",
+                  transition: "top 0.5s ease, opacity 0.3s",
+                  pointerEvents: "none",
+                }} />
+              )}
+
+              {/* Corner brackets — tech frame */}
+              <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M5,2 L2,2 L2,5" fill="none" stroke="rgba(232,164,176,0.4)" strokeWidth="0.3" />
+                <path d="M95,2 L98,2 L98,5" fill="none" stroke="rgba(232,164,176,0.4)" strokeWidth="0.3" />
+                <path d="M5,98 L2,98 L2,95" fill="none" stroke="rgba(232,164,176,0.4)" strokeWidth="0.3" />
+                <path d="M95,98 L98,98 L98,95" fill="none" stroke="rgba(232,164,176,0.4)" strokeWidth="0.3" />
+              </svg>
+
+              {/* Live metrics — appear as scan progresses */}
+              <div style={{ position: "absolute", top: 12, left: 14, pointerEvents: "none" }}>
+                <div style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(126,203,161,0.7)", letterSpacing: "0.05em", lineHeight: 1.8 }}>
+                  {scanProgress > 5 && <div style={{ animation: "fadeIn 0.3s ease" }}>SCAN {Math.min(scanProgress, 100)}%</div>}
+                  {scanProgress > 20 && <div style={{ animation: "fadeIn 0.3s ease" }}>LANDMARKS 478</div>}
+                  {scanProgress > 40 && <div style={{ animation: "fadeIn 0.3s ease" }}>ZONAS {Math.min(completedZones.length + 1, 9)}/9</div>}
+                  {scanProgress > 60 && <div style={{ animation: "fadeIn 0.3s ease" }}>MUESTRAS {Math.round(scanProgress * 0.8)}</div>}
+                  {scanProgress > 80 && <div style={{ animation: "fadeIn 0.3s ease" }}>BIOMARCADORES OK</div>}
+                </div>
+              </div>
+
+              {/* Zone name — bottom right, current zone being scanned */}
+              {activeZoneIdx >= 0 && scanProgress < 99 && (
+                <div style={{
+                  position: "absolute", bottom: 14, right: 14,
+                  fontSize: 10, fontFamily: "monospace", fontWeight: 600,
+                  color: "rgba(232,164,176,0.8)", letterSpacing: "0.12em", textTransform: "uppercase",
+                  textShadow: "0 0 12px rgba(232,164,176,0.4)",
+                }}>
+                  {SCAN_ZONES_ANIM[activeZoneIdx]?.label ?? ""}
+                </div>
+              )}
+
+              {/* Scan complete — green flash + checkmark */}
               {scanProgress >= 99 && (
                 <div style={{
                   position: "absolute", inset: 0,
-                  background: "rgba(126,203,161,0.08)",
+                  background: "rgba(126,203,161,0.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
                   animation: "scanFlash 0.5s ease forwards",
                   pointerEvents: "none",
-                }} />
+                }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: "50%",
+                    background: "rgba(126,203,161,0.15)", border: "2px solid rgba(126,203,161,0.5)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    animation: "scanZonePop 0.4s ease",
+                  }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 13l4 4L19 7" stroke="#7ecba1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                </div>
               )}
             </div>
 
             {/* Progress bar */}
-            <div style={{ height: 2, background: "rgba(245,237,232,0.07)", borderRadius: 2, overflow: "hidden", marginBottom: 12 }}>
-              <div style={{ height: "100%", width: `${scanProgress}%`, background: `linear-gradient(90deg,#e8a4b0,#d4af88,#7ecba1)`, transition: "width 0.1s linear" }} />
+            <div style={{ height: 3, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 14 }}>
+              <div style={{ height: "100%", width: `${scanProgress}%`, background: `linear-gradient(90deg,#e8a4b0,#d4af88,#7ecba1)`, transition: "width 0.1s linear", borderRadius: 2 }} />
             </div>
 
             {/* Status text */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <div style={{ width: 5, height: 5, borderRadius: "50%", background: SCAN_ZONES_ANIM[activeZoneIdx]?.color ?? "#e8a4b0", animation: "pulseDot 0.8s ease-in-out infinite" }} />
-              <p style={{ fontSize: 11, color: "rgba(245,237,232,0.4)", letterSpacing: "0.06em" }}>
-                {scanProgress < 15 ? "Detectando estructura facial…" :
-                 scanProgress < 30 ? `Escaneando ${SCAN_ZONES_ANIM[activeZoneIdx]?.label ?? ""}…` :
-                 scanProgress < 50 ? "Analizando biomarcadores…" :
-                 scanProgress < 70 ? "Calculando puntuaciones por zona…" :
-                 scanProgress < 85 ? "Evaluando luminosidad e hidratación…" :
-                 scanProgress < 99 ? "Finalizando análisis…" : "Análisis completado ✓"}
-              </p>
-            </div>
+            <p style={{ fontSize: 11, color: "rgba(245,237,232,0.4)", letterSpacing: "0.06em", textAlign: "center" }}>
+              {scanProgress < 10 ? "Detectando estructura facial…" :
+               scanProgress < 25 ? "Mapeando 478 puntos de referencia…" :
+               scanProgress < 45 ? "Analizando textura y pigmentación…" :
+               scanProgress < 65 ? "Evaluando biomarcadores cutáneos…" :
+               scanProgress < 80 ? "Midiendo luminosidad e hidratación…" :
+               scanProgress < 95 ? "Consolidando resultados…" : "Análisis completado"}
+            </p>
           </div>
         )}
 

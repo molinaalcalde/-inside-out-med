@@ -75,15 +75,15 @@ const RESULT_ZONES = [
 ]
 
 // ── Accordion zone metadata for results-2 ─────────────────────
-const ACCORDION_META: Record<string, { label: string; emoji: string }> = {
-  frente:     { label: "Frente",      emoji: "\u{1F7E4}" },
-  periocular: { label: "Periocular",  emoji: "\u{1F441}\uFE0F" },
-  nariz:      { label: "Nariz",       emoji: "\u{1F443}" },
-  labios:     { label: "Labios",      emoji: "\u{1F48B}" },
-  mejillas:   { label: "Mejillas",    emoji: "\u{1F60A}" },
-  mandibula:  { label: "Mandibula",   emoji: "\u{1F9B4}" },
-  cuello:     { label: "Cuello",      emoji: "\u{1F9E3}" },
-  piel:       { label: "Piel global", emoji: "\u2728" },
+const ACCORDION_META: Record<string, { label: string; icon: string }> = {
+  frente:     { label: "Frente",      icon: "F" },
+  periocular: { label: "Periocular",  icon: "P" },
+  nariz:      { label: "Nariz",       icon: "N" },
+  labios:     { label: "Labios",      icon: "L" },
+  mejillas:   { label: "Mejillas",    icon: "M" },
+  mandibula:  { label: "Mandíbula",   icon: "J" },
+  cuello:     { label: "Cuello",      icon: "C" },
+  piel:       { label: "Piel global", icon: "G" },
 }
 
 // ── Zone label map ──────────────────────────────────────────────
@@ -1916,28 +1916,44 @@ export default function AnalyzePage() {
                   pointerEvents: "none",
                 }} />
 
-                {/* ALL 9 dots — solid green/yellow/red */}
+                {/* Zone area overlays — semi-transparent regions */}
                 {RESULT_ZONES.map((z, i) => {
                   const dotScore = (scores.zoneScores as Record<string, number>)[z.key] ?? 50
-                  const dotColor = dotScore >= 75 ? "#22c55e" : dotScore >= 55 ? "#eab308" : "#ef4444"
+                  const areaColor = dotScore >= 75 ? "34,197,94" : dotScore >= 55 ? "234,179,8" : "239,68,68"
                   const isActive = activeResultZone === i
+
+                  // Area dimensions vary by zone
+                  const areaW = ["forehead","jaw","neck"].includes(z.key) ? 50 :
+                                ["cheekL","cheekR"].includes(z.key) ? 22 :
+                                ["periocularL","periocularR"].includes(z.key) ? 20 : 18
+                  const areaH = z.key === "forehead" ? 14 : z.key === "neck" ? 12 :
+                                ["jaw"].includes(z.key) ? 10 : 10
+
                   return (
                     <button
                       key={z.key}
-                      onClick={() => { setActiveResultZone(i); setAutoPlay(false) }}
+                      onClick={() => {
+                        setActiveResultZone(i)
+                        setAutoPlay(false)
+                        // Open the corresponding accordion section
+                        const accKey = z.key === "periocularL" || z.key === "periocularR" ? "periocular"
+                                     : z.key === "cheekL" || z.key === "cheekR" ? "mejillas"
+                                     : z.key === "forehead" ? "frente"
+                                     : z.key === "nose" ? "nariz"
+                                     : z.key === "lips" ? "labios"
+                                     : z.key === "jaw" ? "mandibula"
+                                     : z.key === "neck" ? "cuello" : null
+                        if (accKey) setActiveZone(accKey)
+                      }}
                       style={{
                         position: "absolute",
-                        left: `${z.dotX}%`, top: `${z.dotY}%`,
-                        transform: "translate(-50%, -50%)",
-                        width: isActive ? 18 : 14,
-                        height: isActive ? 18 : 14,
-                        borderRadius: "50%",
-                        background: dotColor,
-                        border: isActive ? `2.5px solid #fff` : `2px solid rgba(255,255,255,0.5)`,
-                        boxShadow: isActive ? `0 0 14px ${dotColor}, 0 0 28px ${dotColor}66` : `0 0 6px ${dotColor}88`,
+                        left: `${z.dotX - areaW / 2}%`, top: `${z.dotY - areaH / 2}%`,
+                        width: `${areaW}%`, height: `${areaH}%`,
+                        borderRadius: z.key === "forehead" ? "40% 40% 20% 20%" : "50%",
+                        background: isActive ? `rgba(${areaColor}, 0.25)` : `rgba(${areaColor}, 0.12)`,
+                        border: isActive ? `1.5px solid rgba(${areaColor}, 0.6)` : `1px solid rgba(${areaColor}, 0.3)`,
                         cursor: "pointer",
-                        transition: "all 0.4s ease",
-                        animation: isActive ? "hotspotPulseResult 2s ease-in-out infinite" : "none",
+                        transition: "all 0.3s ease",
                         zIndex: isActive ? 5 : 3,
                         padding: 0,
                       }}
@@ -2022,7 +2038,14 @@ export default function AnalyzePage() {
                       display: "flex", alignItems: "center", justifyContent: "space-between",
                     }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontSize: 18 }}>{meta.emoji}</span>
+                        <div style={{
+                          width: 28, height: 28, borderRadius: "50%",
+                          background: `${statusColor}15`, border: `1.5px solid ${statusColor}40`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 11, fontWeight: 700, color: statusColor,
+                        }}>
+                          {meta.icon}
+                        </div>
                         <span style={{ fontSize: 14, fontWeight: 600 }}>{meta.label}</span>
                         {key === "cuello" && <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)", fontStyle: "italic" }}>estimado</span>}
                       </div>

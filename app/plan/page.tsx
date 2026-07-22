@@ -60,27 +60,11 @@ function amazonUrl(query: string) {
   return `https://www.amazon.com/s?k=${encodeURIComponent(query)}&tag=${AFFILIATE_TAG}`
 }
 
-const PHASES: { name: string; period: string; description: string }[] = [
-  { name: "Base", period: "Semanas 1-2", description: "Protección y limpieza: los pilares sin los cuales nada más funciona." },
-  { name: "Activos", period: "Semanas 3-6", description: "Incorpora ingredientes activos que transforman la piel desde dentro." },
-  { name: "Intensificación", period: "Semanas 6-10", description: "Tratamientos y exfoliaciones que aceleran los resultados." },
-  { name: "Avanzado", period: "Semanas 10-16", description: "Intervenciones profesionales para resultados de siguiente nivel." },
-  { name: "Mantenimiento", period: "Mes 4+", description: "Protocolos de largo plazo para mantener y potenciar lo logrado." },
-]
-
 const CATEGORY_TABS: { key: Category; label: string }[] = [
   { key: "skincare", label: "Skincare" },
   { key: "supplements", label: "Suplementos" },
   { key: "habits", label: "Hábitos" },
   { key: "treatments", label: "Tratamientos" },
-]
-
-const PHASE_COLORS = [
-  "#e8a4b0",
-  "#d4af88",
-  "#7ecba1",
-  "#8fb8d4",
-  "#b39ddb",
 ]
 
 // ── Catalog ────────────────────────────────────────────────────────
@@ -879,10 +863,190 @@ const PRIORITY_COLORS: Record<Priority, { text: string; bg: string; border: stri
   Complementario: { text: "#7ecba1", bg: "rgba(126,203,161,0.06)", border: "rgba(126,203,161,0.18)" },
 }
 
+// ── Recommendation Card renderer ──────────────────────────────────
+function renderRecCard(
+  rec: ScoredRec,
+  ri: number,
+  expandedEvidence: Set<string>,
+  toggleEvidence: (id: string) => void,
+) {
+  const colors = PRIORITY_COLORS[rec.priority]
+  const cardId = `${rec.category}-${rec.name}-${ri}`
+  const showingEvidence = expandedEvidence.has(cardId)
+
+  return (
+    <div
+      key={`${rec.name}-${ri}`}
+      style={{
+        background: "rgba(245,237,232,0.04)",
+        border: "1px solid rgba(245,237,232,0.08)",
+        borderRadius: 14, padding: 20,
+        transition: "border-color 0.2s, transform 0.2s",
+        animation: `cardIn 0.45s ease ${0.35 + ri * 0.06}s both`,
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = "rgba(245,237,232,0.15)"
+        e.currentTarget.style.transform = "translateY(-1px)"
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = "rgba(245,237,232,0.08)"
+        e.currentTarget.style.transform = "translateY(0)"
+      }}
+    >
+      {/* Top row: priority + cost + timing */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+        <span style={{
+          fontSize: 9, letterSpacing: "0.14em", fontWeight: 700,
+          color: colors.text, textTransform: "uppercase",
+          background: colors.bg, border: `1px solid ${colors.border}`,
+          padding: "3px 10px", borderRadius: 99,
+        }}>
+          {rec.priority}
+        </span>
+        {rec.cost && rec.cost !== "$0" && (
+          <span style={{ fontSize: 11, color: "rgba(245,237,232,0.3)" }}>
+            {rec.cost}
+          </span>
+        )}
+        {rec.timing && (
+          <span style={{
+            fontSize: 9, letterSpacing: "0.08em", fontWeight: 600,
+            color: rec.timing === "AM" ? "#d4af88" : "#8fb8d4",
+            background: rec.timing === "AM" ? "rgba(212,175,136,0.08)" : "rgba(143,184,212,0.08)",
+            border: `1px solid ${rec.timing === "AM" ? "rgba(212,175,136,0.2)" : "rgba(143,184,212,0.2)"}`,
+            padding: "3px 8px", borderRadius: 99, marginLeft: "auto",
+          }}>
+            {rec.timing}
+          </span>
+        )}
+        {rec.isNew && (
+          <span style={{
+            fontSize: 9, letterSpacing: "0.08em", fontWeight: 600,
+            color: "#b39ddb", background: "rgba(179,157,219,0.08)",
+            border: "1px solid rgba(179,157,219,0.2)",
+            padding: "3px 8px", borderRadius: 99,
+          }}>
+            NUEVO
+          </span>
+        )}
+      </div>
+
+      {/* Title */}
+      <h4 style={{
+        fontFamily: "var(--font-fraunces)", fontSize: 16, fontWeight: 400,
+        color: "#f5ede8", marginBottom: 6, lineHeight: 1.3, letterSpacing: "-0.01em",
+      }}>
+        {rec.name}
+      </h4>
+
+      {/* What */}
+      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.42)", lineHeight: 1.6, marginBottom: 10 }}>
+        {rec.what}
+      </p>
+
+      {/* Meta: freq + results */}
+      <p style={{ fontSize: 11, color: "#d4af88", marginBottom: 12, lineHeight: 1.5 }}>
+        {rec.freq} · {rec.results}
+      </p>
+
+      {/* Personalized why */}
+      <div style={{
+        background: "rgba(232,164,176,0.04)",
+        border: "1px solid rgba(232,164,176,0.1)",
+        borderRadius: 10, padding: "10px 14px", marginBottom: 14,
+      }}>
+        <p style={{ fontSize: 10, color: "#e8a4b0", fontWeight: 600, letterSpacing: "0.06em", marginBottom: 4, textTransform: "uppercase" }}>
+          Por qu{"\u00e9"} t{"\u00fa"} lo necesitas:
+        </p>
+        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.55 }}>
+          {rec.personalizedWhy}
+        </p>
+      </div>
+
+      {/* FitzCaution warning */}
+      {rec.fitzCaution && (
+        <div style={{
+          background: "rgba(212,175,136,0.06)",
+          border: "1px solid rgba(212,175,136,0.15)",
+          borderRadius: 8, padding: "8px 12px", marginBottom: 14,
+        }}>
+          <p style={{ fontSize: 11, color: "#d4af88", lineHeight: 1.5 }}>
+            Precauci{"\u00f3"}n en fototipos altos (Fitz IV-VI): riesgo de hiperpigmentaci{"\u00f3"}n. Consultar especialista.
+          </p>
+        </div>
+      )}
+
+      {/* Bottom row: Amazon + Evidence */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        {rec.amazonQuery && (rec.category === "skincare" || rec.category === "supplements") && (
+          <a
+            href={amazonUrl(rec.amazonQuery)}
+            target="_blank" rel="noopener noreferrer"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              background: "rgba(245,237,232,0.06)",
+              border: "1px solid rgba(245,237,232,0.12)",
+              color: "#f5ede8", borderRadius: 10,
+              padding: "9px 16px", fontSize: 12, fontWeight: 600,
+              textDecoration: "none", whiteSpace: "nowrap",
+              transition: "background 0.2s, border-color 0.2s",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(245,237,232,0.11)"
+              e.currentTarget.style.borderColor = "rgba(245,237,232,0.22)"
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "rgba(245,237,232,0.06)"
+              e.currentTarget.style.borderColor = "rgba(245,237,232,0.12)"
+            }}
+          >
+            Ver en Amazon
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </a>
+        )}
+        <button
+          onClick={() => toggleEvidence(cardId)}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            fontSize: 11, color: "rgba(245,237,232,0.3)",
+            padding: "6px 0", fontFamily: "var(--font-inter, sans-serif)",
+            display: "inline-flex", alignItems: "center", gap: 4,
+            transition: "color 0.2s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = "rgba(245,237,232,0.6)" }}
+          onMouseLeave={e => { e.currentTarget.style.color = "rgba(245,237,232,0.3)" }}
+        >
+          Evidencia {showingEvidence ? "\u25be" : "\u25b8"}
+        </button>
+      </div>
+
+      {/* Collapsible evidence */}
+      {showingEvidence && (
+        <div style={{
+          marginTop: 10, padding: "10px 14px",
+          background: "rgba(245,237,232,0.02)",
+          border: "1px solid rgba(245,237,232,0.06)",
+          borderRadius: 8,
+        }}>
+          <p style={{ fontSize: 11, color: "rgba(245,237,232,0.4)", lineHeight: 1.6, fontStyle: "italic" }}>
+            {rec.evidence}
+          </p>
+          {rec.risk && rec.risk !== "Ninguno" && rec.risk !== "Bajo" && (
+            <p style={{ fontSize: 11, color: "rgba(212,175,136,0.6)", marginTop: 6, lineHeight: 1.5 }}>
+              Riesgo: {rec.risk}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Plan content ───────────────────────────────────────────────────
 function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserProfile; plan: ScoredRec[] }) {
   const [activeTab, setActiveTab] = useState<Category>("skincare")
-  const [expandedPhases, setExpandedPhases] = useState<Set<number>>(new Set([1, 2]))
   const [expandedEvidence, setExpandedEvidence] = useState<Set<string>>(new Set())
 
   const realAge = ageFromRange(profile.age)
@@ -898,29 +1062,14 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
   const counts: Record<Category, number> = { skincare: 0, supplements: 0, habits: 0, treatments: 0 }
   for (const r of plan) counts[r.category]++
 
-  // Items for current tab, grouped by phase
+  // Items for current tab
   const tabItems = plan.filter(r => r.category === activeTab)
-  const phaseGroups: Record<number, ScoredRec[]> = {}
-  for (const r of tabItems) {
-    if (!phaseGroups[r.phase]) phaseGroups[r.phase] = []
-    phaseGroups[r.phase].push(r)
-  }
-  const phases = Object.keys(phaseGroups).map(Number).sort((a, b) => a - b)
 
   // Top 3 free phase-1 items for "Empieza Hoy"
   const freeStarters = plan
     .filter(r => r.tier === "free" && r.phase === 1)
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)
-
-  const togglePhase = (p: number) => {
-    setExpandedPhases(prev => {
-      const next = new Set(prev)
-      if (next.has(p)) next.delete(p)
-      else next.add(p)
-      return next
-    })
-  }
 
   const toggleEvidence = (id: string) => {
     setExpandedEvidence(prev => {
@@ -1110,263 +1259,171 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
           })}
         </div>
 
-        {/* ── Section D: Phase groups ── */}
+        {/* ── Section D: Tab-specific groups ── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 32, marginBottom: 56 }}>
-          {/* AM/PM routine note for skincare */}
-          {activeTab === "skincare" && (
-            <div style={{
-              background: "rgba(232,164,176,0.05)", border: "1px solid rgba(232,164,176,0.12)",
-              borderRadius: 14, padding: "16px 18px", marginBottom: 20,
-            }}>
-              <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>
-                Tu rutina skincare se divide en{" "}
-                <span style={{ color: "#d4af88", fontWeight: 600 }}>Mañana (AM)</span> y{" "}
-                <span style={{ color: "#8fb8d4", fontWeight: 600 }}>Noche (PM)</span>.{" "}
-                El SPF va siempre en la mañana; los activos fuertes (retinol, ácidos) por la noche.
+
+          {/* ── SKINCARE: Group by AM / PM ── */}
+          {activeTab === "skincare" && (() => {
+            const amItems = tabItems.filter(r => r.timing === "AM" || !r.timing)
+            const pmItems = tabItems.filter(r => r.timing === "PM")
+            const routineGroups = [
+              { key: "am", title: "Rutina de ma\u00f1ana (AM)", color: "#d4af88", items: amItems },
+              { key: "pm", title: "Rutina de noche (PM)", color: "#8fb8d4", items: pmItems },
+            ]
+            return (
+              <>
+                {/* AM/PM routine note */}
+                <div style={{
+                  background: "rgba(232,164,176,0.05)", border: "1px solid rgba(232,164,176,0.12)",
+                  borderRadius: 14, padding: "16px 18px", marginBottom: 20,
+                }}>
+                  <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>
+                    Tu rutina skincare se divide en{" "}
+                    <span style={{ color: "#d4af88", fontWeight: 600 }}>Ma{"\u00f1"}ana (AM)</span> y{" "}
+                    <span style={{ color: "#8fb8d4", fontWeight: 600 }}>Noche (PM)</span>.{" "}
+                    El SPF va siempre en la ma{"\u00f1"}ana; los activos fuertes (retinol, {"\u00e1"}cidos) por la noche.
+                  </p>
+                </div>
+
+                {routineGroups.map((group, gi) => group.items.length > 0 && (
+                  <div key={group.key} style={{ animation: `cardIn 0.55s ease ${0.3 + gi * 0.06}s both` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, padding: "8px 0" }}>
+                      <div style={{
+                        width: 10, height: 10, borderRadius: "50%",
+                        background: group.color,
+                        boxShadow: `0 0 8px ${group.color}66`,
+                        flexShrink: 0,
+                      }} />
+                      <h3 style={{
+                        fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 400,
+                        color: "#f5ede8", letterSpacing: "-0.02em",
+                      }}>
+                        {group.title}
+                      </h3>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence))}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )
+          })()}
+
+          {/* ── SUPPLEMENTS: Additive groups ── */}
+          {activeTab === "supplements" && (() => {
+            const empiezaItems = tabItems.filter(r => r.phase === 1)
+            const sumaItems = tabItems.filter(r => r.phase === 2)
+            const avanzadoItems = tabItems.filter(r => r.phase >= 4)
+            const suppGroups = [
+              { key: "empieza", title: "Empieza con estos", subtitle: "Tu base de suplementaci\u00f3n desde el d\u00eda 1.", color: "#7ecba1", items: empiezaItems, additive: false },
+              { key: "suma", title: "Suma en el mes 2", subtitle: "Mant\u00e9n todo lo anterior + suma estos.", color: "#d4af88", items: sumaItems, additive: true },
+              { key: "avanzados", title: "Avanzados", subtitle: "Mant\u00e9n todo lo anterior + suma estos cuando est\u00e9s listo.", color: "#b39ddb", items: avanzadoItems, additive: true },
+            ]
+            return (
+              <>
+                {/* Additive note */}
+                <div style={{
+                  background: "rgba(126,203,161,0.05)", border: "1px solid rgba(126,203,161,0.12)",
+                  borderRadius: 14, padding: "16px 18px", marginBottom: 20,
+                }}>
+                  <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>
+                    Los suplementos son <span style={{ color: "#7ecba1", fontWeight: 600 }}>acumulativos</span>: cada etapa se suma a la anterior. Nunca dejas de tomar los de la etapa previa.
+                  </p>
+                </div>
+
+                {suppGroups.map((group, gi) => group.items.length > 0 && (
+                  <div key={group.key} style={{ animation: `cardIn 0.55s ease ${0.3 + gi * 0.06}s both` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, padding: "8px 0" }}>
+                      <div style={{
+                        width: 10, height: 10, borderRadius: "50%",
+                        background: group.color,
+                        boxShadow: `0 0 8px ${group.color}66`,
+                        flexShrink: 0,
+                      }} />
+                      <h3 style={{
+                        fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 400,
+                        color: "#f5ede8", letterSpacing: "-0.02em",
+                      }}>
+                        {group.title}
+                      </h3>
+                    </div>
+                    <p style={{ fontSize: 12, color: "rgba(245,237,232,0.28)", marginBottom: 16, paddingLeft: 22 }}>
+                      {group.additive && (
+                        <span style={{ color: "#d4af88", fontWeight: 600 }}>{"+"} </span>
+                      )}
+                      {group.subtitle}
+                    </p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence))}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )
+          })()}
+
+          {/* ── HABITS: Flat list, no phases ── */}
+          {activeTab === "habits" && (
+            <div style={{ animation: "cardIn 0.55s ease 0.3s both" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, padding: "8px 0" }}>
+                <div style={{
+                  width: 10, height: 10, borderRadius: "50%",
+                  background: "#7ecba1",
+                  boxShadow: "0 0 8px rgba(126,203,161,0.4)",
+                  flexShrink: 0,
+                }} />
+                <h3 style={{
+                  fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 400,
+                  color: "#f5ede8", letterSpacing: "-0.02em",
+                }}>
+                  Tu estilo de vida
+                </h3>
+              </div>
+              <p style={{ fontSize: 12, color: "rgba(245,237,232,0.28)", marginBottom: 16, paddingLeft: 22 }}>
+                H{"\u00e1"}bitos permanentes que protegen y rejuvenecen tu piel todos los d{"\u00ed"}as. No tienen fase: son para siempre.
               </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {tabItems.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence))}
+              </div>
             </div>
           )}
 
-          {phases.map((phaseNum, pi) => {
-            const phaseIdx = phaseNum - 1
-            const phaseInfo = PHASES[phaseIdx] || PHASES[4]
-            const phaseColor = PHASE_COLORS[phaseIdx] || PHASE_COLORS[4]
-            const items = phaseGroups[phaseNum]
-            const isExpanded = expandedPhases.has(phaseNum)
-            const isCollapsible = phaseNum > 2
-
-            return (
-              <div key={phaseNum} style={{ animation: `cardIn 0.55s ease ${0.3 + pi * 0.06}s both` }}>
-                {/* Phase header */}
-                <div
-                  onClick={isCollapsible ? () => togglePhase(phaseNum) : undefined}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 12, marginBottom: isExpanded ? 16 : 0,
-                    cursor: isCollapsible ? "pointer" : "default",
-                    padding: "8px 0",
-                  }}
-                >
+          {/* ── TREATMENTS: Non-invasive vs Advanced ── */}
+          {activeTab === "treatments" && (() => {
+            const noInvasiveNames = ["led", "hydrafacial", "peel"]
+            const noInvasivos = tabItems.filter(r => noInvasiveNames.some(n => r.name.toLowerCase().includes(n)))
+            const avanzados = tabItems.filter(r => !noInvasiveNames.some(n => r.name.toLowerCase().includes(n)))
+            const treatGroups = [
+              { key: "no-invasivos", title: "No invasivos", subtitle: "Tratamientos en consultorio sin agujas. Resultados con cero tiempo de recuperaci\u00f3n.", color: "#7ecba1", items: noInvasivos },
+              { key: "avanzados", title: "Avanzados", subtitle: "Procedimientos con microagujas o inyectables. Resultados m\u00e1s potentes, requieren profesional certificado.", color: "#8fb8d4", items: avanzados },
+            ]
+            return treatGroups.map((group, gi) => group.items.length > 0 && (
+              <div key={group.key} style={{ animation: `cardIn 0.55s ease ${0.3 + gi * 0.06}s both` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, padding: "8px 0" }}>
                   <div style={{
                     width: 10, height: 10, borderRadius: "50%",
-                    background: phaseColor,
-                    boxShadow: `0 0 8px ${phaseColor}66`,
+                    background: group.color,
+                    boxShadow: `0 0 8px ${group.color}66`,
                     flexShrink: 0,
                   }} />
                   <h3 style={{
                     fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 400,
                     color: "#f5ede8", letterSpacing: "-0.02em",
                   }}>
-                    Fase {phaseNum} · {phaseInfo.name}
+                    {group.title}
                   </h3>
-                  <span style={{
-                    fontSize: 10, letterSpacing: "0.08em", color: "rgba(245,237,232,0.3)",
-                    background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.06)",
-                    padding: "3px 10px", borderRadius: 99,
-                  }}>
-                    {phaseInfo.period}
-                  </span>
-                  {isCollapsible && (
-                    <svg
-                      width="14" height="14" viewBox="0 0 14 14" fill="none"
-                      style={{
-                        marginLeft: "auto", opacity: 0.3,
-                        transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
-                        transition: "transform 0.2s ease",
-                      }}
-                    >
-                      <path d="M3 5l4 4 4-4" stroke="#f5ede8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
                 </div>
-
-                {isExpanded && (
-                  <>
-                    <p style={{ fontSize: 12, color: "rgba(245,237,232,0.28)", marginBottom: 16, paddingLeft: 22 }}>
-                      {phaseInfo.description}
-                    </p>
-
-                    {/* ── Section E: Recommendation Cards ── */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {items.map((rec, ri) => {
-                        const colors = PRIORITY_COLORS[rec.priority]
-                        const cardId = `${rec.category}-${rec.phase}-${ri}`
-                        const showingEvidence = expandedEvidence.has(cardId)
-
-                        return (
-                          <div
-                            key={ri}
-                            style={{
-                              background: "rgba(245,237,232,0.04)",
-                              border: "1px solid rgba(245,237,232,0.08)",
-                              borderRadius: 14, padding: 20,
-                              transition: "border-color 0.2s, transform 0.2s",
-                              animation: `cardIn 0.45s ease ${0.35 + ri * 0.06}s both`,
-                            }}
-                            onMouseEnter={e => {
-                              e.currentTarget.style.borderColor = "rgba(245,237,232,0.15)"
-                              e.currentTarget.style.transform = "translateY(-1px)"
-                            }}
-                            onMouseLeave={e => {
-                              e.currentTarget.style.borderColor = "rgba(245,237,232,0.08)"
-                              e.currentTarget.style.transform = "translateY(0)"
-                            }}
-                          >
-                            {/* Top row: priority + cost + timing */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-                              <span style={{
-                                fontSize: 9, letterSpacing: "0.14em", fontWeight: 700,
-                                color: colors.text, textTransform: "uppercase",
-                                background: colors.bg, border: `1px solid ${colors.border}`,
-                                padding: "3px 10px", borderRadius: 99,
-                              }}>
-                                {rec.priority}
-                              </span>
-                              {rec.cost && rec.cost !== "$0" && (
-                                <span style={{ fontSize: 11, color: "rgba(245,237,232,0.3)" }}>
-                                  {rec.cost}
-                                </span>
-                              )}
-                              {rec.timing && (
-                                <span style={{
-                                  fontSize: 9, letterSpacing: "0.08em", fontWeight: 600,
-                                  color: rec.timing === "AM" ? "#d4af88" : "#8fb8d4",
-                                  background: rec.timing === "AM" ? "rgba(212,175,136,0.08)" : "rgba(143,184,212,0.08)",
-                                  border: `1px solid ${rec.timing === "AM" ? "rgba(212,175,136,0.2)" : "rgba(143,184,212,0.2)"}`,
-                                  padding: "3px 8px", borderRadius: 99, marginLeft: "auto",
-                                }}>
-                                  {rec.timing}
-                                </span>
-                              )}
-                              {rec.isNew && (
-                                <span style={{
-                                  fontSize: 9, letterSpacing: "0.08em", fontWeight: 600,
-                                  color: "#b39ddb", background: "rgba(179,157,219,0.08)",
-                                  border: "1px solid rgba(179,157,219,0.2)",
-                                  padding: "3px 8px", borderRadius: 99,
-                                }}>
-                                  NUEVO
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Title */}
-                            <h4 style={{
-                              fontFamily: "var(--font-fraunces)", fontSize: 16, fontWeight: 400,
-                              color: "#f5ede8", marginBottom: 6, lineHeight: 1.3, letterSpacing: "-0.01em",
-                            }}>
-                              {rec.name}
-                            </h4>
-
-                            {/* What */}
-                            <p style={{ fontSize: 12, color: "rgba(245,237,232,0.42)", lineHeight: 1.6, marginBottom: 10 }}>
-                              {rec.what}
-                            </p>
-
-                            {/* Meta: freq + results */}
-                            <p style={{ fontSize: 11, color: "#d4af88", marginBottom: 12, lineHeight: 1.5 }}>
-                              {rec.freq} · {rec.results}
-                            </p>
-
-                            {/* Personalized why */}
-                            <div style={{
-                              background: "rgba(232,164,176,0.04)",
-                              border: "1px solid rgba(232,164,176,0.1)",
-                              borderRadius: 10, padding: "10px 14px", marginBottom: 14,
-                            }}>
-                              <p style={{ fontSize: 10, color: "#e8a4b0", fontWeight: 600, letterSpacing: "0.06em", marginBottom: 4, textTransform: "uppercase" }}>
-                                Por qu{"\u00e9"} t{"\u00fa"} lo necesitas:
-                              </p>
-                              <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.55 }}>
-                                {rec.personalizedWhy}
-                              </p>
-                            </div>
-
-                            {/* FitzCaution warning */}
-                            {rec.fitzCaution && (
-                              <div style={{
-                                background: "rgba(212,175,136,0.06)",
-                                border: "1px solid rgba(212,175,136,0.15)",
-                                borderRadius: 8, padding: "8px 12px", marginBottom: 14,
-                              }}>
-                                <p style={{ fontSize: 11, color: "#d4af88", lineHeight: 1.5 }}>
-                                  Precauci{"\u00f3"}n en fototipos altos (Fitz IV-VI): riesgo de hiperpigmentaci{"\u00f3"}n. Consultar especialista.
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Bottom row: Amazon + Evidence */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                              {rec.amazonQuery && (rec.category === "skincare" || rec.category === "supplements") && (
-                                <a
-                                  href={amazonUrl(rec.amazonQuery)}
-                                  target="_blank" rel="noopener noreferrer"
-                                  style={{
-                                    display: "inline-flex", alignItems: "center", gap: 7,
-                                    background: "rgba(245,237,232,0.06)",
-                                    border: "1px solid rgba(245,237,232,0.12)",
-                                    color: "#f5ede8", borderRadius: 10,
-                                    padding: "9px 16px", fontSize: 12, fontWeight: 600,
-                                    textDecoration: "none", whiteSpace: "nowrap",
-                                    transition: "background 0.2s, border-color 0.2s",
-                                  }}
-                                  onMouseEnter={e => {
-                                    e.currentTarget.style.background = "rgba(245,237,232,0.11)"
-                                    e.currentTarget.style.borderColor = "rgba(245,237,232,0.22)"
-                                  }}
-                                  onMouseLeave={e => {
-                                    e.currentTarget.style.background = "rgba(245,237,232,0.06)"
-                                    e.currentTarget.style.borderColor = "rgba(245,237,232,0.12)"
-                                  }}
-                                >
-                                  Ver en Amazon
-                                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                                    <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </a>
-                              )}
-                              <button
-                                onClick={() => toggleEvidence(cardId)}
-                                style={{
-                                  background: "none", border: "none", cursor: "pointer",
-                                  fontSize: 11, color: "rgba(245,237,232,0.3)",
-                                  padding: "6px 0", fontFamily: "var(--font-inter, sans-serif)",
-                                  display: "inline-flex", alignItems: "center", gap: 4,
-                                  transition: "color 0.2s",
-                                }}
-                                onMouseEnter={e => { e.currentTarget.style.color = "rgba(245,237,232,0.6)" }}
-                                onMouseLeave={e => { e.currentTarget.style.color = "rgba(245,237,232,0.3)" }}
-                              >
-                                Evidencia {showingEvidence ? "\u25be" : "\u25b8"}
-                              </button>
-                            </div>
-
-                            {/* Collapsible evidence */}
-                            {showingEvidence && (
-                              <div style={{
-                                marginTop: 10, padding: "10px 14px",
-                                background: "rgba(245,237,232,0.02)",
-                                border: "1px solid rgba(245,237,232,0.06)",
-                                borderRadius: 8,
-                              }}>
-                                <p style={{ fontSize: 11, color: "rgba(245,237,232,0.4)", lineHeight: 1.6, fontStyle: "italic" }}>
-                                  {rec.evidence}
-                                </p>
-                                {rec.risk && rec.risk !== "Ninguno" && rec.risk !== "Bajo" && (
-                                  <p style={{ fontSize: 11, color: "rgba(212,175,136,0.6)", marginTop: 6, lineHeight: 1.5 }}>
-                                    Riesgo: {rec.risk}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </>
-                )}
+                <p style={{ fontSize: 12, color: "rgba(245,237,232,0.28)", marginBottom: 16, paddingLeft: 22 }}>
+                  {group.subtitle}
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence))}
+                </div>
               </div>
-            )
-          })}
+            ))
+          })()}
+
         </div>
 
         {/* ── Section F: Consultation CTA ── */}

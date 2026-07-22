@@ -5,7 +5,7 @@ import { CameraStage, type Scores } from "./camera-stage"
 import { generateCrossRefInsights } from "../../lib/analysis/cross-reference"
 import { trackFunnelEvent, updateLead } from "../../lib/tracking/funnel"
 import type { UserProfile } from "../../lib/types"
-import { Timer, Sparkles, Diamond, Eye, Scissors, Smile, Infinity, CalendarDays, CircleDot, Bandage, Square, Check, Sun, ScanFace, Ban, Ruler, Focus, Droplets, Star } from "lucide-react"
+import { Timer, Sparkles, Diamond, Eye, Scissors, Smile, Infinity as InfinityIcon, CalendarDays, CircleDot, Bandage, Square as SquareIcon, Check as CheckIcon, Sun as SunIcon, ScanFace, Ban, Ruler, Focus as FocusIcon, Droplets, Star as StarIcon } from "lucide-react"
 
 type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "gate-quiz" | "results-2" | "error"
 
@@ -109,28 +109,28 @@ const QUIZ_ICONS: Record<string, React.ReactNode> = {
   "ojos":        <Eye size={22} strokeWidth={1.5} />,
   "cabello":     <Scissors size={22} strokeWidth={1.5} />,
   "labios":      <Smile size={22} strokeWidth={1.5} />,
-  "longevidad":  <Infinity size={22} strokeWidth={1.5} />,
+  "longevidad":  <InfinityIcon size={22} strokeWidth={1.5} />,
   "evento":      <CalendarDays size={22} strokeWidth={1.5} />,
   // Conditions
   "rosacea":     <CircleDot size={22} strokeWidth={1.5} />,
-  "melasma":     <Sun size={22} strokeWidth={1.5} />,
+  "melasma":     <SunIcon size={22} strokeWidth={1.5} />,
   "acne_c":      <ScanFace size={22} strokeWidth={1.5} />,
   "dermatitis":  <Bandage size={22} strokeWidth={1.5} />,
-  "psoriasis":   <Square size={22} strokeWidth={1.5} />,
-  "ninguna":     <Check size={22} strokeWidth={1.5} />,
+  "psoriasis":   <SquareIcon size={22} strokeWidth={1.5} />,
+  "ninguna":     <CheckIcon size={22} strokeWidth={1.5} />,
   // Concerns
-  "manchas":     <Sun size={22} strokeWidth={1.5} />,
+  "manchas":     <SunIcon size={22} strokeWidth={1.5} />,
   "arrugas":     <Ruler size={22} strokeWidth={1.5} />,
-  "poros":       <Focus size={22} strokeWidth={1.5} />,
+  "poros":       <FocusIcon size={22} strokeWidth={1.5} />,
   "acne":        <ScanFace size={22} strokeWidth={1.5} />,
   "hidratacion": <Droplets size={22} strokeWidth={1.5} />,
-  "luminosidad": <Star size={22} strokeWidth={1.5} />,
+  "luminosidad": <StarIcon size={22} strokeWidth={1.5} />,
   // Upload guide
-  "luz":         <Sun size={18} strokeWidth={1.5} />,
+  "luz":         <SunIcon size={18} strokeWidth={1.5} />,
   "rostro":      <ScanFace size={18} strokeWidth={1.5} />,
   "sin":         <Ban size={18} strokeWidth={1.5} />,
   "camara":      <Ruler size={18} strokeWidth={1.5} />,
-  "nitida":      <Focus size={18} strokeWidth={1.5} />,
+  "nitida":      <FocusIcon size={18} strokeWidth={1.5} />,
 }
 
 // ── Quiz step types ─────────────────────────────────────────────

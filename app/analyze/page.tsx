@@ -144,14 +144,14 @@ const PRE_SCAN_STEPS: QuizStep[] = [
     sub: "Selecciona todo lo que aplique — priorizamos tu plan según esto",
     type: "multiSelect",
     options: [
-      { value: "edad",       label: "Edad visible",   icon: "⏳" },
-      { value: "piel",       label: "Piel",           icon: "✨" },
-      { value: "mandibula",  label: "Mandíbula",      icon: "🦴" },
-      { value: "ojos",       label: "Ojos",           icon: "👁️" },
-      { value: "cabello",    label: "Cabello",        icon: "💇" },
-      { value: "labios",     label: "Labios",         icon: "💋" },
-      { value: "longevidad", label: "Longevidad",     icon: "🧬" },
-      { value: "evento",     label: "Evento pronto",  icon: "📅" },
+      { value: "edad",       label: "Edad visible",   icon: "◷" },
+      { value: "piel",       label: "Piel",           icon: "◈" },
+      { value: "mandibula",  label: "Mandíbula",      icon: "△" },
+      { value: "ojos",       label: "Ojos",           icon: "◎" },
+      { value: "cabello",    label: "Cabello",        icon: "∿" },
+      { value: "labios",     label: "Labios",         icon: "◡" },
+      { value: "longevidad", label: "Longevidad",     icon: "∞" },
+      { value: "evento",     label: "Evento pronto",  icon: "◇" },
     ],
   },
   {
@@ -245,11 +245,11 @@ const PRE_SCAN_STEPS: QuizStep[] = [
     sub: "Para evitar recomendarte algo que pueda irritar o empeorar — selecciona todo lo que aplique",
     type: "multiSelect",
     options: [
-      { value: "rosacea",    label: "Rosácea",         icon: "🔴" },
-      { value: "melasma",    label: "Melasma",         icon: "🟤" },
+      { value: "rosacea",    label: "Rosácea",         icon: "◉" },
+      { value: "melasma",    label: "Melasma",         icon: "◐" },
       { value: "acne",       label: "Acné activo",     icon: "●" },
-      { value: "dermatitis", label: "Dermatitis/eccema",icon: "🩹" },
-      { value: "psoriasis",  label: "Psoriasis",       icon: "⬜" },
+      { value: "dermatitis", label: "Dermatitis/eccema",icon: "◌" },
+      { value: "psoriasis",  label: "Psoriasis",       icon: "▫" },
       { value: "ninguna",    label: "Ninguna",         icon: "✓" },
     ],
   },
@@ -285,11 +285,11 @@ const GATE_STEPS: QuizStep[] = [
     sub: "Elige tu prioridad #1 — esto define el orden de tu plan",
     type: "grid6",
     options: [
-      { value: "manchas",     label: "Manchas",     icon: "🌑" },
-      { value: "arrugas",     label: "Arrugas",     icon: "〰️" },
+      { value: "manchas",     label: "Manchas",     icon: "◐" },
+      { value: "arrugas",     label: "Arrugas",     icon: "≈" },
       { value: "poros",       label: "Poros",       icon: "⊙" },
       { value: "acne",        label: "Acné",        icon: "●" },
-      { value: "hidratacion", label: "Hidratación", icon: "💧" },
+      { value: "hidratacion", label: "Hidratación", icon: "◦" },
       { value: "luminosidad", label: "Luminosidad", icon: "✦" },
     ],
   },
@@ -1437,11 +1437,11 @@ export default function AnalyzePage() {
               <p style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "#7ecba1", fontWeight: 700, marginBottom: 10 }}>Asi funciona</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                 {[
-                  { icon: "☀", text: "Luz natural frontal — ventana o lámpara apuntando a tu cara, sin contraluz" },
-                  { icon: "👤", text: "Rostro centrado y completo — frente, mejillas, nariz y mentón visibles" },
-                  { icon: "🚫", text: "Sin maquillaje, filtros, gafas ni cabello tapando la cara" },
-                  { icon: "📐", text: "Cámara al nivel de los ojos, a 30–50 cm de distancia" },
-                  { icon: "🔆", text: "Imagen nítida y bien expuesta" },
+                  { icon: "◐", text: "Luz natural frontal — ventana o lámpara apuntando a tu cara, sin contraluz" },
+                  { icon: "◎", text: "Rostro centrado y completo — frente, mejillas, nariz y mentón visibles" },
+                  { icon: "✕", text: "Sin maquillaje, filtros, gafas ni cabello tapando la cara" },
+                  { icon: "▱", text: "Cámara al nivel de los ojos, a 30–50 cm de distancia" },
+                  { icon: "◈", text: "Imagen nítida y bien expuesta" },
                 ].map((item,i)=>(
                   <div key={i} style={{ display: "flex", gap: 12, padding: "11px 14px", background: "rgba(126,203,161,0.04)", border: "1px solid rgba(126,203,161,0.1)", borderRadius: 11 }}>
                     <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>

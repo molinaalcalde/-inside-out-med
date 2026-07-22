@@ -116,35 +116,37 @@ export function FaceScrollSection() {
         background: "#0e0c12",
       }}>
 
-        {/* ── Video — fills section, face centered ── */}
-        <video
-          ref={videoRef}
-          muted
-          playsInline
-          preload="auto"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center center",
-          }}
-        >
-          <source src="/face-scan.mp4" type="video/mp4" />
-        </video>
+        {/* ── Video — contained, fades into background via mask ── */}
+        <div style={{
+          position: "absolute",
+          top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "min(65vw, 720px)",
+          height: "min(85vh, 900px)",
+          WebkitMaskImage: "radial-gradient(ellipse 50% 48% at 50% 45%, black 35%, transparent 72%)",
+          maskImage: "radial-gradient(ellipse 50% 48% at 50% 45%, black 35%, transparent 72%)",
+        }}>
+          <video
+            ref={videoRef}
+            muted
+            playsInline
+            preload="auto"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center center",
+            }}
+          >
+            <source src="/face-scan.mp4" type="video/mp4" />
+          </video>
+        </div>
 
-        {/* Light overlay — just enough for text readability, face stays visible */}
+        {/* Subtle overlay for text readability */}
         <div style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(to right, rgba(14,12,18,0.8) 0%, rgba(14,12,18,0.15) 30%, rgba(14,12,18,0.05) 50%, rgba(14,12,18,0.15) 70%, rgba(14,12,18,0.7) 100%)",
-          pointerEvents: "none",
-        }} />
-        <div style={{
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(to bottom, rgba(14,12,18,0.4) 0%, transparent 15%, transparent 60%, rgba(14,12,18,0.5) 80%, rgba(14,12,18,1) 95%)",
+          background: "radial-gradient(ellipse 45% 45% at 50% 45%, rgba(14,12,18,0.1) 0%, rgba(14,12,18,0.7) 60%, rgba(14,12,18,0.95) 85%)",
           pointerEvents: "none",
         }} />
 

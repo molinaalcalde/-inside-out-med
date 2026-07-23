@@ -101,7 +101,7 @@ export function FaceScrollSection() {
     <section
       ref={sectionRef}
       id="results"
-      style={{ position: "relative", height: "600vh", background: "#111118" }}
+      style={{ position: "relative", height: "600vh", background: "#0e0c12" }}
     >
       {/* ── Sticky container ── */}
       <div style={{
@@ -113,40 +113,39 @@ export function FaceScrollSection() {
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
-        background: "#111118",
+        background: "#0e0c12",
       }}>
 
-        {/* ── Video — contained, soft edge fade into background ── */}
-        <div style={{
-          position: "absolute",
-          top: "50%", left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "min(90vw, 1100px)",
-          height: "95vh",
-          WebkitMaskImage: "radial-gradient(ellipse 70% 65% at 50% 45%, black 50%, transparent 90%)",
-          maskImage: "radial-gradient(ellipse 70% 65% at 50% 45%, black 50%, transparent 90%)",
-        }}>
-          <video
-            ref={videoRef}
-            muted
-            playsInline
-            preload="auto"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center center",
-            }}
-          >
-            <source src="/face-scan.mp4" type="video/mp4" />
-          </video>
-        </div>
+        {/* ── Video — fullscreen, no mask ── */}
+        <video
+          ref={videoRef}
+          muted
+          playsInline
+          preload="auto"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center center",
+          }}
+        >
+          <source src="/face-scan.mp4" type="video/mp4" />
+        </video>
 
-        {/* Light gradient for text readability on the left */}
+        {/* Radial overlay — darkens edges, face floats in center */}
         <div style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(to right, rgba(17,17,24,0.75) 0%, rgba(17,17,24,0.2) 35%, transparent 55%, rgba(17,17,24,0.2) 75%, rgba(17,17,24,0.6) 100%)",
+          background: "radial-gradient(ellipse 55% 55% at 50% 42%, transparent 30%, rgba(14,12,18,0.6) 65%, rgba(14,12,18,0.92) 85%)",
+          pointerEvents: "none",
+        }} />
+        {/* Left side darker for text readability */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(to right, rgba(14,12,18,0.7) 0%, transparent 40%, transparent 65%, rgba(14,12,18,0.5) 100%)",
           pointerEvents: "none",
         }} />
 

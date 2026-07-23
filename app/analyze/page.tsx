@@ -677,8 +677,7 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
   }
   const depthAdj = clamp(depthBonus, -5, 5)
 
-  // Texture metrics (simplified for upload — no multi-frame averaging)
-  const avgContrast = activeZones.reduce((s, zn) => s + zoneAvgs[zn].contrast, 0) / activeZones.length
+  // Texture metrics (simplified for upload — uses existing avgContrast)
   const texture = clamp(Math.round(100 - avgContrast * 3.5), 15, 98)
   const wrinkleDepth = clamp(Math.round(100 - avgContrast * 2.0), 15, 95)
 

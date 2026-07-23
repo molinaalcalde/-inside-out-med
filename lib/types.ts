@@ -16,6 +16,7 @@ export interface Scores {
   vascularity: number
   texture: number
   wrinkleDepth: number
+  darkCircles: number
   ageApparent: number
   symmetry: number
   quality: number

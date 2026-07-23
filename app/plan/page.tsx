@@ -14,6 +14,8 @@ type Scores = {
   vascularity: number
   texture?: number
   wrinkleDepth?: number
+  darkCircles?: number
+  symmetry?: number
   ageApparent?: number
   zoneScores?: Record<string, { score: number; status: string }>
 }
@@ -1551,7 +1553,7 @@ export default function PlanPage() {
         loadedScores = {
           overall: 72, luminosity: 65, hydration: 70, uniformity: 58,
           glycation: 32, inflammation: 28, sunDamage: 35, vascularity: 20,
-          texture: 68, wrinkleDepth: 65, ageApparent: 34,
+          texture: 68, wrinkleDepth: 65, darkCircles: 72, symmetry: 85, ageApparent: 34,
         }
       }
 
@@ -1569,7 +1571,7 @@ export default function PlanPage() {
       loadedScores = {
         overall: 72, luminosity: 65, hydration: 70, uniformity: 58,
         glycation: 32, inflammation: 28, sunDamage: 35, vascularity: 20,
-        texture: 68, wrinkleDepth: 65, ageApparent: 34,
+        texture: 68, wrinkleDepth: 65, darkCircles: 72, ageApparent: 34,
       }
       loadedProfile = {
         age: "26-35",

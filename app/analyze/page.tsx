@@ -666,6 +666,23 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
   const texture = clamp(Math.round(100 - avgContrast * 3.5), 15, 98)
   const wrinkleDepth = clamp(Math.round(100 - avgContrast * 2.0), 15, 95)
 
+  // Dark circles: compare periocular luminosity vs cheek luminosity
+  const periLum = ((zoneAvgs.periocularL?.lum || 0) + (zoneAvgs.periocularR?.lum || 0)) / 2
+  const cheekLum = ((zoneAvgs.cheekL?.lum || 0) + (zoneAvgs.cheekR?.lum || 0)) / 2
+  const darkCircleRatio = cheekLum > 0 ? periLum / cheekLum : 1
+  const darkCircles = clamp(Math.round(darkCircleRatio * 100), 30, 98)
+
+  // Symmetry from single image
+  const symCenterX = (landmarks[1].x + landmarks[152].x) / 2
+  const symPairs: [number, number][] = [[33, 263], [133, 362], [46, 276], [50, 280], [61, 291], [116, 345]]
+  let symDiff = 0
+  for (const [l, r] of symPairs) {
+    if (landmarks[l] && landmarks[r]) {
+      symDiff += Math.abs(Math.abs(landmarks[l].x - symCenterX) - Math.abs(landmarks[r].x - symCenterX))
+    }
+  }
+  const symmetry = clamp(Math.round(100 - (symDiff / symPairs.length) * 800), 40, 99)
+
   // Overall (higher = better)
   const overall = clamp(Math.round(
     luminosity * 0.14 + hydration * 0.16 + uniformity * 0.14 +
@@ -691,6 +708,7 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
     uniformity,                                                     // tone evenness (spots)
     clamp(Math.round(100 - sunDamage), 10, 95),                   // sun damage (inverted)
     luminosity,                                                     // skin luminosity
+    darkCircles,                                                    // dark circles under eyes
     zoneScore("periocularL"),                                      // left eye area
     zoneScore("periocularR"),                                      // right eye area
     zoneScore("cheekL"),                                           // left cheek (nasolabial)
@@ -707,7 +725,7 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
 
   return {
     overall, luminosity, hydration, uniformity, glycation, inflammation, sunDamage, vascularity,
-    texture, wrinkleDepth, ageApparent,
+    texture, wrinkleDepth, darkCircles, symmetry, ageApparent,
     zoneScores: {
       forehead:    zoneScore("forehead"),
       periocularL: zoneScore("periocularL"),
@@ -754,6 +772,14 @@ function getBiomarkerInsight(label: string, value: number): string {
       if (value <= 12) return "No hay rojez persistente — tu circulación facial está estable."
       if (value <= 25) return "Detectamos rojez en mejillas y nariz que indica actividad vascular elevada. Puede ser rosácea temprana, sensibilidad o reacción a temperaturas extremas. Ingredientes calmantes como centella asiática ayudan."
       return "Hay rojez marcada en tu cara — vasos dilatados visibles, especialmente en mejillas y nariz. Esto da una apariencia de piel irritada y sensible que envejece tu aspecto. Evita agua caliente en la cara, alcohol y picante. Necesita tratamiento calmante específico."
+    case "Ojeras":
+      if (value >= 80) return "Sin signos de fatiga bajo los ojos — tu contorno ocular se ve descansado y uniforme en tono."
+      if (value >= 55) return "Se nota oscurecimiento bajo los ojos. Puede ser por falta de sueño, genética o retención de líquidos. Un contorno de ojos con vitamina K y cafeína puede ayudar en 4-6 semanas."
+      return "Ojeras marcadas — el contraste entre tu contorno ocular y mejillas es notable. Esto te suma años visualmente. Necesitas un enfoque combinado: sueño, contorno de ojos con retinol y posiblemente ácido hialurónico inyectable."
+    case "Simetría":
+      if (value >= 90) return "Tu rostro tiene simetría muy alta — los rasgos izquierdo y derecho están bien alineados. Esto se percibe como armonía y atractivo."
+      if (value >= 75) return "Simetría normal — hay pequeñas diferencias entre ambos lados de tu cara que son naturales. La mayoría de las personas tienen asimetría leve."
+      return "Se detecta asimetría notable entre ambos lados de tu cara. Puede ser postural, genética o por hábitos (dormir de un lado). No es un problema de salud pero afecta la percepción de armonía."
     default:
       return ""
   }
@@ -1593,6 +1619,8 @@ export default function AnalyzePage() {
     { label: "Inflamación",      rawValue: scores.inflammation,  higherBetter: false, friendlyLabel: "Rojez e inflamación" },
     { label: "Daño solar",       rawValue: scores.sunDamage,     higherBetter: false, friendlyLabel: "Daño por sol" },
     { label: "Vascularidad",     rawValue: scores.vascularity,   higherBetter: false, friendlyLabel: "Rojez vascular" },
+    { label: "Ojeras",            rawValue: scores.darkCircles,   higherBetter: true,  friendlyLabel: "Contorno de ojos" },
+    { label: "Simetría",          rawValue: scores.symmetry ?? 85, higherBetter: true,  friendlyLabel: "Simetría facial" },
   ].map(b => {
     // Display value: always "higher = better" for intuitive reading
     const displayValue = b.higherBetter ? b.rawValue : (100 - b.rawValue)
@@ -2143,6 +2171,7 @@ export default function AnalyzePage() {
               { label: "Apertura ocular", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.9 + 5, 20, 95)) },
               { label: "Simetría L/R", score: Math.round(clamp(100 - Math.abs(s.periocularL - s.periocularR) * 3, 50, 99)) },
               { label: "Ojeras / pigmento", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.75, 15, 95)) },
+              { label: "Ojeras / oscurecimiento", score: Math.round(clamp(scores.darkCircles ?? 70, 15, 95)) },
               { label: "Bolsas / hinchazón", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.80 - 5, 15, 90)) },
               { label: "Patas de gallo", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.85, 15, 90)) },
               { label: "Densidad de pestañas", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.5 + 40, 40, 99)) },
@@ -2184,6 +2213,7 @@ export default function AnalyzePage() {
               { label: "Manchas / uniformidad", score: Math.round(scores.uniformity) },
               { label: "Luminosidad", score: Math.round(scores.luminosity) },
               { label: "Daño solar", score: Math.round(clamp(100 - scores.sunDamage, 10, 95)) },
+              { label: "Simetría facial", score: Math.round(scores.symmetry ?? 85) },
             ],
           }
 

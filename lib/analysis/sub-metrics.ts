@@ -155,6 +155,7 @@ export function computeSubMetrics(
   landmarks: Lm[],
   regions: Record<string, RegionData>,
   bio: ReturnType<typeof computeBiomarkers>,
+  scores?: { darkCircles?: number },
 ): Record<string, SubMetric[]> {
   const RG = (k: string) => regions[k] || null
   const geo = computeGeometry(landmarks)
@@ -194,6 +195,7 @@ export function computeSubMetrics(
       { label: "Apertura ocular", score: geo.apertura },
       { label: "Simetría L/R", score: geo.eyeSym },
       { label: "Ojeras / pigmento", score: Math.round((dark(ueL, cheekL) + dark(ueR, cheekR)) / 2) },
+      { label: "Ojeras / oscurecimiento", score: Math.round(clamp(scores?.darkCircles ?? 70, 15, 95)) },
       { label: "Bolsas / hinchazón", score: Math.round((tex(ueL) + tex(ueR)) / 2) },
       { label: "Profundidad de bolsas (z)", score: geo.eyeBagDepth },
       { label: "Patas de gallo", score: Math.round((tex(cfL) + tex(cfR)) / 2) },

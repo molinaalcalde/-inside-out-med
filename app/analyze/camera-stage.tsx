@@ -14,6 +14,8 @@ export interface Scores {
   vascularity: number
   texture: number
   wrinkleDepth: number
+  darkCircles: number
+  symmetry: number
   ageApparent: number
   zoneScores: {
     forehead: number
@@ -107,7 +109,7 @@ function accumulate(a: ZoneAccum, m: ZoneMetrics) {
 function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)) }
 
 // ── Scoring engine (deterministic, Fitzpatrick-calibrated) ───────
-function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age: number, zDepthAvgs?: Record<string, number>): Scores | null {
+function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age: number, zDepthAvgs?: Record<string, number>, symmetryDiff?: number): Scores | null {
   // Require at minimum forehead, cheekL, cheekR, nose to have data
   if (!acc.forehead?.n || !acc.cheekL?.n || !acc.cheekR?.n || !acc.nose?.n) return null
 
@@ -179,6 +181,17 @@ function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age:
   const texture = clamp(Math.round(100 - avgSobel * 3.5), 15, 98)
   const wrinkleDepth = clamp(Math.round(100 - (avgTexDepth - 0.5) * 60), 15, 95)
 
+  // Dark circles: compare periocular luminosity vs cheek luminosity
+  const periLum = ((zoneAvgs.periocularL?.lum || 0) + (zoneAvgs.periocularR?.lum || 0)) / 2
+  const cheekLum = ((zoneAvgs.cheekL?.lum || 0) + (zoneAvgs.cheekR?.lum || 0)) / 2
+  const darkCircleRatio = cheekLum > 0 ? periLum / cheekLum : 1
+  const darkCircles = clamp(Math.round(darkCircleRatio * 100), 30, 98)
+
+  // Facial symmetry from accumulated landmark diffs
+  const symmetry = symmetryDiff !== undefined
+    ? clamp(Math.round(100 - symmetryDiff * 800), 40, 99)
+    : 85 // default if no landmark data
+
   // ── Z-depth adjustments (if available) ─────────────────────────
   let depthBonus = 0
   if (zDepthAvgs && Object.keys(zDepthAvgs).length > 0) {
@@ -228,6 +241,7 @@ function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age:
     luminosity,                                                     // skin luminosity
     texture,                                                        // surface texture quality
     wrinkleDepth,                                                   // fine-to-coarse wrinkle depth
+    darkCircles,                                                    // dark circles under eyes
     zoneScore('periocularL'),                                      // left eye area
     zoneScore('periocularR'),                                      // right eye area
     zoneScore('cheekL'),                                           // left cheek
@@ -244,7 +258,7 @@ function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age:
 
   return {
     overall, luminosity, hydration, uniformity, glycation, inflammation, sunDamage, vascularity,
-    texture, wrinkleDepth, ageApparent,
+    texture, wrinkleDepth, darkCircles, symmetry, ageApparent,
     zoneScores: {
       forehead:    zoneScore('forehead'),
       periocularL: zoneScore('periocularL'),
@@ -509,6 +523,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
   const landmarkFramesRef  = useRef(0)
   const noFaceFramesRef    = useRef(0)
   const zDepthAccumRef     = useRef<{ sums: Record<string, number>; n: number }>({ sums: {}, n: 0 })
+  const symmetryAccumRef   = useRef<{ sumDiffs: number; n: number }>({ sumDiffs: 0, n: 0 })
 
   const [phase, setPhase]         = useState<Phase>("init")
   const [guidance, setGuidance]   = useState<{ msg: string; sub: string; type: "neutral" | "warning" | "success" }>({ msg: "Iniciando cámara…", sub: "", type: "neutral" })
@@ -570,7 +585,10 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
         zAvgs[k] = v / zda.n
       }
     }
-    const scores = computeScores(accumRef.current, fitzpatrick, age, Object.keys(zAvgs).length > 0 ? zAvgs : undefined)
+    const symAvg = symmetryAccumRef.current.n > 0
+      ? symmetryAccumRef.current.sumDiffs / symmetryAccumRef.current.n
+      : 0
+    const scores = computeScores(accumRef.current, fitzpatrick, age, Object.keys(zAvgs).length > 0 ? zAvgs : undefined, symAvg)
 
     const canvas = document.createElement("canvas")
     canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480
@@ -700,6 +718,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
 
           accumRef.current = fresh9Zones()
           zDepthAccumRef.current = { sums: {}, n: 0 }
+          symmetryAccumRef.current = { sumDiffs: 0, n: 0 }
           landmarkFramesRef.current = 0; noFaceFramesRef.current = 0
           setPhase("countdown")
           return
@@ -727,6 +746,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
           if (bSum / (60 * 80) < 55) {
             capturedRef.current = false; accumRef.current = fresh9Zones()
             zDepthAccumRef.current = { sums: {}, n: 0 }
+            symmetryAccumRef.current = { sumDiffs: 0, n: 0 }
             landmarkFramesRef.current = 0; noFaceFramesRef.current = 0
             phaseStartRef.current = Date.now(); setPhase("stabilizing"); return
           }
@@ -778,6 +798,18 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
                   }
                   za.n++
 
+                  // Symmetry: compare left/right landmark pairs relative to face center
+                  const centerX = (lm[1].x + lm[152].x) / 2
+                  const symPairs: [number, number][] = [[33, 263], [133, 362], [46, 276], [50, 280], [61, 291], [116, 345]]
+                  let symDiff = 0
+                  for (const [l, r] of symPairs) {
+                    if (lm[l] && lm[r]) {
+                      symDiff += Math.abs(Math.abs(lm[l].x - centerX) - Math.abs(lm[r].x - centerX))
+                    }
+                  }
+                  symmetryAccumRef.current.sumDiffs += symDiff / symPairs.length
+                  symmetryAccumRef.current.n++
+
                   usedLandmarks = true; landmarkFramesRef.current++; noFaceFramesRef.current = 0
                 } else { noFaceFramesRef.current++ }
               } else { noFaceFramesRef.current++ }
@@ -786,6 +818,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
             if (noFaceFramesRef.current > 5) {
               capturedRef.current = false; accumRef.current = fresh9Zones()
               zDepthAccumRef.current = { sums: {}, n: 0 }
+              symmetryAccumRef.current = { sumDiffs: 0, n: 0 }
               landmarkFramesRef.current = 0; noFaceFramesRef.current = 0
               phaseStartRef.current = Date.now(); setPhase("stabilizing")
               updateGuidance("Rostro perdido", "Centra tu cara y quédate quieto", "warning"); return

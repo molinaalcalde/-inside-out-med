@@ -223,8 +223,15 @@ export function Nav() {
           ))}
         </div>
 
-        {/* CTA */}
-        <div style={{ padding: "24px 40px 48px", flexShrink: 0 }}>
+        {/* Language + CTA */}
+        <div style={{ padding: "24px 40px 48px", flexShrink: 0, display: "flex", flexDirection: "column", gap: 20, alignItems: "center" }}>
+          {/* Language toggle */}
+          <div style={{ display: "flex", alignItems: "center", background: "rgba(245,237,232,0.06)", border: "1px solid rgba(245,237,232,0.1)", borderRadius: 99, padding: "4px 6px", gap: 2 }}>
+            <button onClick={() => { setLocale("es") }} style={{ background: locale === "es" ? "rgba(245,237,232,0.12)" : "transparent", border: "none", borderRadius: 99, padding: "6px 14px", fontSize: 13, fontWeight: locale === "es" ? 700 : 500, color: locale === "es" ? "#f5ede8" : "rgba(245,237,232,0.4)", cursor: "pointer" }}>ES</button>
+            <span style={{ color: "rgba(245,237,232,0.15)", fontSize: 11 }}>|</span>
+            <button onClick={() => { setLocale("en") }} style={{ background: locale === "en" ? "rgba(245,237,232,0.12)" : "transparent", border: "none", borderRadius: 99, padding: "6px 14px", fontSize: 13, fontWeight: locale === "en" ? 700 : 500, color: locale === "en" ? "#f5ede8" : "rgba(245,237,232,0.4)", cursor: "pointer" }}>EN</button>
+          </div>
+          {/* CTA */}
           <a
             href="/analyze"
             onClick={() => setMenuOpen(false)}

@@ -89,13 +89,14 @@ export function Nav() {
         ))}
       </div>
 
-      {/* CTA */}
-      <a href="/analyze" className="btn-rose hidden md:inline-flex" style={{ padding: "10px 24px", fontSize: 14 }}>
+      {/* CTA — desktop only */}
+      <a href="/analyze" className="btn-rose nav-cta" style={{ padding: "10px 24px", fontSize: 14 }}>
         {t("nav.cta")}
       </a>
 
-      {/* Language toggle */}
+      {/* Language toggle — hidden on mobile */}
       <div
+        className="nav-lang"
         style={{
           display: "flex",
           alignItems: "center",
@@ -144,6 +145,8 @@ export function Nav() {
       <style>{`
         @media (max-width: 768px) {
           .nav-links { display: none !important; }
+          .nav-cta { display: none !important; }
+          .nav-lang { display: none !important; }
         }
         .mobile-menu-btn { display: none !important; }
         @media (max-width: 768px) {

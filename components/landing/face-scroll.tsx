@@ -220,8 +220,9 @@ export function FaceScrollSection() {
               borderRadius: 18,
               padding: "28px 28px",
               width: 320,
-              maxWidth: "100%",
+              maxWidth: "calc(100% - 32px)",
               marginLeft: "auto",
+              marginRight: "auto",
             }}
           >
             {/* Header */}

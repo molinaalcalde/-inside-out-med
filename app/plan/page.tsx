@@ -785,7 +785,7 @@ function AnalyzingScreen({ scores, onDone }: { scores: Scores; onDone: () => voi
             return (
               <div key={i} style={{
                 display: "flex", alignItems: "center", gap: 13,
-                opacity: isPending ? 0.22 : 1,
+                opacity: isPending ? 0.38 : 1,
                 transform: isPending ? "translateX(-4px)" : "translateX(0)",
                 transition: "opacity 0.4s ease, transform 0.4s ease",
               }}>
@@ -1115,10 +1115,10 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
           href={`https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`}
           target="_blank" rel="noopener noreferrer"
           style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "rgba(232,164,176,0.1)", border: "1px solid rgba(232,164,176,0.28)",
-            color: "#e8a4b0", borderRadius: 99, padding: "8px 20px",
-            fontSize: 13, fontWeight: 600, textDecoration: "none",
+            display: "inline-flex", alignItems: "center", gap: 7,
+            background: "none", border: "none",
+            color: "rgba(245,237,232,0.5)", borderRadius: 99, padding: "8px 0",
+            fontSize: 12, fontWeight: 500, textDecoration: "none", letterSpacing: "0.02em",
           }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">

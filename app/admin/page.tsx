@@ -13,7 +13,19 @@ interface Lead {
   scan_data: {
     overall?: number
     ageApparent?: number
+    luminosity?: number
+    hydration?: number
+    uniformity?: number
+    glycation?: number
+    inflammation?: number
+    sunDamage?: number
+    vascularity?: number
+    texture?: number
+    wrinkleDepth?: number
+    darkCircles?: number
+    symmetry?: number
     zoneScores?: Record<string, number>
+    [key: string]: unknown
   } | null
   plan_data: unknown
   funnel_stage: string
@@ -21,7 +33,7 @@ interface Lead {
   updated_at: string
 }
 
-const STAGE_ORDER = ["started", "quiz_complete", "scan_started", "scan_complete", "contact_complete", "results_viewed", "plan_viewed", "plan_committed"]
+const STAGE_ORDER = ["started", "quiz_complete", "scan_started", "scan_complete", "contact_complete", "results_viewed", "full_results_viewed", "plan_viewed", "plan_committed"]
 const STAGE_LABELS: Record<string, string> = {
   started: "Inicio",
   quiz_complete: "Quiz",
@@ -29,8 +41,23 @@ const STAGE_LABELS: Record<string, string> = {
   scan_complete: "Scan OK",
   contact_complete: "Contacto",
   results_viewed: "Resultados",
+  full_results_viewed: "Full Results",
   plan_viewed: "Plan",
   plan_committed: "Comprometido",
+}
+
+const BIOMARKER_LABELS: Record<string, string> = {
+  luminosity: "Luminosidad",
+  hydration: "Hidratación",
+  uniformity: "Uniformidad",
+  glycation: "Glicación",
+  inflammation: "Inflamación",
+  sunDamage: "Daño solar",
+  vascularity: "Vascularidad",
+  texture: "Textura",
+  wrinkleDepth: "Arrugas",
+  darkCircles: "Ojeras",
+  symmetry: "Simetría",
 }
 
 function getStageColor(stage: string) {
@@ -143,6 +170,21 @@ export default function AdminDashboard() {
       <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1a1520", marginBottom: 8 }}>Dashboard</h1>
       <p style={{ fontSize: 14, color: "#888", marginBottom: 32 }}>{leads.length} usuarios totales</p>
 
+      {/* KPI Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 32 }}>
+        {[
+          { label: "Total Leads", value: leads.length, color: "#e8a4b0" },
+          { label: "Con escaneo", value: leads.filter(l => l.scan_data?.overall).length, color: "#7ecba1" },
+          { label: "Conversión", value: leads.length > 0 ? Math.round(leads.filter(l => l.funnel_stage === "results_viewed" || l.funnel_stage === "plan_viewed" || l.funnel_stage === "plan_committed" || l.funnel_stage === "full_results_viewed").length / leads.length * 100) + "%" : "0%", color: "#d4af88" },
+          { label: "Score promedio", value: (() => { const scored = leads.filter(l => l.scan_data?.overall); return scored.length > 0 ? Math.round(scored.reduce((s, l) => s + l.scan_data!.overall!, 0) / scored.length) : "—" })(), color: "#e8a4b0" },
+        ].map((kpi, i) => (
+          <div key={i} style={{ background: "rgba(245,237,232,0.04)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 14, padding: "20px 16px", textAlign: "center" }}>
+            <p style={{ fontSize: 10, letterSpacing: "0.1em", color: "rgba(245,237,232,0.35)", textTransform: "uppercase", marginBottom: 8 }}>{kpi.label}</p>
+            <p style={{ fontFamily: "var(--font-fraunces, serif)", fontSize: 28, fontWeight: 300, color: kpi.color }}>{kpi.value}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Funnel overview */}
       <div style={{
         background: "#fff", borderRadius: 16, padding: 24, marginBottom: 24,
@@ -173,18 +215,40 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Search */}
-      <div style={{ marginBottom: 16 }}>
+      {/* Search + Export */}
+      <div style={{ marginBottom: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         <input
           type="text"
           placeholder="Buscar por nombre, email o teléfono..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           style={{
-            width: "100%", maxWidth: 400, padding: "12px 16px", borderRadius: 12,
+            flex: 1, minWidth: 240, maxWidth: 400, padding: "12px 16px", borderRadius: 12,
             border: "1.5px solid #e5e2df", fontSize: 14, outline: "none",
           }}
         />
+        <button
+          onClick={() => {
+            const headers = ["Nombre","Email","Teléfono","Edad","Score","Edad Aparente","Etapa","Fecha"]
+            const rows = leads.map(l => [
+              l.name || "", l.email || "", l.phone || "", l.age || "",
+              l.scan_data?.overall || "", l.scan_data?.ageApparent || "",
+              l.funnel_stage || "", l.created_at ? new Date(l.created_at).toLocaleDateString() : ""
+            ])
+            const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n")
+            const blob = new Blob([csv], { type: "text/csv" })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement("a"); a.href = url; a.download = `insideoutmed-leads-${new Date().toISOString().slice(0,10)}.csv`; a.click()
+            URL.revokeObjectURL(url)
+          }}
+          style={{
+            padding: "8px 16px", borderRadius: 10,
+            background: "rgba(126,203,161,0.1)", border: "1px solid rgba(126,203,161,0.25)",
+            color: "#7ecba1", fontSize: 12, fontWeight: 600, cursor: "pointer",
+          }}
+        >
+          Exportar CSV
+        </button>
       </div>
 
       {/* Users table */}
@@ -261,22 +325,37 @@ export default function AdminDashboard() {
             <button onClick={() => setSelectedLead(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#ccc" }}>×</button>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 20 }}>
-            <div>
-              <div style={{ fontSize: 10, color: "#888", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 4 }}>Email</div>
-              <div style={{ fontSize: 14, color: "#1a1520" }}>{selectedLead.email || "—"}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, color: "#888", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 4 }}>Teléfono</div>
-              <div style={{ fontSize: 14, color: "#1a1520" }}>{selectedLead.phone || "—"}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, color: "#888", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 4 }}>Edad</div>
-              <div style={{ fontSize: 14, color: "#1a1520" }}>{selectedLead.age || "—"}</div>
-            </div>
+          {/* Profile info */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16, marginBottom: 20 }}>
+            {[
+              { label: "Email", value: selectedLead.email },
+              { label: "Teléfono", value: selectedLead.phone },
+              { label: "Edad", value: selectedLead.age },
+              { label: "Fitzpatrick", value: selectedLead.profile_data?.fitzpatrick != null ? `Tipo ${selectedLead.profile_data.fitzpatrick}` : null },
+            ].map(({ label, value }) => (
+              <div key={label}>
+                <div style={{ fontSize: 10, color: "#888", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: 14, color: "#1a1520" }}>{value != null ? String(value) : "—"}</div>
+              </div>
+            ))}
           </div>
 
-          {/* Profile data */}
+          {/* Funnel stage with timestamp */}
+          <div style={{ marginBottom: 20, padding: "12px 16px", background: "#faf7f5", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{
+              display: "inline-block", padding: "4px 12px", borderRadius: 8,
+              fontSize: 12, fontWeight: 600,
+              background: `${getStageColor(selectedLead.funnel_stage)}15`,
+              color: getStageColor(selectedLead.funnel_stage),
+            }}>
+              {STAGE_LABELS[selectedLead.funnel_stage] || selectedLead.funnel_stage}
+            </span>
+            <span style={{ fontSize: 12, color: "#999" }}>
+              {new Date(selectedLead.updated_at).toLocaleString("es", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
+
+          {/* Profile data (quiz) */}
           {selectedLead.profile_data && Object.keys(selectedLead.profile_data).length > 0 && (
             <div style={{ marginBottom: 20 }}>
               <h3 style={{ fontSize: 13, fontWeight: 600, color: "#888", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>Datos del quiz</h3>
@@ -295,37 +374,58 @@ export default function AdminDashboard() {
           {selectedLead.scan_data && (
             <div>
               <h3 style={{ fontSize: 13, fontWeight: 600, color: "#888", marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" }}>Resultados del scan</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                <div style={{ padding: "12px", background: "#faf7f5", borderRadius: 10, textAlign: "center" }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1520" }}>{selectedLead.scan_data.overall || "—"}</div>
-                  <div style={{ fontSize: 10, color: "#888" }}>Score global</div>
+
+              {/* Score + Age headline cards */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                <div style={{ padding: "16px", background: "#faf7f5", borderRadius: 12, textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: 700, color: "#1a1520" }}>{selectedLead.scan_data.overall ?? "—"}</div>
+                  <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Score global</div>
                 </div>
-                <div style={{ padding: "12px", background: "#faf7f5", borderRadius: 10, textAlign: "center" }}>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: "#e8a4b0" }}>{selectedLead.scan_data.ageApparent || "—"}</div>
-                  <div style={{ fontSize: 10, color: "#888" }}>Edad visible</div>
+                <div style={{ padding: "16px", background: "#faf7f5", borderRadius: 12, textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: 700, color: "#e8a4b0" }}>{selectedLead.scan_data.ageApparent ?? "—"}</div>
+                  <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>Edad aparente</div>
                 </div>
-                {selectedLead.scan_data.zoneScores && (
-                  <div style={{ padding: "12px", background: "#faf7f5", borderRadius: 10, textAlign: "center" }}>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: "#1a1520" }}>
-                      {Object.keys(selectedLead.scan_data.zoneScores).length}
-                    </div>
-                    <div style={{ fontSize: 10, color: "#888" }}>Zonas</div>
-                  </div>
-                )}
               </div>
 
-              {/* Zone scores */}
-              {selectedLead.scan_data.zoneScores && (
-                <div style={{ marginTop: 12 }}>
-                  {Object.entries(selectedLead.scan_data.zoneScores).map(([zone, score]) => {
-                    const barColor = (score as number) >= 75 ? "#22c55e" : (score as number) >= 55 ? "#eab308" : "#ef4444"
-                    return (
-                      <div key={zone} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                        <span style={{ fontSize: 11, color: "#888", width: 80, flexShrink: 0 }}>{zone}</span>
-                        <div style={{ flex: 1, height: 6, borderRadius: 3, background: "#f0ede9" }}>
-                          <div style={{ height: "100%", borderRadius: 3, background: barColor, width: `${score}%` }} />
+              {/* Biomarker bars */}
+              {(() => {
+                const biomarkerKeys = Object.keys(BIOMARKER_LABELS) as (keyof typeof BIOMARKER_LABELS)[]
+                const activeBiomarkers = biomarkerKeys.filter(k => selectedLead.scan_data?.[k] != null)
+                if (activeBiomarkers.length === 0) return null
+                return (
+                  <div style={{ marginBottom: 16 }}>
+                    <h4 style={{ fontSize: 11, fontWeight: 600, color: "#aaa", marginBottom: 10, letterSpacing: "0.06em", textTransform: "uppercase" }}>Biomarcadores</h4>
+                    {activeBiomarkers.map(key => {
+                      const score = Number(selectedLead.scan_data![key])
+                      const barColor = score >= 75 ? "#22c55e" : score >= 55 ? "#eab308" : "#ef4444"
+                      return (
+                        <div key={key} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                          <span style={{ fontSize: 12, color: "#666", width: 100, flexShrink: 0 }}>{BIOMARKER_LABELS[key]}</span>
+                          <div style={{ flex: 1, height: 8, borderRadius: 4, background: "#f0ede9" }}>
+                            <div style={{ height: "100%", borderRadius: 4, background: barColor, width: `${Math.min(score, 100)}%`, transition: "width 0.4s" }} />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: barColor, width: 32, textAlign: "right" }}>{score}</span>
                         </div>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: barColor, width: 30, textAlign: "right" }}>{score as number}</span>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+
+              {/* Zone scores */}
+              {selectedLead.scan_data.zoneScores && Object.keys(selectedLead.scan_data.zoneScores).length > 0 && (
+                <div>
+                  <h4 style={{ fontSize: 11, fontWeight: 600, color: "#aaa", marginBottom: 10, letterSpacing: "0.06em", textTransform: "uppercase" }}>Zonas faciales</h4>
+                  {Object.entries(selectedLead.scan_data.zoneScores).map(([zone, score]) => {
+                    const s = score as number
+                    const barColor = s >= 75 ? "#22c55e" : s >= 55 ? "#eab308" : "#ef4444"
+                    return (
+                      <div key={zone} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, color: "#666", width: 100, flexShrink: 0 }}>{zone}</span>
+                        <div style={{ flex: 1, height: 8, borderRadius: 4, background: "#f0ede9" }}>
+                          <div style={{ height: "100%", borderRadius: 4, background: barColor, width: `${Math.min(s, 100)}%`, transition: "width 0.4s" }} />
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: barColor, width: 32, textAlign: "right" }}>{s}</span>
                       </div>
                     )
                   })}

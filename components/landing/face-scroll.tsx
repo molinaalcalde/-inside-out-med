@@ -127,8 +127,7 @@ export function FaceScrollSection() {
             inset: 0,
             width: "100%",
             height: "100%",
-            objectFit: "cover",
-            objectPosition: "center center",
+            objectFit: "contain",
           }}
         >
           <source src="/face-scan.mp4" type="video/mp4" />

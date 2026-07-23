@@ -232,27 +232,26 @@ export function Testimonials() {
         }}
       >
         {[
-          { icon: "⬡", text: t("test.trust.1") },
-          { icon: "◈", text: t("test.trust.2") },
-          { icon: "◇", text: t("test.trust.3") },
-          { icon: "△", text: t("test.trust.4") },
+          { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>, text: t("test.trust.1") },
+          { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, text: t("test.trust.2") },
+          { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, text: t("test.trust.3") },
+          { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>, text: t("test.trust.4") },
         ].map((item, i) => (
           <div
             key={i}
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 8,
-              opacity: 0.32,
+              gap: 10,
             }}
           >
-            <span style={{ fontSize: 12, color: "rgba(245,237,232,0.6)" }}>{item.icon}</span>
+            <span style={{ color: "#e8a4b0", display: "flex", alignItems: "center" }}>{item.icon}</span>
             <span
               style={{
                 fontSize: 11,
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
-                color: "rgba(245,237,232,0.6)",
+                color: "rgba(245,237,232,0.45)",
                 fontWeight: 600,
               }}
             >

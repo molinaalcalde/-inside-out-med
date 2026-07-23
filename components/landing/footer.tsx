@@ -44,7 +44,7 @@ export function Footer() {
             {t("footer.desc")}
           </p>
           <p style={{ fontSize: 11, color: "rgba(245,237,232,0.18)", marginTop: 24, letterSpacing: "0.04em" }}>
-            © {new Date().getFullYear()} {t("footer.brand")}. {t("footer.rights")}
+            <a href="/admin" style={{ color: "inherit", textDecoration: "none" }}>©</a> {new Date().getFullYear()} {t("footer.brand")}. {t("footer.rights")}
           </p>
         </div>
 

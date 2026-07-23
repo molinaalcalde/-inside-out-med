@@ -193,6 +193,7 @@ export function Testimonials() {
 
       {/* Marquee rows */}
       <div
+        className="testimonials-container"
         style={{
           display: "flex",
           flexDirection: "column",
@@ -204,14 +205,14 @@ export function Testimonials() {
         }}
       >
         {/* Row 1 — left */}
-        <div className="marquee-track marquee-left" style={{ display: "flex" }}>
+        <div className="marquee-track marquee-left marquee-row" style={{ display: "flex" }}>
           {doubled1.map((card, i) => (
             <TestimonialCard key={i} t={card} />
           ))}
         </div>
 
         {/* Row 2 — right */}
-        <div className="marquee-track marquee-right" style={{ display: "flex" }}>
+        <div className="marquee-track marquee-right marquee-row" style={{ display: "flex" }}>
           {doubled2.map((card, i) => (
             <TestimonialCard key={i} t={card} />
           ))}
@@ -275,6 +276,31 @@ export function Testimonials() {
         .marquee-track { will-change: transform; }
         @media (prefers-reduced-motion: reduce) {
           .marquee-left, .marquee-right { animation: none; }
+        }
+        @media (max-width: 640px) {
+          .testimonials-container {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0 !important;
+          }
+          .marquee-row {
+            animation: none !important;
+            display: flex !important;
+            overflow-x: auto !important;
+            scroll-snap-type: x mandatory !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 0 16px !important;
+            gap: 12px !important;
+          }
+          .marquee-row > * {
+            scroll-snap-align: center !important;
+            flex-shrink: 0 !important;
+            width: 85vw !important;
+            max-width: 340px !important;
+          }
+          .marquee-row:nth-child(2) {
+            display: none !important;
+          }
         }
       `}</style>
     </section>

@@ -6,6 +6,7 @@ import { useLanguage } from "@/components/providers/language-provider"
 export function Nav() {
   const navRef = useRef<HTMLElement>(null)
   const [scrolled, setScrolled] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const { locale, setLocale, t } = useLanguage()
 
   const links = [
@@ -144,25 +145,123 @@ export function Nav() {
         @media (max-width: 768px) {
           .nav-links { display: none !important; }
         }
+        .mobile-menu-btn { display: none !important; }
+        @media (max-width: 768px) {
+          .mobile-menu-btn { display: flex !important; }
+        }
       `}</style>
 
-      {/* Mobile menu */}
+      {/* Hamburger button — mobile only */}
       <button
-        className="md:hidden"
+        className="mobile-menu-btn"
+        onClick={() => setMenuOpen(true)}
         style={{
-          background: "rgba(245,237,232,0.06)",
-          border: "1px solid rgba(245,237,232,0.12)",
-          borderRadius: 10,
-          padding: "8px 12px",
-          color: "#f5ede8",
-          fontSize: 13,
-          fontWeight: 600,
+          alignItems: "center",
+          justifyContent: "center",
+          background: "none",
+          border: "none",
           cursor: "pointer",
+          padding: 8,
         }}
-        onClick={() => handleClick("#cta")}
+        aria-label="Open menu"
       >
-        {t("nav.start")}
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f5ede8" strokeWidth="2" strokeLinecap="round">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
       </button>
+
+      {/* Fullscreen mobile overlay */}
+      {menuOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 100,
+            background: "rgba(14,12,18,0.96)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: menuOpen ? 1 : 0,
+            transform: menuOpen ? "translateY(0)" : "translateY(-20px)",
+            transition: "opacity 0.3s ease, transform 0.3s ease",
+          }}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
+            style={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              width: 44,
+              height: 44,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f5ede8" strokeWidth="2" strokeLinecap="round">
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
+          </button>
+
+          {/* Nav links */}
+          <nav style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            {links.map((l) => (
+              <button
+                key={l.href}
+                onClick={() => {
+                  setMenuOpen(false)
+                  handleClick(l.href)
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontFamily: "var(--font-fraunces)",
+                  fontSize: 32,
+                  color: "#f5ede8",
+                  marginBottom: 32,
+                  cursor: "pointer",
+                }}
+              >
+                {l.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* CTA */}
+          <a
+            href="/analyze"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              marginTop: 24,
+              padding: "16px 40px",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#fff",
+              background: "linear-gradient(135deg, #e8a4b0, #d4788a)",
+              borderRadius: 12,
+              textDecoration: "none",
+              fontFamily: "var(--font-fraunces)",
+            }}
+          >
+            {t("nav.cta")}
+          </a>
+        </div>
+      )}
     </nav>
   )
 }

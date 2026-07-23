@@ -1238,8 +1238,13 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
         )}
 
         {/* ── Section C: Category Tabs ── */}
-        <div style={{
-          display: "flex", gap: 8, marginBottom: 32, flexWrap: "wrap",
+        <div className="plan-tabs" style={{
+          display: "flex", gap: 8, marginBottom: 32,
+          overflowX: "auto", WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+          paddingBottom: 4,
+          WebkitMaskImage: "linear-gradient(to right, transparent, black 4%, black 96%, transparent)",
+          maskImage: "linear-gradient(to right, transparent, black 4%, black 96%, transparent)",
           animation: "cardIn 0.6s ease 0.25s both",
         }}>
           {CATEGORY_TABS.map(tab => {
@@ -1257,6 +1262,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                   color: isActive ? "#e8a4b0" : "rgba(245,237,232,0.4)",
                   transition: "all 0.2s ease",
                   fontFamily: "var(--font-inter, sans-serif)",
+                  flexShrink: 0, whiteSpace: "nowrap",
                 }}
               >
                 {tab.label} ({count})

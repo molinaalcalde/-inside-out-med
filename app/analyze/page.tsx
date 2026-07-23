@@ -1575,6 +1575,19 @@ export default function AnalyzePage() {
         }))
       }
     } catch {}
+    // Save to Supabase (non-blocking)
+    try {
+      fetch("/api/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: typeof window !== "undefined" ? (window as any).__iom_session : undefined,
+          email: preQuizData.email || data.email || "",
+          scores: { overall: scores?.overall, luminosity: scores?.luminosity, hydration: scores?.hydration, uniformity: scores?.uniformity, glycation: scores?.glycation, inflammation: scores?.inflammation, sunDamage: scores?.sunDamage, vascularity: scores?.vascularity, texture: scores?.texture, wrinkleDepth: scores?.wrinkleDepth, darkCircles: scores?.darkCircles, symmetry: scores?.symmetry, ageApparent: scores?.ageApparent, zoneScores: scores?.zoneScores },
+          profile: preQuizData,
+        }),
+      }).catch(() => {}) // Silent fail — don't block UI
+    } catch {}
     trackFunnelEvent("results_viewed", { overall: scores?.overall, ageApparent: scores?.ageApparent })
     updateLead({ scanData: scores, funnelStage: "results_viewed" })
     setStage("results-1")

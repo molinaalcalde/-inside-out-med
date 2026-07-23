@@ -1056,6 +1056,17 @@ function renderRecCard(
 function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserProfile; plan: ScoredRec[] }) {
   const [activeTab, setActiveTab] = useState<Category>("skincare")
   const [expandedEvidence, setExpandedEvidence] = useState<Set<string>>(new Set())
+  const [scanHistory, setScanHistory] = useState<Array<{ scan_date: string; overall: number; visible_age: number }>>([])
+
+  useEffect(() => {
+    const profileData = (() => { try { return JSON.parse(localStorage.getItem("insideoutmed_profile") || "{}") } catch { return {} } })()
+    if (profileData.email) {
+      fetch(`/api/scan?email=${encodeURIComponent(profileData.email)}`)
+        .then(r => r.json())
+        .then(d => { if (d.scans?.length > 1) setScanHistory(d.scans) })
+        .catch(() => {})
+    }
+  }, [])
 
   const realAge = ageFromRange(profile.age)
   const ageApparent = scores.ageApparent ?? realAge + 3
@@ -1236,6 +1247,51 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── Section B2: Tu progreso (scan history) ── */}
+        {scanHistory.length > 1 && (
+          <div style={{
+            background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
+            borderRadius: 18, padding: "24px 20px", marginBottom: 32,
+            animation: "cardIn 0.6s ease 0.2s both",
+          }}>
+            <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16, fontWeight: 600 }}>
+              Tu progreso
+            </p>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: 80 }}>
+              {scanHistory.slice().reverse().map((scan, i) => {
+                const h = Math.max(20, (scan.overall / 100) * 80)
+                const isLatest = i === scanHistory.length - 1
+                return (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flex: 1 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: isLatest ? "#e8a4b0" : "rgba(245,237,232,0.4)" }}>
+                      {scan.overall}
+                    </span>
+                    <div style={{
+                      width: "100%", maxWidth: 40, height: h, borderRadius: 6,
+                      background: isLatest
+                        ? "linear-gradient(to top, #e8a4b0, #d4af88)"
+                        : "rgba(245,237,232,0.08)",
+                    }} />
+                    <span style={{ fontSize: 9, color: "rgba(245,237,232,0.25)" }}>
+                      {new Date(scan.scan_date).toLocaleDateString("es", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+            {scanHistory.length >= 2 && (() => {
+              const latest = scanHistory[0].overall
+              const oldest = scanHistory[scanHistory.length - 1].overall
+              const diff = latest - oldest
+              return diff !== 0 ? (
+                <p style={{ fontSize: 12, color: diff > 0 ? "#7ecba1" : "#e8a4b0", marginTop: 12, textAlign: "center" }}>
+                  {diff > 0 ? `+${diff} puntos desde tu primer análisis` : `${diff} puntos desde tu primer análisis`}
+                </p>
+              ) : null
+            })()}
           </div>
         )}
 

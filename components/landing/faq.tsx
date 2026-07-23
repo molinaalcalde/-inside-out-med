@@ -4,6 +4,8 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { useLanguage } from "@/components/providers/language-provider"
 
+const WHATSAPP_NUMBER = "5491112345678" // TODO: Replace with real number
+
 const QUESTIONS = [
   {
     q: "¿Es realmente preciso o es solo marketing?",
@@ -200,7 +202,7 @@ export function FAQ() {
             </p>
           </div>
           <a
-            href="https://wa.me/TUTELEFONO?text=Hola,%20tengo%20una%20consulta%20sobre%20InsideOutMed"
+            href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hola,%20tengo%20una%20consulta%20sobre%20InsideOutMed`}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-ghost"

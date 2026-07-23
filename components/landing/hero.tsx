@@ -6,7 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { useLanguage } from "@/components/providers/language-provider"
 
 const MARKERS = [
-  "Luminosidad", "Hidratación", "Uniformidad", "Salud del colágeno",
+  "Luminosidad", "Suavidad", "Uniformidad", "Salud del colágeno",
   "Control de inflamación", "Protección solar", "Salud vascular",
   "Frente", "Contorno ocular", "Mejillas", "Zona T", "Mandíbula",
 ]

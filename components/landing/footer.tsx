@@ -57,12 +57,16 @@ export function Footer() {
           }}
         >
           {[
-            t("footer.privacy"), t("footer.terms"), t("footer.contact"), t("footer.blog"),
-            t("footer.doctors"), t("footer.enterprise"),
+            { label: t("footer.privacy"), href: "/privacy" },
+            { label: t("footer.terms"), href: "#" },
+            { label: t("footer.contact"), href: "#" },
+            { label: t("footer.blog"), href: "#" },
+            { label: t("footer.doctors"), href: "#" },
+            { label: t("footer.enterprise"), href: "#" },
           ].map((l) => (
             <a
-              key={l}
-              href="#"
+              key={l.label}
+              href={l.href}
               style={{
                 fontSize: 13,
                 color: "rgba(245,237,232,0.35)",
@@ -72,7 +76,7 @@ export function Footer() {
               onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "rgba(245,237,232,0.8)")}
               onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "rgba(245,237,232,0.35)")}
             >
-              {l}
+              {l.label}
             </a>
           ))}
         </div>

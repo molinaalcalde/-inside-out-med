@@ -563,7 +563,7 @@ function buildPlan(catalog: Rec[], profile: UserProfile, scores: Scores): Scored
     if (
       (concern.includes("arrugas") && (rec.name.toLowerCase().includes("retinol") || rec.name.toLowerCase().includes("péptidos") || rec.name.toLowerCase().includes("botox"))) ||
       (concern.includes("manchas") && (rec.name.toLowerCase().includes("vitamina c") || rec.name.toLowerCase().includes("peel") || rec.name.toLowerCase().includes("spf"))) ||
-      (concern.includes("hidratación") && (rec.name.toLowerCase().includes("ceramidas") || rec.name.toLowerCase().includes("colágeno") || rec.name.toLowerCase().includes("omega"))) ||
+      (concern.includes("suavidad") && (rec.name.toLowerCase().includes("ceramidas") || rec.name.toLowerCase().includes("colágeno") || rec.name.toLowerCase().includes("omega"))) ||
       (concern.includes("firmeza") && (rec.name.toLowerCase().includes("péptidos") || rec.name.toLowerCase().includes("retinol") || rec.name.toLowerCase().includes("microneedling"))) ||
       (concern.includes("ojeras") && (rec.name.toLowerCase().includes("contorno") || rec.name.toLowerCase().includes("dormir") || rec.name.toLowerCase().includes("prp"))) ||
       (concern.includes("acné") && (rec.name.toLowerCase().includes("niacinamida") || rec.name.toLowerCase().includes("zinc") || rec.name.toLowerCase().includes("aha"))) ||
@@ -629,10 +629,10 @@ function getPersonalizedWhy(rec: Rec, scores: Scores): string {
     return `Tu luminosidad está en ${scores.luminosity}%. La vitamina C es el antioxidante tópico con mayor evidencia.`
   }
   if (n.includes("colágeno hidrolizado")) {
-    return `Con una hidratación del ${scores.hydration}%, los péptidos de colágeno mejoran elasticidad desde dentro.`
+    return `Con una suavidad del ${scores.hydration}%, los péptidos de colágeno mejoran elasticidad desde dentro.`
   }
   if (n.includes("ceramidas") || n.includes("hidratante")) {
-    return `Tu hidratación está en ${scores.hydration}%. Las ceramidas restauran tu barrera cutánea.`
+    return `Tu suavidad de piel está en ${scores.hydration}%. Las ceramidas restauran tu barrera cutánea.`
   }
   if (n.includes("omega-3")) {
     return `Tu inflamación está en ${scores.inflammation}%. Omega-3 es el antiinflamatorio sistémico con mejor evidencia.`
@@ -1059,7 +1059,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
   const ageApparent = scores.ageApparent ?? realAge + 3
   const diff = ageApparent - realAge
 
-  const WHATSAPP_NUMBER = "TUTELEFONO"
+  const WHATSAPP_NUMBER = "5491112345678" // TODO: Replace with real number
   const waMsg = encodeURIComponent(
     `Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100. Me gustaría hablar con un especialista.`
   )

@@ -7,6 +7,8 @@ import { trackFunnelEvent, updateLead } from "../../lib/tracking/funnel"
 import type { UserProfile } from "../../lib/types"
 import { ScanFace, Bandage } from "lucide-react"
 
+const WHATSAPP_NUMBER = "5491112345678" // TODO: Replace with real number
+
 type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "gate-quiz" | "results-2" | "error"
 
 // ── MediaPipe landmark indices per zone (upload path — 9 zones) ──
@@ -435,7 +437,7 @@ const GATE_STEPS: QuizStep[] = [
       { value: "arrugas",     label: "Arrugas",     icon: "arrugas" },
       { value: "poros",       label: "Poros",       icon: "poros" },
       { value: "acne",        label: "Acné",        icon: "acne" },
-      { value: "hidratacion", label: "Hidratación", icon: "hidratacion" },
+      { value: "suavidad", label: "Suavidad", icon: "hidratacion" },
       { value: "luminosidad", label: "Luminosidad", icon: "luminosidad" },
     ],
   },
@@ -728,10 +730,10 @@ function getBiomarkerInsight(label: string, value: number): string {
       if (value >= 70) return "Tu piel refleja bien la luz — se ve descansada y con vida. Esto te quita años de encima."
       if (value >= 50) return "Tu cara se ve apagada, como cansada aunque hayas dormido. Eso te envejece visualmente porque la piel no refleja luz. Una vitamina C en la mañana puede cambiar esto en 4 semanas."
       return "Tu piel perdió brillo por completo — se ve gris, sin vida. Esto es lo primero que la gente nota. Te puede sumar 2-3 años visibles. Necesita renovación celular urgente."
-    case "Hidratación":
-      if (value >= 75) return "Tu piel retiene bien el agua — se ve jugosa y firme. Esto es clave para prevenir líneas finas."
-      if (value >= 55) return "Tu piel se siente tirante después de lavarte la cara? Eso es porque pierde agua más rápido de lo normal. Las líneas finas se marcan más y la textura se vuelve áspera. Un hidratante con ácido hialurónico lo corrige."
-      return "Tu piel está deshidratada — cada línea fina se ve el doble de profunda, y la textura es rugosa al tacto. Esto amplifica TODOS los demás problemas. Es la primera prioridad a resolver."
+    case "Suavidad":
+      if (value >= 75) return "Tu piel tiene una superficie lisa y uniforme — esto indica buena renovación celular y barrera cutánea funcional."
+      if (value >= 55) return "Tu piel muestra algo de textura irregular — áreas con aspereza o microescamas. Esto puede ser por falta de exfoliación o exposición sin protección."
+      return "La superficie de tu piel es notablemente irregular — rugosidad, textura áspera y posible descamación. Indica que la barrera cutánea necesita reparación urgente."
     case "Uniformidad":
       if (value >= 75) return "Tu tono es parejo — sin manchas ni zonas rojas visibles. Eso da una apariencia limpia y joven."
       if (value >= 55) return "Se ven zonas más oscuras o rojas en tu cara, probablemente en mejillas y frente. El ojo lo percibe como 'piel cansada'. Con niacinamida y SPF diario se emparejan en 6-8 semanas."
@@ -1585,7 +1587,7 @@ export default function AnalyzePage() {
   // so all bars read left-to-right = better, more intuitive for the user
   const biomarkers = scores ? [
     { label: "Luminosidad",      rawValue: scores.luminosity,    higherBetter: true,  friendlyLabel: "Brillo de tu piel" },
-    { label: "Hidratación",      rawValue: scores.hydration,     higherBetter: true,  friendlyLabel: "Hidratación" },
+    { label: "Suavidad",          rawValue: scores.hydration,     higherBetter: true,  friendlyLabel: "Suavidad de tu piel" },
     { label: "Uniformidad",      rawValue: scores.uniformity,    higherBetter: true,  friendlyLabel: "Tono parejo" },
     { label: "Glicación",        rawValue: scores.glycation,     higherBetter: false, friendlyLabel: "Daño por azúcar" },
     { label: "Inflamación",      rawValue: scores.inflammation,  higherBetter: false, friendlyLabel: "Rojez e inflamación" },
@@ -1877,7 +1879,7 @@ export default function AnalyzePage() {
           const humanFindings = criticalFindings.slice(0, 3).map(b => {
             const yearMap: Record<string, string> = {
               "Daño solar": "~2 años", "Inflamación": "~1.5 años", "Glicación": "~1 año",
-              "Vascularidad": "~0.5 años", "Luminosidad": "~1 año", "Hidratación": "~1 año", "Uniformidad": "~0.5 años",
+              "Vascularidad": "~0.5 años", "Luminosidad": "~1 año", "Suavidad": "~1 año", "Uniformidad": "~0.5 años",
             }
             const descMap: Record<string, string> = {
               "Daño solar": "Fotodaño acumulado — textura irregular y manchas",
@@ -1885,7 +1887,7 @@ export default function AnalyzePage() {
               "Glicación": "Colágeno debilitado por azúcar — pérdida de firmeza",
               "Vascularidad": "Vasos dilatados visibles en mejillas y nariz",
               "Luminosidad": "Piel apagada — sin brillo ni reflejo natural",
-              "Hidratación": "Deshidratación — líneas finas más marcadas",
+              "Suavidad": "Textura irregular — superficie áspera y microescamas",
               "Uniformidad": "Tono desigual — manchas y rojez visible",
             }
             return { desc: descMap[b.label] || b.friendlyLabel, years: yearMap[b.label] || "~1 año", color: b.color }
@@ -2077,7 +2079,7 @@ export default function AnalyzePage() {
               </button>
 
               <a
-                href="https://wa.me/TUTELEFONO?text=Hola%2C%20quiero%20una%20asesor%C3%ADa%20personalizada.%20Mi%20score%20fue%20"
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hola%2C%20quiero%20una%20asesor%C3%ADa%20personalizada.%20Mi%20score%20fue%20`}
                 target="_blank" rel="noopener noreferrer"
                 style={{
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
@@ -2095,9 +2097,16 @@ export default function AnalyzePage() {
                 Asesoría personalizada con especialista
               </a>
 
-              <p style={{ fontSize: 10, color: "rgba(245,237,232,0.2)", textAlign: "center", marginTop: 20, lineHeight: 1.6 }}>
-                Estimación educativa basada en geometría facial y biomarcadores visuales. No es diagnóstico médico.
-              </p>
+              <div style={{ borderTop: "1px solid rgba(245,237,232,0.1)", marginTop: 24, paddingTop: 16, display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "center" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                  <circle cx="12" cy="12" r="10" stroke="rgba(245,237,232,0.4)" strokeWidth="1.5"/>
+                  <line x1="12" y1="8" x2="12" y2="13" stroke="rgba(245,237,232,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="12" cy="16.5" r="0.8" fill="rgba(245,237,232,0.4)"/>
+                </svg>
+                <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", textAlign: "center", lineHeight: 1.6 }}>
+                  Estimación visual educativa basada en biomarcadores faciales. No constituye diagnóstico médico ni reemplaza la evaluación de un profesional de la salud.
+                </p>
+              </div>
             </div>
           </div>
           )
@@ -2146,7 +2155,7 @@ export default function AnalyzePage() {
               { label: "Volumen", score: Math.round(clamp(s.lips * 0.85 + 5, 20, 95)) },
               { label: "Ratio superior/inferior", score: Math.round(clamp(s.lips * 0.6 + 30, 40, 99)) },
               { label: "Arco de Cupido", score: Math.round(clamp(s.lips * 0.7 + 20, 30, 98)) },
-              { label: "Hidratación", score: Math.round(clamp(s.lips * 0.9, 20, 98)) },
+              { label: "Suavidad", score: Math.round(clamp(s.lips * 0.9, 20, 98)) },
               { label: "Líneas peribucales", score: Math.round(clamp(s.lips * 0.75 - 5, 15, 90)) },
               { label: "Color / saturación", score: Math.round(clamp(s.lips * 0.65 + 15, 20, 95)) },
             ],
@@ -2211,7 +2220,7 @@ export default function AnalyzePage() {
             "Glicación": "hasta +1 año",
             "Vascularidad": "hasta +0.5 años",
             "Luminosidad": "hasta +1 año",
-            "Hidratación": "hasta +1 año",
+            "Suavidad": "hasta +1 año",
             "Uniformidad": "hasta +0.5 años",
           }
 
@@ -2220,7 +2229,7 @@ export default function AnalyzePage() {
             "Control de inflamación": { title: "Inflamación activa", desc: "Rojez e irritación crónica que amplifica el envejecimiento y debilita la barrera cutánea." },
             "Salud del colágeno": { title: "Colágeno debilitado", desc: "Las fibras de colágeno se degradan más rápido de lo esperado, afectando firmeza y elasticidad." },
             "Luminosidad": { title: "Piel apagada", desc: "Falta de brillo natural que refleja deshidratación profunda y acumulación de células muertas." },
-            "Hidratación": { title: "Deshidratación crónica", desc: "La barrera cutánea no retiene agua de forma óptima, acelerando la formación de líneas finas." },
+            "Suavidad": { title: "Textura irregular", desc: "La superficie de la piel muestra rugosidad y aspereza, indicando barrera cutánea comprometida." },
             "Uniformidad de tono": { title: "Tono desigual", desc: "Manchas e irregularidades de pigmento que dan un aspecto envejecido y cansado." },
             "Salud vascular": { title: "Fragilidad vascular", desc: "Vasos sanguíneos visibles o rojez persistente que indican sensibilidad e inflamación subyacente." },
           }
@@ -2571,7 +2580,7 @@ export default function AnalyzePage() {
 
             {/* Gold CTA — consultation */}
             <a
-              href={`https://wa.me/TUTELEFONO?text=${encodeURIComponent(`Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100.`)}`}
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100.`)}`}
               target="_blank" rel="noopener noreferrer"
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
@@ -2596,9 +2605,16 @@ export default function AnalyzePage() {
             </div>
 
             {/* ── DISCLAIMER ── */}
-            <p style={{ fontSize: 10, color: "rgba(245,237,232,0.2)", textAlign: "center", marginTop: 32, lineHeight: 1.6, paddingBottom: 40 }}>
-              Estimacion educativa basada en geometria facial y biomarcadores visuales. No es diagnostico medico ni reemplaza la valoracion de un profesional de la salud.
-            </p>
+            <div style={{ borderTop: "1px solid rgba(245,237,232,0.1)", marginTop: 32, paddingTop: 16, display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "center", paddingBottom: 40 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                <circle cx="12" cy="12" r="10" stroke="rgba(245,237,232,0.4)" strokeWidth="1.5"/>
+                <line x1="12" y1="8" x2="12" y2="13" stroke="rgba(245,237,232,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="12" cy="16.5" r="0.8" fill="rgba(245,237,232,0.4)"/>
+              </svg>
+              <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", textAlign: "center", lineHeight: 1.6 }}>
+                Estimación visual educativa basada en biomarcadores faciales. No constituye diagnóstico médico ni reemplaza la evaluación de un profesional de la salud.
+              </p>
+            </div>
           </div>
           )
         })()}

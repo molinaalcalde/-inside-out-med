@@ -208,7 +208,7 @@ export function computeSubMetrics(
       { label: "Ratio superior/inferior", score: geo.lipBalance },
       { label: "Arco de Cupido", score: geo.cupid },
       { label: "Proyección labial (z)", score: geo.lipProjScore },
-      { label: "Hidratación", score: clamp(lipC.lum / 210 * 100 + 10, 20, 98) },
+      { label: "Suavidad", score: clamp(lipC.lum / 210 * 100 + 10, 20, 98) },
       { label: "Líneas peribucales", score: tex(periO) },
       { label: "Color / saturación", score: clamp(lipC.red * 2.4 + 30, 20, 98) },
     ],

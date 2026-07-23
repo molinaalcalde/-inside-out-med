@@ -21,10 +21,10 @@ export function getBiomarkerInsight(label: string, value: number): string {
       [55, "Tu piel tiene algo de brillo pero puede mejorar. Más hidratación y antioxidantes."],
       [0, "Tu piel se ve apagada. Es señal de que necesita renovación celular urgente."],
     ],
-    "Hidratación": [
-      [75, "Bien hidratada. Tu barrera cutánea está funcionando correctamente."],
-      [55, "Hidratación moderada. Tu piel puede estar perdiendo agua más rápido de lo ideal."],
-      [0, "Piel deshidratada. Esto acentúa líneas finas y opaca el tono."],
+    "Suavidad": [
+      [75, "Tu piel tiene una superficie lisa y uniforme. Buena renovación celular."],
+      [55, "Algo de textura irregular. Áreas con aspereza o microescamas."],
+      [0, "Superficie notablemente irregular. La barrera cutánea necesita reparación."],
     ],
     "Uniformidad": [
       [75, "Tono muy parejo. Sin manchas ni rojeces notables."],

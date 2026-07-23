@@ -116,9 +116,10 @@ export function FaceScrollSection() {
         background: "#0e0c12",
       }}>
 
-        {/* ── Video — fullscreen, no mask ── */}
+        {/* ── Video — contain on desktop, cover on mobile ── */}
         <video
           ref={videoRef}
+          className="face-video"
           muted
           playsInline
           preload="auto"
@@ -134,14 +135,14 @@ export function FaceScrollSection() {
         </video>
 
         {/* Radial overlay — darkens edges, face floats in center */}
-        <div style={{
+        <div className="face-overlay-radial" style={{
           position: "absolute",
           inset: 0,
           background: "radial-gradient(ellipse 55% 55% at 50% 42%, transparent 30%, rgba(14,12,18,0.6) 65%, rgba(14,12,18,0.92) 85%)",
           pointerEvents: "none",
         }} />
-        {/* Left side darker for text readability */}
-        <div style={{
+        {/* Side gradient for text readability */}
+        <div className="face-overlay-side" style={{
           position: "absolute",
           inset: 0,
           background: "linear-gradient(to right, rgba(14,12,18,0.7) 0%, transparent 40%, transparent 65%, rgba(14,12,18,0.5) 100%)",
@@ -159,6 +160,7 @@ export function FaceScrollSection() {
           gridTemplateColumns: "1fr auto",
           alignItems: "center",
           gap: 60,
+          height: "100%",
         }}>
 
           {/* Left: Caption */}
@@ -335,7 +337,20 @@ export function FaceScrollSection() {
         @media (max-width: 640px) {
           .scroll-grid {
             grid-template-columns: 1fr !important;
-            gap: 24px !important;
+            gap: 16px !important;
+            padding: 0 20px !important;
+            align-items: flex-end !important;
+            padding-bottom: 80px !important;
+          }
+          .face-video {
+            object-fit: cover !important;
+            object-position: center 30% !important;
+          }
+          .face-overlay-radial {
+            background: radial-gradient(ellipse 80% 50% at 50% 35%, transparent 20%, rgba(14,12,18,0.5) 55%, rgba(14,12,18,0.95) 80%) !important;
+          }
+          .face-overlay-side {
+            background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(14,12,18,0.85) 70%, rgba(14,12,18,1) 90%) !important;
           }
         }
       `}</style>

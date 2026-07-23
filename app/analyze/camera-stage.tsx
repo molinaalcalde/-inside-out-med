@@ -12,6 +12,8 @@ export interface Scores {
   inflammation: number
   sunDamage: number
   vascularity: number
+  texture: number
+  wrinkleDepth: number
   ageApparent: number
   zoneScores: {
     forehead: number
@@ -24,6 +26,7 @@ export interface Scores {
     jaw: number
     neck: number
   }
+  zDepthAvgs?: Record<string, number>
 }
 
 // ── 9 Facial Zones — MediaPipe landmark indices ─────────────────
@@ -75,16 +78,17 @@ function getAgeBaseline(age: number): { glycationOffset: number; ageMid: number 
 interface ZoneMetrics {
   avgLum: number; avgR: number; avgG: number; avgB: number
   redPixels: number; total: number; localContrast: number; stdDev: number
+  sobelEdge: number; textureDepth: number
 }
 
 interface ZoneAccum {
   sumLum: number; sumR: number; sumG: number; sumB: number
-  sumContrast: number; sumStdDev: number; redPix: number; totalPix: number
+  sumContrast: number; sumStdDev: number; sumSobel: number; sumTexDepth: number; redPix: number; totalPix: number
   n: number
 }
 
 function freshAccum(): ZoneAccum {
-  return { sumLum: 0, sumR: 0, sumG: 0, sumB: 0, sumContrast: 0, sumStdDev: 0, redPix: 0, totalPix: 0, n: 0 }
+  return { sumLum: 0, sumR: 0, sumG: 0, sumB: 0, sumContrast: 0, sumStdDev: 0, sumSobel: 0, sumTexDepth: 0, redPix: 0, totalPix: 0, n: 0 }
 }
 
 function fresh9Zones(): Record<string, ZoneAccum> {
@@ -96,25 +100,26 @@ function fresh9Zones(): Record<string, ZoneAccum> {
 function accumulate(a: ZoneAccum, m: ZoneMetrics) {
   a.sumLum += m.avgLum; a.sumR += m.avgR; a.sumG += m.avgG; a.sumB += m.avgB
   a.sumContrast += m.localContrast; a.sumStdDev += m.stdDev
+  a.sumSobel += m.sobelEdge; a.sumTexDepth += m.textureDepth
   a.redPix += m.redPixels; a.totalPix += m.total; a.n++
 }
 
 function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)) }
 
 // ── Scoring engine (deterministic, Fitzpatrick-calibrated) ───────
-function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age: number): Scores | null {
+function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age: number, zDepthAvgs?: Record<string, number>): Scores | null {
   // Require at minimum forehead, cheekL, cheekR, nose to have data
   if (!acc.forehead?.n || !acc.cheekL?.n || !acc.cheekR?.n || !acc.nose?.n) return null
 
   const fitz = FITZ_CALIBRATION[fitzpatrick] || FITZ_CALIBRATION[3]
   const ageCfg = getAgeBaseline(age)
 
-  const avg = (a: ZoneAccum, f: 'sumLum'|'sumR'|'sumG'|'sumB'|'sumContrast'|'sumStdDev') =>
+  const avg = (a: ZoneAccum, f: 'sumLum'|'sumR'|'sumG'|'sumB'|'sumContrast'|'sumStdDev'|'sumSobel'|'sumTexDepth') =>
     a.n > 0 ? a[f] / a.n : 0
 
   // Collect per-zone averages
   const zoneLums: number[] = []
-  const zoneAvgs: Record<string, { lum: number; r: number; g: number; b: number; contrast: number; stdDev: number; redRatio: number }> = {}
+  const zoneAvgs: Record<string, { lum: number; r: number; g: number; b: number; contrast: number; stdDev: number; redRatio: number; sobel: number; texDepth: number }> = {}
   for (const z of ZONE_NAMES) {
     const a = acc[z]
     if (!a || !a.n) continue
@@ -128,6 +133,8 @@ function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age:
       contrast: avg(a, 'sumContrast'),
       stdDev: avg(a, 'sumStdDev'),
       redRatio: a.totalPix > 0 ? a.redPix / a.totalPix : 0,
+      sobel: avg(a, 'sumSobel'),
+      texDepth: avg(a, 'sumTexDepth'),
     }
   }
 
@@ -167,14 +174,40 @@ function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age:
   const sunDamage    = clamp(Math.round(avgContrast * 1.8 + avgStdDev * 0.2), 5, 70)
   const vascularity  = clamp(Math.round(cheekNoseRedRatio * 250 - 10), 3, 60)
 
+  const avgSobel = activeZones.reduce((s, z) => s + zoneAvgs[z].sobel, 0) / activeZones.length
+  const avgTexDepth = activeZones.reduce((s, z) => s + zoneAvgs[z].texDepth, 0) / activeZones.length
+  const texture = clamp(Math.round(100 - avgSobel * 3.5), 15, 98)
+  const wrinkleDepth = clamp(Math.round(100 - (avgTexDepth - 0.5) * 60), 15, 95)
+
+  // ── Z-depth adjustments (if available) ─────────────────────────
+  let depthBonus = 0
+  if (zDepthAvgs && Object.keys(zDepthAvgs).length > 0) {
+    // Cheek projection: more projected = younger look (negative z = closer to camera)
+    const cheekProj = ((zDepthAvgs.cheekProjL || 0) + (zDepthAvgs.cheekProjR || 0)) / 2
+    const cheekScore = clamp(Math.round(50 + cheekProj * 500), 20, 95)
+
+    // Eye bags: larger z-drop = more bags = worse
+    const eyeBags = ((zDepthAvgs.eyeBagL || 0) + (zDepthAvgs.eyeBagR || 0)) / 2
+    const eyeBagScore = clamp(Math.round(80 + eyeBags * 400), 20, 95)
+
+    // Jaw definition: more z-differential = more defined
+    const jawDef = zDepthAvgs.jawDef || 0
+    const jawScore = clamp(Math.round(50 + jawDef * 300), 25, 95)
+
+    depthBonus = Math.round((cheekScore + eyeBagScore + jawScore) / 3) - 60
+  }
+  const depthAdj = clamp(depthBonus, -5, 5)
+
   // Overall: higher = better skin health
-  // luminosity, hydration, uniformity are "higher is better"
-  // glycation, inflammation, sunDamage, vascularity are "lower is better"
+  // luminosity, hydration, uniformity, texture are "higher is better"
+  // glycation, inflammation, sunDamage, vascularity, wrinkleDepth(inverted) are "lower is better"
+  // depthAdj: small z-depth-based adjustment (clamped to +-5)
   const overall = clamp(Math.round(
-    luminosity * 0.15 + hydration * 0.18 + uniformity * 0.15 +
-    (100 - glycation) * 0.12 + (100 - inflammation) * 0.18 +
-    (100 - sunDamage) * 0.12 + (100 - vascularity) * 0.10
-  ), 30, 96)
+    luminosity * 0.13 + hydration * 0.16 + uniformity * 0.13 +
+    (100 - glycation) * 0.11 + (100 - inflammation) * 0.16 +
+    (100 - sunDamage) * 0.11 + (100 - vascularity) * 0.09 +
+    texture * 0.06 + wrinkleDepth * 0.05
+  ) + depthAdj, 30, 96)
 
   // ── Per-zone score ──────────────────────────────────────────────
   const zoneScore = (z: string): number => {
@@ -187,12 +220,14 @@ function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age:
   }
 
   // ── Apparent age — INDEPENDENT of declared age ─────────────────
-  // Uses 11 aging-relevant markers from actual pixel analysis
+  // Uses 13 aging-relevant markers from actual pixel analysis
   const agingMarkers = [
     clamp(Math.round(100 - avgContrast * 2.4), 10, 99),          // skin smoothness
     uniformity,                                                     // tone evenness
     clamp(Math.round(100 - sunDamage), 10, 95),                   // sun damage inverted
     luminosity,                                                     // skin luminosity
+    texture,                                                        // surface texture quality
+    wrinkleDepth,                                                   // fine-to-coarse wrinkle depth
     zoneScore('periocularL'),                                      // left eye area
     zoneScore('periocularR'),                                      // right eye area
     zoneScore('cheekL'),                                           // left cheek
@@ -209,7 +244,7 @@ function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age:
 
   return {
     overall, luminosity, hydration, uniformity, glycation, inflammation, sunDamage, vascularity,
-    ageApparent,
+    texture, wrinkleDepth, ageApparent,
     zoneScores: {
       forehead:    zoneScore('forehead'),
       periocularL: zoneScore('periocularL'),
@@ -220,7 +255,8 @@ function computeScores(acc: Record<string, ZoneAccum>, fitzpatrick: number, age:
       cheekR:      zoneScore('cheekR'),
       jaw:         zoneScore('jaw'),
       neck:        zoneScore('neck'),
-    }
+    },
+    zDepthAvgs,
   }
 }
 
@@ -252,7 +288,40 @@ function sampleRegion(
   localContrast /= total
   let variance = 0
   for (const v of lums) variance += (v - avgLum) ** 2
-  return { avgLum, avgR: sumR/total, avgG: sumG/total, avgB: sumB/total, redPixels, total, localContrast, stdDev: Math.sqrt(variance/total) }
+  const stdDev = Math.sqrt(variance / total)
+
+  // Sobel 3x3 edge detection on luminance
+  let sobelSum = 0
+  for (let row = 1; row < h - 1; row++) {
+    for (let col = 1; col < w - 1; col++) {
+      const tl = lums[(row-1)*w+col-1], tc = lums[(row-1)*w+col], tr = lums[(row-1)*w+col+1]
+      const ml = lums[row*w+col-1], mr = lums[row*w+col+1]
+      const bl = lums[(row+1)*w+col-1], bc = lums[(row+1)*w+col], br = lums[(row+1)*w+col+1]
+      const gx = -tl + tr - 2*ml + 2*mr - bl + br
+      const gy = -tl - 2*tc - tr + bl + 2*bc + br
+      sobelSum += Math.sqrt(gx*gx + gy*gy)
+    }
+  }
+  const sobelEdge = sobelSum / total
+
+  // Multi-scale texture: compare fine (2px) vs coarse (8px) contrast
+  let fineSum = 0, coarseSum = 0, fineN = 0, coarseN = 0
+  for (let row = 8; row < h - 8; row += 4) {
+    for (let col = 8; col < w - 8; col += 4) {
+      const center = lums[row * w + col]
+      // Fine: 2px neighbors
+      const fineAvg = (lums[(row-2)*w+col] + lums[(row+2)*w+col] + lums[row*w+col-2] + lums[row*w+col+2]) / 4
+      fineSum += Math.abs(center - fineAvg); fineN++
+      // Coarse: 8px neighbors
+      const coarseAvg = (lums[(row-8)*w+col] + lums[(row+8)*w+col] + lums[row*w+col-8] + lums[row*w+col+8]) / 4
+      coarseSum += Math.abs(center - coarseAvg); coarseN++
+    }
+  }
+  const fineContrast = fineN > 0 ? fineSum / fineN : 0
+  const coarseContrast = coarseN > 0 ? coarseSum / coarseN : 0
+  const textureDepth = coarseContrast > 0.1 ? fineContrast / coarseContrast : 1
+
+  return { avgLum, avgR: sumR/total, avgG: sumG/total, avgB: sumB/total, redPixels, total, localContrast, stdDev, sobelEdge, textureDepth }
 }
 
 // ── Compute bounding box from landmarks ──────────────────────────
@@ -367,7 +436,7 @@ function drawScanLine(ctx: CanvasRenderingContext2D, W: number, H: number, scanY
 function drawCountdownRing(ctx: CanvasRenderingContext2D, W: number, H: number, secondsLeft: number, progress: number) {
   const { cx, cy } = ovalParams(W, H)
   ctx.save()
-  const totalProgress = 1 - (secondsLeft - (1 - progress)) / 3
+  const totalProgress = 1 - (secondsLeft - (1 - progress)) / 6
   ctx.beginPath(); ctx.arc(cx, cy - 12, 28, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * totalProgress)
   ctx.strokeStyle = "rgba(126,203,161,0.8)"; ctx.lineWidth = 3; ctx.stroke()
   if (secondsLeft > 0) {
@@ -439,6 +508,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
   const glassesDetectedRef = useRef(false)
   const landmarkFramesRef  = useRef(0)
   const noFaceFramesRef    = useRef(0)
+  const zDepthAccumRef     = useRef<{ sums: Record<string, number>; n: number }>({ sums: {}, n: 0 })
 
   const [phase, setPhase]         = useState<Phase>("init")
   const [guidance, setGuidance]   = useState<{ msg: string; sub: string; type: "neutral" | "warning" | "success" }>({ msg: "Iniciando cámara…", sub: "", type: "neutral" })
@@ -492,7 +562,15 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
       return
     }
 
-    const scores = computeScores(accumRef.current, fitzpatrick, age)
+    // Compute z-depth averages from accumulated frames
+    const zda = zDepthAccumRef.current
+    const zAvgs: Record<string, number> = {}
+    if (zda.n > 0) {
+      for (const [k, v] of Object.entries(zda.sums)) {
+        zAvgs[k] = v / zda.n
+      }
+    }
+    const scores = computeScores(accumRef.current, fitzpatrick, age, Object.keys(zAvgs).length > 0 ? zAvgs : undefined)
 
     const canvas = document.createElement("canvas")
     canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480
@@ -514,7 +592,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
   useEffect(() => {
     if (phase !== "stabilizing" && phase !== "countdown") return
     let countdownStart = 0
-    const STABILIZE_MS = 1500, COUNTDOWN_MS = 3000
+    const STABILIZE_MS = 1500, COUNTDOWN_MS = 6000
 
     function loop() {
       rafRef.current = requestAnimationFrame(loop)
@@ -621,6 +699,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
           if (avgLum > 230) { updateGuidance("Demasiada luz directa", "Aléjate de la fuente de luz", "warning"); drawOval(ctx, W, H, "warning", 0); phaseStartRef.current = now - 1200; return }
 
           accumRef.current = fresh9Zones()
+          zDepthAccumRef.current = { sums: {}, n: 0 }
           landmarkFramesRef.current = 0; noFaceFramesRef.current = 0
           setPhase("countdown")
           return
@@ -647,13 +726,14 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
           for (let i = 0; i < bd.length; i += 4) bSum += 0.299 * bd[i] + 0.587 * bd[i+1] + 0.114 * bd[i+2]
           if (bSum / (60 * 80) < 55) {
             capturedRef.current = false; accumRef.current = fresh9Zones()
+            zDepthAccumRef.current = { sums: {}, n: 0 }
             landmarkFramesRef.current = 0; noFaceFramesRef.current = 0
             phaseStartRef.current = Date.now(); setPhase("stabilizing"); return
           }
         }
 
-        // Sample pixels every 6 frames
-        if (frameRef.current % 6 === 0 && !capturedRef.current) {
+        // Sample pixels every 4 frames
+        if (frameRef.current % 4 === 0 && !capturedRef.current) {
           if (!offscreenRef.current) offscreenRef.current = document.createElement("canvas")
           const off = offscreenRef.current
           off.width = video.videoWidth || 640; off.height = video.videoHeight || 480
@@ -675,6 +755,29 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
                     const m = sampleRegion(oc, bbox.x, bbox.y, bbox.w, bbox.h)
                     if (m) accumulate(accumRef.current[zoneName], m)
                   }
+
+                  // Collect z-depth metrics from landmarks
+                  const zDepths: Record<string, number> = {}
+                  // Forehead convexity: glabella vs temples
+                  zDepths.foreheadConvexity = (lm[8].z - (lm[112].z + lm[341].z) / 2)
+                  // Eye bag depth: tear trough vs upper cheek
+                  zDepths.eyeBagL = (lm[111].z - lm[116].z)
+                  zDepths.eyeBagR = (lm[340].z - lm[345].z)
+                  // Cheek projection: cheekbone vs nose bridge
+                  zDepths.cheekProjL = (lm[50].z - lm[6].z)
+                  zDepths.cheekProjR = (lm[280].z - lm[6].z)
+                  // Jaw definition: chin vs gonial angle depth differential
+                  zDepths.jawDef = ((lm[172].z + lm[397].z) / 2 - lm[152].z)
+                  // Lip projection
+                  zDepths.lipProj = ((lm[13].z + lm[14].z) / 2 - lm[1].z)
+
+                  // Accumulate z-depths across frames
+                  const za = zDepthAccumRef.current
+                  for (const [k, v] of Object.entries(zDepths)) {
+                    za.sums[k] = (za.sums[k] || 0) + v
+                  }
+                  za.n++
+
                   usedLandmarks = true; landmarkFramesRef.current++; noFaceFramesRef.current = 0
                 } else { noFaceFramesRef.current++ }
               } else { noFaceFramesRef.current++ }
@@ -682,6 +785,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
 
             if (noFaceFramesRef.current > 5) {
               capturedRef.current = false; accumRef.current = fresh9Zones()
+              zDepthAccumRef.current = { sums: {}, n: 0 }
               landmarkFramesRef.current = 0; noFaceFramesRef.current = 0
               phaseStartRef.current = Date.now(); setPhase("stabilizing")
               updateGuidance("Rostro perdido", "Centra tu cara y quédate quieto", "warning"); return
@@ -704,7 +808,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
         drawScanLine(ctx, W, H, scanY, 0.7 + pulseRef.current * 0.3)
         drawCountdownRing(ctx, W, H, secLeft, 1 - (remaining % 1000) / 1000)
         setCountdown(secLeft)
-        updateGuidance(secLeft > 0 ? `Escaneando… ${secLeft}` : "Análisis completado ✓", "No te muevas", "success")
+        updateGuidance(secLeft > 3 ? `Escaneando… ${secLeft}` : secLeft > 0 ? `Analizando textura… ${secLeft}` : "Análisis completado ✓", "No te muevas", "success")
 
         if (secLeft <= 0 && !capturedRef.current) {
           capturedRef.current = true; cancelAnimationFrame(rafRef.current); doCapture()
@@ -745,7 +849,7 @@ export function CameraStage({ onCapture, onCancel, onScanError, fitzpatrick, age
       </div>
 
       <div style={{
-        position: "relative", width: "100%", paddingBottom: "133%", borderRadius: 24, overflow: "hidden",
+        position: "relative", width: "100%", paddingBottom: "133%", maxHeight: "70vh", borderRadius: 24, overflow: "hidden",
         background: "#060409", marginBottom: 16,
         boxShadow: guidance.type === "success" ? "0 0 0 1.5px rgba(126,203,161,0.4), 0 0 40px rgba(126,203,161,0.18)" : guidance.type === "warning" ? "0 0 0 1.5px rgba(212,175,136,0.3), 0 0 20px rgba(212,175,136,0.1)" : "0 0 0 1px rgba(245,237,232,0.07)",
         transition: "box-shadow 0.5s ease",

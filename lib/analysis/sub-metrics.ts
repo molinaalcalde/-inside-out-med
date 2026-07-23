@@ -87,6 +87,23 @@ export function computeGeometry(landmarks: Lm[]) {
   // Cheek projection (z-depth)
   const cheekProj = clamp(70 - (g(50).z + g(280).z) / 2 * 900)
 
+  // Eye bag z-depth: tear trough vs upper cheek — larger drop = more bags = worse
+  const eyeBagZL = g(111).z - g(116).z
+  const eyeBagZR = g(340).z - g(345).z
+  const eyeBagDepth = clamp(Math.round(80 + ((eyeBagZL + eyeBagZR) / 2) * 400), 20, 95)
+
+  // Forehead convexity: glabella vs temples — more convex = younger
+  const foreheadConvexity = g(8).z - (g(112).z + g(341).z) / 2
+  const foreheadConvexScore = clamp(Math.round(60 + foreheadConvexity * 600), 25, 95)
+
+  // Jaw z-definition: chin vs gonial angle depth differential
+  const jawZDef = (g(172).z + g(397).z) / 2 - g(152).z
+  const jawZScore = clamp(Math.round(50 + jawZDef * 300), 25, 95)
+
+  // Lip projection: lips vs nose tip
+  const lipProjZ = (g(13).z + g(14).z) / 2 - g(1).z
+  const lipProjScore = clamp(Math.round(60 + lipProjZ * 500), 20, 95)
+
   // Jaw definition
   const jawW = D(g(172), g(397)) / faceW
   const jawDef = clamp(100 - Math.abs(jawW - 0.74) * 150)
@@ -98,6 +115,7 @@ export function computeGeometry(landmarks: Lm[]) {
     symmetry, eyeOpenL, eyeOpenR, eyeSym, apertura,
     browSym, browPos, lipBalance, lipFull, cupid,
     noseHarmony, nostrilSym, cheekProj, jawDef, gonialSym,
+    eyeBagDepth, foreheadConvexScore, jawZScore, lipProjScore,
     faceH, faceW,
   }
 }
@@ -170,12 +188,14 @@ export function computeSubMetrics(
       { label: "Glabela / entrecejo", score: tex(glab) },
       { label: "Simetría de cejas", score: geo.browSym },
       { label: "Posición de cejas", score: geo.browPos },
+      { label: "Convexidad frontal", score: geo.foreheadConvexScore },
     ],
     periocular: [
       { label: "Apertura ocular", score: geo.apertura },
       { label: "Simetría L/R", score: geo.eyeSym },
       { label: "Ojeras / pigmento", score: Math.round((dark(ueL, cheekL) + dark(ueR, cheekR)) / 2) },
       { label: "Bolsas / hinchazón", score: Math.round((tex(ueL) + tex(ueR)) / 2) },
+      { label: "Profundidad de bolsas (z)", score: geo.eyeBagDepth },
       { label: "Patas de gallo", score: Math.round((tex(cfL) + tex(cfR)) / 2) },
       { label: "Densidad de pestañas", score: Math.round((lashL + lashR) / 2) },
     ],
@@ -187,6 +207,7 @@ export function computeSubMetrics(
       { label: "Volumen", score: geo.lipFull },
       { label: "Ratio superior/inferior", score: geo.lipBalance },
       { label: "Arco de Cupido", score: geo.cupid },
+      { label: "Proyección labial (z)", score: geo.lipProjScore },
       { label: "Hidratación", score: clamp(lipC.lum / 210 * 100 + 10, 20, 98) },
       { label: "Líneas peribucales", score: tex(periO) },
       { label: "Color / saturación", score: clamp(lipC.red * 2.4 + 30, 20, 98) },
@@ -200,6 +221,7 @@ export function computeSubMetrics(
     ],
     mandibula: [
       { label: "Definición mandibular", score: geo.jawDef },
+      { label: "Definición z-depth", score: geo.jawZScore },
       { label: "Ángulo gonial", score: clamp(geo.jawDef * 0.9 + 6) },
       { label: "Flacidez (jowl)", score: Math.round((tex(jowlL) + tex(jowlR)) / 2 * 0.5 + geo.jawDef * 0.5) },
       { label: "Simetría L/R", score: geo.gonialSym },
@@ -248,17 +270,19 @@ export function computeVisibleAge(
   if (piel[1]) ageMarkers.push(piel[1].score)
   if (piel[3]) ageMarkers.push(piel[3].score)
   if (piel[5]) ageMarkers.push(piel[5].score)
-  // Periocular: ojeras, bolsas, patas de gallo
+  // Periocular: ojeras, bolsas, z-depth bolsas, patas de gallo
   if (periocular[2]) ageMarkers.push(periocular[2].score)
   if (periocular[3]) ageMarkers.push(periocular[3].score)
-  if (periocular[4]) ageMarkers.push(periocular[4].score)
+  if (periocular[4]) ageMarkers.push(periocular[4].score) // z-depth eye bags
+  if (periocular[5]) ageMarkers.push(periocular[5].score) // patas de gallo
   // Mejillas: textura, nasogeniano
   if (mejillas[2]) ageMarkers.push(mejillas[2].score)
   if (mejillas[3]) ageMarkers.push(mejillas[3].score)
-  // Mandíbula: flacidez
-  if (mandibula[2]) ageMarkers.push(mandibula[2].score)
+  // Mandíbula: z-depth definition, flacidez
+  if (mandibula[1]) ageMarkers.push(mandibula[1].score) // z-depth jaw definition
+  if (mandibula[3]) ageMarkers.push(mandibula[3].score) // flacidez (jowl)
   // Labios: peribucales
-  if (labios[4]) ageMarkers.push(labios[4].score)
+  if (labios[5]) ageMarkers.push(labios[5].score)
 
   if (!ageMarkers.length) {
     return { visibleAge: chronologicalAge, ageDelta: 0, percentile: 50, ageRange: 4 }

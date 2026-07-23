@@ -592,6 +592,22 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
     zoneData[zone] = analyzeRegion(ctx, bbox.x, bbox.y, bbox.w, bbox.h)
   }
 
+  // Collect z-depth metrics from landmarks (single frame for upload)
+  const lm = landmarks
+  const zDepthAvgs: Record<string, number> = {}
+  // Forehead convexity: glabella vs temples
+  zDepthAvgs.foreheadConvexity = (lm[8].z - (lm[112].z + lm[341].z) / 2)
+  // Eye bag depth: tear trough vs upper cheek
+  zDepthAvgs.eyeBagL = (lm[111].z - lm[116].z)
+  zDepthAvgs.eyeBagR = (lm[340].z - lm[345].z)
+  // Cheek projection: cheekbone vs nose bridge
+  zDepthAvgs.cheekProjL = (lm[50].z - lm[6].z)
+  zDepthAvgs.cheekProjR = (lm[280].z - lm[6].z)
+  // Jaw definition: chin vs gonial angle depth differential
+  zDepthAvgs.jawDef = ((lm[172].z + lm[397].z) / 2 - lm[152].z)
+  // Lip projection
+  zDepthAvgs.lipProj = ((lm[13].z + lm[14].z) / 2 - lm[1].z)
+
   const z = zoneData
   // Require minimum 4 zones
   if (!z.forehead || !z.cheekL || !z.cheekR || !z.nose) return null
@@ -648,12 +664,25 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
   const sunDamage    = clamp(Math.round(avgContrast * 1.8 + avgStdDev * 0.2), 5, 70)
   const vascularity  = clamp(Math.round(cheekNoseRedRatio * 250 - 10), 3, 60)
 
+  // ── Z-depth adjustments ─────────────────────────────────────────
+  let depthBonus = 0
+  if (Object.keys(zDepthAvgs).length > 0) {
+    const cheekProj = ((zDepthAvgs.cheekProjL || 0) + (zDepthAvgs.cheekProjR || 0)) / 2
+    const cheekScore = clamp(Math.round(50 + cheekProj * 500), 20, 95)
+    const eyeBags = ((zDepthAvgs.eyeBagL || 0) + (zDepthAvgs.eyeBagR || 0)) / 2
+    const eyeBagScore = clamp(Math.round(80 + eyeBags * 400), 20, 95)
+    const jawDef = zDepthAvgs.jawDef || 0
+    const jawScore = clamp(Math.round(50 + jawDef * 300), 25, 95)
+    depthBonus = Math.round((cheekScore + eyeBagScore + jawScore) / 3) - 60
+  }
+  const depthAdj = clamp(depthBonus, -5, 5)
+
   // Overall (higher = better)
   const overall = clamp(Math.round(
     luminosity * 0.15 + hydration * 0.18 + uniformity * 0.15 +
     (100 - glycation) * 0.12 + (100 - inflammation) * 0.18 +
     (100 - sunDamage) * 0.12 + (100 - vascularity) * 0.10
-  ), 30, 96)
+  ) + depthAdj, 30, 96)
 
   // Per-zone score
   const zoneScore = (zn: string): number => {
@@ -700,6 +729,7 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
       jaw:         zoneScore("jaw"),
       neck:        zoneScore("neck"),
     },
+    zDepthAvgs,
   }
 }
 
@@ -869,7 +899,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
 
         {/* grid4: 4 big tiles */}
         {current.type === "grid4" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
             {current.options.map(opt => (
               <button key={opt.value} onClick={() => advance({ [current.id]: opt.value })}
                 style={{
@@ -993,7 +1023,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
 
         {/* grid6: 6 icon tiles */}
         {current.type === "grid6" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
             {current.options.map(opt => (
               <button key={opt.value} onClick={() => advance({ [current.id]: opt.value })}
                 style={{
@@ -1017,7 +1047,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
 
         {/* fitz6: Fitzpatrick 3x2 grid of circular skin tone tiles */}
         {current.type === "fitz6" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
             {FITZ_TILES.map(tile => {
               const isSelected = data[current.id] === tile.value
               return (
@@ -1192,7 +1222,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
           const hasSelection = selected.length > 0 && selected[0] !== ""
           return (
           <div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 20 }}>
               {current.options.map(opt => {
                 const isOn = selected.includes(opt.value)
                 return (
@@ -1592,7 +1622,7 @@ export default function AnalyzePage() {
         </div>
       </nav>
 
-      <main style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px" }}>
+      <main style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
 
         {/* ── CHOOSE ── */}
         {stage === "choose" && (
@@ -1605,7 +1635,7 @@ export default function AnalyzePage() {
               Detectamos 478 puntos faciales y analizamos cada zona de tu piel.<br/>
               Necesitas <strong style={{ color: "rgba(245,237,232,0.7)", fontWeight: 500 }}>buena luz natural</strong> y el rostro visible.
             </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 28 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 28 }}>
               <button onClick={() => { setCaptureMode("camera"); setStage("pre-quiz") }}
                 style={{ background: "rgba(245,237,232,0.03)", border: "1.5px solid rgba(245,237,232,0.1)", borderRadius: 18, padding: "28px 18px", cursor: "pointer", color: "#f5ede8", textAlign: "center", transition: "all 0.2s", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}
                 onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(232,164,176,0.45)";e.currentTarget.style.background="rgba(232,164,176,0.05)"}}

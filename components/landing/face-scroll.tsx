@@ -149,7 +149,7 @@ export function FaceScrollSection() {
         }} />
 
         {/* ── Layout grid ── */}
-        <div style={{
+        <div className="scroll-grid" style={{
           position: "relative",
           zIndex: 10,
           width: "100%",
@@ -218,6 +218,7 @@ export function FaceScrollSection() {
               borderRadius: 18,
               padding: "28px 28px",
               width: 320,
+              maxWidth: "100%",
               marginLeft: "auto",
               marginRight: -20,
             }}
@@ -330,6 +331,12 @@ export function FaceScrollSection() {
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(16px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        @media (max-width: 640px) {
+          .scroll-grid {
+            grid-template-columns: 1fr !important;
+            gap: 24px !important;
+          }
         }
       `}</style>
     </section>

@@ -19,6 +19,7 @@ export interface Scores {
   quality: number
   zoneScores: Record<string, number>
   subMetrics: Record<string, SubMetric[]>
+  zDepthAvgs?: Record<string, number>
 }
 
 export interface UserProfile {

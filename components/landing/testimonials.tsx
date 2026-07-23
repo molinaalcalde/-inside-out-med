@@ -97,7 +97,7 @@ function TestimonialCard({
     <div
       style={{
         flexShrink: 0,
-        width: "clamp(280px, 32vw, 360px)",
+        width: "clamp(260px, 85vw, 360px)",
         marginRight: 16,
         padding: "24px 24px 20px",
         background: "rgba(245,237,232,0.03)",

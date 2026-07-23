@@ -65,7 +65,7 @@ export function Nav() {
       </a>
 
       {/* Links — desktop only */}
-      <div style={{ display: "flex", gap: 32, alignItems: "center" }} className="hidden md:flex">
+      <div style={{ display: "flex", gap: 32, alignItems: "center" }} className="nav-links">
         {links.map((l) => (
           <button
             key={l.href}
@@ -139,6 +139,12 @@ export function Nav() {
           EN
         </button>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .nav-links { display: none !important; }
+        }
+      `}</style>
 
       {/* Mobile menu */}
       <button

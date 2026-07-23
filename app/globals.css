@@ -245,6 +245,11 @@
   .section-sm { padding: 56px 0; }
 }
 
+@media (max-width: 480px) {
+  .section { padding: 48px 0; }
+  .container { padding: 0 16px; }
+}
+
 /* ─── Animations ─── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(20px); }

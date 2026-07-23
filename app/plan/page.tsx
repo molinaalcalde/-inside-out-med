@@ -880,7 +880,7 @@ function renderRecCard(
       style={{
         background: "rgba(245,237,232,0.04)",
         border: "1px solid rgba(245,237,232,0.08)",
-        borderRadius: 14, padding: 20,
+        borderRadius: 14, padding: 16,
         transition: "border-color 0.2s, transform 0.2s",
         animation: `cardIn 0.45s ease ${0.35 + ri * 0.06}s both`,
       }}
@@ -1195,7 +1195,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             </h2>
             <div style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
               gap: 14,
             }}>
               {freeStarters.map((r, i) => (
@@ -1244,7 +1244,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 style={{
-                  padding: "10px 20px", borderRadius: 99, cursor: "pointer",
+                  padding: "8px 14px", borderRadius: 99, cursor: "pointer",
                   fontSize: 13, fontWeight: 600, letterSpacing: "0.01em",
                   border: isActive ? "1px solid rgba(232,164,176,0.25)" : "1px solid rgba(245,237,232,0.08)",
                   background: isActive ? "rgba(232,164,176,0.08)" : "rgba(245,237,232,0.04)",
@@ -1430,9 +1430,9 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
         <div style={{
           background: "linear-gradient(135deg, rgba(232,164,176,0.07) 0%, rgba(212,175,136,0.04) 100%)",
           border: "1px solid rgba(232,164,176,0.16)",
-          borderRadius: 20, padding: "36px 40px", marginBottom: 40,
+          borderRadius: 20, padding: "28px 24px", marginBottom: 40,
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          gap: 32, flexWrap: "wrap",
+          gap: 20, flexWrap: "wrap",
           animation: "cardIn 0.6s ease 0.4s both",
         }}>
           <div style={{ maxWidth: 520 }}>

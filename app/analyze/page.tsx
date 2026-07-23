@@ -2055,20 +2055,27 @@ export default function AnalyzePage() {
               }}>
                 {counterAge || skinAge}
               </p>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 10 }}>
-                <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tienes <strong style={{ color: "rgba(245,237,232,0.7)" }}>{userAge}</strong></span>
-                <span style={{ color: "rgba(245,237,232,0.12)", fontSize: 14 }}>→</span>
-                <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tu cara dice <strong style={{ color: isOlder ? "#e8a4b0" : "#7ecba1" }}>{skinAge}</strong></span>
-              </div>
-              <span style={{
-                display: "inline-block", padding: "5px 18px", borderRadius: 99,
-                fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
-                color: isOlder ? "#e8a4b0" : "#7ecba1",
-                background: isOlder ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
-                border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
+              {/* Hidden until counter finishes — preserves surprise */}
+              <div style={{
+                opacity: counterAge >= skinAge ? 1 : 0,
+                transform: counterAge >= skinAge ? "translateY(0)" : "translateY(8px)",
+                transition: "all 0.5s ease",
               }}>
-                {isOlder ? `+${ageDiff} años por encima` : isSame ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
-              </span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 10 }}>
+                  <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tienes <strong style={{ color: "rgba(245,237,232,0.7)" }}>{userAge}</strong></span>
+                  <span style={{ color: "rgba(245,237,232,0.12)", fontSize: 14 }}>→</span>
+                  <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tu cara dice <strong style={{ color: isOlder ? "#e8a4b0" : "#7ecba1" }}>{skinAge}</strong></span>
+                </div>
+                <span style={{
+                  display: "inline-block", padding: "5px 18px", borderRadius: 99,
+                  fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+                  color: isOlder ? "#e8a4b0" : "#7ecba1",
+                  background: isOlder ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
+                  border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
+                }}>
+                  {isOlder ? `+${ageDiff} años por encima` : isSame ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
+                </span>
+              </div>
               <h2 style={{
                 fontFamily: "var(--font-fraunces)", fontSize: "clamp(18px, 3.5vw, 26px)",
                 fontWeight: 400, marginTop: 18, letterSpacing: "-0.02em", lineHeight: 1.2,

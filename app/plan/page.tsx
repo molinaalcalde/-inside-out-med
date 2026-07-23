@@ -12,6 +12,8 @@ type Scores = {
   inflammation: number
   sunDamage: number
   vascularity: number
+  texture?: number
+  wrinkleDepth?: number
   ageApparent?: number
   zoneScores?: Record<string, { score: number; status: string }>
 }

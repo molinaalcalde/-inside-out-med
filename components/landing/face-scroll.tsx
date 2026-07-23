@@ -222,7 +222,6 @@ export function FaceScrollSection() {
               width: 320,
               maxWidth: "100%",
               marginLeft: "auto",
-              marginRight: -20,
             }}
           >
             {/* Header */}
@@ -337,20 +336,23 @@ export function FaceScrollSection() {
         @media (max-width: 640px) {
           .scroll-grid {
             grid-template-columns: 1fr !important;
-            gap: 16px !important;
+            gap: 20px !important;
             padding: 0 20px !important;
-            align-items: flex-end !important;
-            padding-bottom: 80px !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            padding-bottom: 100px !important;
+            padding-top: 0 !important;
+            height: 100% !important;
           }
           .face-video {
             object-fit: cover !important;
-            object-position: center 30% !important;
+            object-position: center 40% !important;
           }
           .face-overlay-radial {
-            background: radial-gradient(ellipse 80% 50% at 50% 35%, transparent 20%, rgba(14,12,18,0.5) 55%, rgba(14,12,18,0.95) 80%) !important;
+            background: linear-gradient(to bottom, rgba(14,12,18,0.1) 0%, rgba(14,12,18,0.15) 35%, rgba(14,12,18,0.5) 60%, rgba(14,12,18,0.92) 80%, rgba(14,12,18,1) 95%) !important;
           }
           .face-overlay-side {
-            background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(14,12,18,0.85) 70%, rgba(14,12,18,1) 90%) !important;
+            display: none !important;
           }
         }
       `}</style>

@@ -1524,6 +1524,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .plan-tabs::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   )

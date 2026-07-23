@@ -104,111 +104,94 @@ const ZONE_LABELS: Record<string, string> = {
 const QUIZ_ICONS: Record<string, React.ReactNode> = {
   // Conditions
   rosacea: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8 10c1 1.5 2 2 4 2s3-.5 4-2" />
-      <path d="M9 14c.5.8 1.5 1.2 3 1.2s2.5-.4 3-1.2" />
-      <line x1="7" y1="12" x2="8" y2="13" />
-      <line x1="17" y1="12" x2="16" y2="13" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 22c1.5-3 2-5 2-7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M12 22c1-3.5 1.2-6 0.8-8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M16 22c0-2.5-.5-5-1.5-7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M20 22c-1-3-2.5-5.5-3-7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M6 24h16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   ),
   melasma: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <ellipse cx="8.5" cy="10" rx="2" ry="1.5" />
-      <ellipse cx="15" cy="11" rx="2.5" ry="1.8" />
-      <ellipse cx="11" cy="15" rx="1.8" ry="1.2" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 8c-3 1-5 4-4.5 7.5s3 5.5 6 5c2.5-.4 3-2 5.5-2.5s4.5.5 6-1.5 0-5-2-6.5-4-1.5-6-.5-2.5-2.5-5-1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   acne_c: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="9" cy="9" r="1.2" />
-      <circle cx="15" cy="10" r="1" />
-      <circle cx="10" cy="14" r="0.8" />
-      <circle cx="14" cy="15" r="1.1" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="10" cy="12" r="3" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="18" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="15" cy="18" r="1.8" stroke="currentColor" strokeWidth="1.2"/>
     </svg>
   ),
   dermatitis: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M7 10c2 1 4-1 6 0s3 1 5-0.5" />
-      <path d="M7 13c2 1 4-1 6 0s3 1 5-0.5" />
-      <path d="M8 16c1.5.8 3-.5 4.5.3" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 14c2-2 4 2 6 0s4 2 6 0 4 2 6 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M7 10l0.5-2M11 10.5l0.3-2M15 10l0.5-2M19 10.5l0.3-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M9 18l-0.4 2M13 17.5l-0.3 2M17 18l-0.4 2M21 17.5l-0.3 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   ),
   psoriasis: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8 8l2 2-2 2 2 2" />
-      <path d="M14 8l2 2-2 2 2 2" />
-      <path d="M11 10l1.5 1.5-1.5 1.5" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 10c2-1 4 0 5 1.5s1 3.5-1 4-3-.5-3-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 7c2-.5 4 1 4.5 3s-.5 3.5-2.5 3.5-3-1-2.5-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M10 17c1.5-.5 3.5 0 4 2s-.5 3-2 3-2.5-1.5-2-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M18 15c1.5-.5 3 .5 3.5 2s0 3-1.5 3-2.5-1-2-2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   ninguna: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8 12.5l2.5 2.5 5-5" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="14" cy="14" r="10" stroke="currentColor" strokeWidth="1.2"/>
+      <path d="M9 14.5l3 3 7-7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   // Concerns
   manchas: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="9" cy="10" r="1.5" fill="currentColor" fillOpacity="0.2" />
-      <circle cx="14" cy="9" r="1" fill="currentColor" fillOpacity="0.2" />
-      <circle cx="11" cy="15" r="1.8" fill="currentColor" fillOpacity="0.2" />
-      <circle cx="16" cy="14" r="1.2" fill="currentColor" fillOpacity="0.2" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="9" cy="11" r="3" stroke="currentColor" strokeWidth="1.2" fill="currentColor" fillOpacity="0.12"/>
+      <circle cx="18" cy="9" r="2" stroke="currentColor" strokeWidth="1.2" fill="currentColor" fillOpacity="0.12"/>
+      <circle cx="15" cy="18" r="2.5" stroke="currentColor" strokeWidth="1.2" fill="currentColor" fillOpacity="0.12"/>
     </svg>
   ),
   arrugas: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 7c4 1 6-1 10 0s4 1 4 0" />
-      <path d="M5 11c3 1.2 7-1 10 0.5s4 .5 4-.5" />
-      <path d="M5 15c4 1.5 6-1.5 10 0s4 1 4 0" />
-      <path d="M6 19c3 .8 5-.8 8 0" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 9c3 1.2 6-1 9 0.3s5 .8 9-.3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M5 14.5c3 1.2 6-1 9 0.3s5 .8 9-.3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M5 20c3 1.2 6-1 9 0.3s5 .8 9-.3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   ),
   poros: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="8" cy="9" r="0.8" />
-      <circle cx="11" cy="8" r="0.7" />
-      <circle cx="14" cy="9.5" r="0.8" />
-      <circle cx="9" cy="12" r="0.7" />
-      <circle cx="12" cy="11.5" r="0.9" />
-      <circle cx="15" cy="12" r="0.7" />
-      <circle cx="10" cy="15" r="0.8" />
-      <circle cx="13" cy="14.5" r="0.7" />
-      <circle cx="16" cy="15" r="0.8" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="8" r="1.2" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="15" cy="7" r="1" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="22" cy="9" r="1.2" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="10" cy="14" r="1.1" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="18" cy="15" r="1.2" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="7" cy="21" r="1" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="14" cy="21" r="1.2" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="21" cy="20" r="1.1" stroke="currentColor" strokeWidth="1.2"/>
     </svg>
   ),
   acne: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="8" cy="9" r="1.5" />
-      <circle cx="14" cy="8" r="1" />
-      <circle cx="16" cy="12" r="1.3" />
-      <circle cx="10" cy="14" r="1.2" />
-      <circle cx="14" cy="16" r="0.9" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="7" cy="10" r="1.8" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="16" cy="7" r="1" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="22" cy="12" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="12" cy="15" r="2" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="19" cy="19" r="0.8" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="8" cy="21" r="1.3" stroke="currentColor" strokeWidth="1.2"/>
     </svg>
   ),
   hidratacion: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3c-4 5.5-7 8.5-7 12a7 7 0 0014 0c0-3.5-3-6.5-7-12z" />
-      <path d="M9.5 16a3 3 0 004.5 1" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 4c-4.5 6-8 9.5-8 13.5a8 8 0 0016 0c0-4-3.5-7.5-8-13.5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   luminosidad: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="4" />
-      <line x1="12" y1="2" x2="12" y2="5" />
-      <line x1="12" y1="19" x2="12" y2="22" />
-      <line x1="2" y1="12" x2="5" y2="12" />
-      <line x1="19" y1="12" x2="22" y2="12" />
-      <line x1="4.93" y1="4.93" x2="7.05" y2="7.05" />
-      <line x1="16.95" y1="16.95" x2="19.07" y2="19.07" />
-      <line x1="4.93" y1="19.07" x2="7.05" y2="16.95" />
-      <line x1="16.95" y1="7.05" x2="19.07" y2="4.93" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 4v4M14 20v4M4 14h4M20 14h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M14 11l1.5 3-1.5 3-1.5-3z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M11 14l3-1.5 3 1.5-3 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   // Upload guide icons

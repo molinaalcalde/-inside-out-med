@@ -497,6 +497,10 @@ const CATALOG: Rec[] = [
 
 // ── Engine ─────────────────────────────────────────────────────────
 function ageFromRange(ageStr: string): number {
+  // Try exact number first (quiz stores exact age like "38")
+  const exact = parseInt(ageStr, 10)
+  if (!isNaN(exact) && exact >= 14 && exact <= 99) return exact
+  // Fallback: legacy range format
   const map: Record<string, number> = { "18-25": 22, "26-35": 30, "36-45": 40, "46+": 52 }
   return map[ageStr] ?? 30
 }
@@ -1538,7 +1542,7 @@ export default function PlanPage() {
         loadedScores = {
           overall: 72, luminosity: 65, hydration: 70, uniformity: 58,
           glycation: 32, inflammation: 28, sunDamage: 35, vascularity: 20,
-          ageApparent: 34,
+          texture: 68, wrinkleDepth: 65, ageApparent: 34,
         }
       }
 
@@ -1556,7 +1560,7 @@ export default function PlanPage() {
       loadedScores = {
         overall: 72, luminosity: 65, hydration: 70, uniformity: 58,
         glycation: 32, inflammation: 28, sunDamage: 35, vascularity: 20,
-        ageApparent: 34,
+        texture: 68, wrinkleDepth: 65, ageApparent: 34,
       }
       loadedProfile = {
         age: "26-35",

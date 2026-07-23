@@ -14,6 +14,8 @@ export interface Scores {
   inflammation: number
   sunDamage: number
   vascularity: number
+  texture: number
+  wrinkleDepth: number
   ageApparent: number
   symmetry: number
   quality: number

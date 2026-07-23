@@ -677,11 +677,17 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
   }
   const depthAdj = clamp(depthBonus, -5, 5)
 
+  // Texture metrics (simplified for upload — no multi-frame averaging)
+  const avgContrast = activeZones.reduce((s, zn) => s + zoneAvgs[zn].contrast, 0) / activeZones.length
+  const texture = clamp(Math.round(100 - avgContrast * 3.5), 15, 98)
+  const wrinkleDepth = clamp(Math.round(100 - avgContrast * 2.0), 15, 95)
+
   // Overall (higher = better)
   const overall = clamp(Math.round(
-    luminosity * 0.15 + hydration * 0.18 + uniformity * 0.15 +
-    (100 - glycation) * 0.12 + (100 - inflammation) * 0.18 +
-    (100 - sunDamage) * 0.12 + (100 - vascularity) * 0.10
+    luminosity * 0.14 + hydration * 0.16 + uniformity * 0.14 +
+    (100 - glycation) * 0.11 + (100 - inflammation) * 0.16 +
+    (100 - sunDamage) * 0.11 + (100 - vascularity) * 0.07 +
+    texture * 0.06 + wrinkleDepth * 0.05
   ) + depthAdj, 30, 96)
 
   // Per-zone score
@@ -717,7 +723,7 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
 
   return {
     overall, luminosity, hydration, uniformity, glycation, inflammation, sunDamage, vascularity,
-    ageApparent,
+    texture, wrinkleDepth, ageApparent,
     zoneScores: {
       forehead:    zoneScore("forehead"),
       periocularL: zoneScore("periocularL"),

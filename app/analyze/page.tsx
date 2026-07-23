@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react"
 import { CameraStage, type Scores } from "./camera-stage"
 import { generateCrossRefInsights } from "../../lib/analysis/cross-reference"
+import { generateBrainInsights } from "../../lib/analysis/brain-insights"
 import { trackFunnelEvent, updateLead } from "../../lib/tracking/funnel"
 import type { UserProfile } from "../../lib/types"
 import { ScanFace, Bandage } from "lucide-react"
@@ -2256,6 +2257,32 @@ export default function AnalyzePage() {
           const scoresWithSubs = { ...scores, subMetrics: derivedSubMetrics }
           const crossRefInsights = generateCrossRefInsights(scoresWithSubs as any, userProfile)
 
+          // ── Brain insights: evidence-based analysis ──
+          const brainPapers = [
+            { key_findings: "El uso diario de FPS redujo el fotoenvejecimiento un 24%.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["Protector solar SPF 50"], authors: "Hughes MCB et al.", year: 2013, title: "Sunscreen and prevention of skin aging", tags: ["SPF", "fotoenvejecimiento", "photoaging", "sunscreen"] },
+            { key_findings: "La vitamina C topica aumenta la sintesis de colageno y protege del fotodano.", applicable_zones: ["piel", "mejillas"], applicable_treatments: ["Vitamina C 15-20% (AM)"], authors: "Pinnell SR", year: 2001, title: "Topical vitamin C increases collagen synthesis", tags: ["vitamina C", "colageno", "antioxidante"] },
+            { key_findings: "Los retinoides reducen arrugas y aumentan colageno de forma comprobada.", applicable_zones: ["piel", "frente", "periocular", "labios"], applicable_treatments: ["Retinol 0.3% -> 1% (PM)"], authors: "Mukherjee S et al.", year: 2006, title: "Retinoids in the treatment of skin aging", tags: ["retinol", "retinoid", "anti-aging", "colageno", "arrugas"] },
+            { key_findings: "Peptidos de colageno orales mejoraron elasticidad cutanea en 8 semanas.", applicable_zones: ["piel", "mandibula"], applicable_treatments: ["Colageno hidrolizado tipo I y III"], authors: "Proksch E et al.", year: 2014, title: "Oral collagen peptides improve skin elasticity", tags: ["colageno", "elasticidad", "suplemento", "peptidos"] },
+            { key_findings: "Niacinamida topica mejoro arrugas, manchas, rojez y elasticidad.", applicable_zones: ["piel", "mejillas", "frente"], applicable_treatments: ["Niacinamida 5-10%"], authors: "Bissett DL et al.", year: 2005, title: "Niacinamide improves aging facial skin", tags: ["niacinamida", "niacinamide", "poros", "manchas", "barrera"] },
+            { key_findings: "Cafeina topica reduce edema periorbital.", applicable_zones: ["periocular"], applicable_treatments: ["Contorno de ojos con cafeina + peptidos"], authors: "Herman A, Herman AP", year: 2013, title: "Caffeine reduces periorbital edema", tags: ["cafeina", "ojeras", "hinchazon", "periocular"] },
+            { key_findings: "La luz roja mejora densidad de colageno y reduce arrugas.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["LED rojo terapeutico"], authors: "Wunsch A, Matuschka K", year: 2014, title: "Red light and skin rejuvenation", tags: ["LED", "fotobiomodulacion", "colageno", "luz roja"] },
+            { key_findings: "El envejecimiento cutaneo resulta de UV (80%), genetica, hormonas, contaminacion y tabaco.", applicable_zones: ["piel", "frente", "periocular", "mejillas", "mandibula", "cuello"], applicable_treatments: ["Protector solar SPF 50", "Retinol 0.3% -> 1% (PM)"], authors: "Farage MA et al.", year: 2008, title: "Intrinsic and extrinsic factors in skin ageing", tags: ["aging", "skin aging", "envejecimiento", "UV"] },
+            { key_findings: "El estres oxidativo es un mecanismo central del envejecimiento cutaneo.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["Vitamina C 15-20% (AM)", "Antioxidantes topicos"], authors: "Kammeyer A, Luiten RM", year: 2015, title: "Oxidation events and skin aging", tags: ["oxidacion", "antioxidante", "aging", "radicales libres"] },
+            { key_findings: "Fotoproteccion + antioxidantes + retinoides = abordaje multimodal necesario.", applicable_zones: ["piel", "frente", "mejillas", "cuello"], applicable_treatments: ["Protector solar SPF 50", "Retinol 0.3% -> 1% (PM)"], authors: "Krutmann J et al.", year: 2017, title: "The skin aging exposome", tags: ["exposome", "aging", "UV", "prevencion"] },
+            { key_findings: "La exposicion solar cronica genera manchas, arrugas y perdida de elasticidad acumulativa.", applicable_zones: ["piel", "frente", "mejillas", "periocular", "cuello"], applicable_treatments: ["Protector solar SPF 50"], authors: "Flament F et al.", year: 2013, title: "Effect of sun on visible clinical signs of aging", tags: ["sun", "photoaging", "arrugas", "manchas", "exposicion solar"] },
+            { key_findings: "Retinol al 0.4% mejoro arrugas finas en piel envejecida en 24 semanas.", applicable_zones: ["piel", "frente", "periocular", "mejillas"], applicable_treatments: ["Retinol 0.3% -> 1% (PM)"], authors: "Kafi R et al.", year: 2007, title: "Improvement of naturally aged skin with retinol", tags: ["retinol", "retinoid", "arrugas", "colageno", "anti-aging"] },
+            { key_findings: "Vitamina C topica al 10-20% maximiza absorcion, estimula colageno e inhibe melanogenesis.", applicable_zones: ["piel", "mejillas", "frente", "periocular"], applicable_treatments: ["Vitamina C 15-20% (AM)"], authors: "Pullar JM et al.", year: 2017, title: "The roles of vitamin C in skin health", tags: ["vitamina C", "vitamin C", "antioxidante", "colageno", "fotoproteccion"] },
+            { key_findings: "Mala calidad de sueno acelera signos de envejecimiento y retrasa recuperacion de barrera.", applicable_zones: ["piel", "periocular", "frente"], applicable_treatments: ["Mejora de calidad de sueno"], authors: "Oyetakin-White P et al.", year: 2015, title: "Poor sleep quality affects skin ageing", tags: ["sueno", "sleep", "aging", "barrera cutanea"] },
+            { key_findings: "Estres cronico degrada colageno y amplifica rosacea, dermatitis e inflamacion.", applicable_zones: ["piel", "mejillas"], applicable_treatments: ["Manejo de estres"], authors: "Kahan V et al.", year: 2009, title: "Stress and skin collagen integrity", tags: ["estres", "stress", "cortisol", "inflamacion", "barrera cutanea"] },
+            { key_findings: "La barrera cutanea esta comprometida en rosacea; ceramidas y niacinamida son clave.", applicable_zones: ["mejillas", "nariz"], applicable_treatments: ["Niacinamida 5-10%", "Limpiador suave + hidratante con ceramidas"], authors: "Addor FAS", year: 2017, title: "Skin barrier in rosacea", tags: ["rosacea", "barrera cutanea", "inflamacion", "ceramidas"] },
+            { key_findings: "La rosacea se clasifica por fenotipos. El tratamiento debe personalizarse.", applicable_zones: ["mejillas", "nariz", "frente"], applicable_treatments: ["Niacinamida 5-10%", "Azelaic acid 15%"], authors: "Gallo RL et al.", year: 2018, title: "Standard classification of rosacea", tags: ["rosacea", "inflamacion", "rojez", "eritema"] },
+            { key_findings: "El acido hialuronico disminuye con la edad. HA topico de bajo peso molecular mejora hidratacion.", applicable_zones: ["piel", "mejillas", "labios", "periocular"], applicable_treatments: ["Acido hialuronico topico"], authors: "Papakonstantinou E et al.", year: 2012, title: "Hyaluronic acid: key molecule in skin aging", tags: ["acido hialuronico", "hyaluronic", "hidratacion", "volumen", "aging"] },
+            { key_findings: "Colageno oral (2.5g/dia x 12 semanas) mejora hidratacion +28%, elasticidad +19%.", applicable_zones: ["piel", "mejillas", "mandibula", "cuello"], applicable_treatments: ["Colageno hidrolizado tipo I y III"], authors: "Bolke L et al.", year: 2019, title: "Collagen supplement improves skin hydration and elasticity", tags: ["colageno", "suplemento", "hidratacion", "elasticidad"] },
+            { key_findings: "Acido ferulico + vitamina C + E duplica la fotoproteccion cutanea.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["Vitamina C 15-20% (AM)", "Antioxidantes topicos"], authors: "Lin FH et al.", year: 2005, title: "Ferulic acid doubles photoprotection of vitamins C and E", tags: ["acido ferulico", "vitamina C", "antioxidante", "fotoproteccion"] },
+            { key_findings: "Proteccion solar + retinoides + antioxidantes son las estrategias anti-aging con mayor evidencia.", applicable_zones: ["piel", "frente", "mejillas", "periocular", "mandibula", "cuello"], applicable_treatments: ["Protector solar SPF 50", "Retinol 0.3% -> 1% (PM)", "Vitamina C 15-20% (AM)"], authors: "Ganceviciene R et al.", year: 2012, title: "Skin anti-aging strategies", tags: ["anti-aging", "estrategias", "multimodal", "evidencia"] },
+          ]
+          const brainInsights = generateBrainInsights(scores, userProfile, brainPapers)
+
           // Human-readable findings with year impact
           const yearImpact: Record<string, string> = {
             "Daño solar": "hasta +2 años",
@@ -2425,6 +2452,47 @@ export default function AnalyzePage() {
                         </div>
                         <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.65, margin: 0 }}>
                           {insight.text}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── BRAIN INSIGHTS — lo que dice la ciencia ── */}
+            {brainInsights.length > 0 && (
+              <div style={{ marginTop: 20, marginBottom: 8 }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>
+                  Lo que dice la ciencia
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {brainInsights.map((insight, idx) => {
+                    const borderColor = insight.severity === "critical" ? "#e8a4b0" : insight.severity === "warning" ? "#d4af88" : "#7ecba1"
+                    const cardBg = insight.severity === "critical" ? "rgba(232,164,176,0.06)" : insight.severity === "warning" ? "rgba(212,175,136,0.04)" : "rgba(126,203,161,0.04)"
+                    const borderSide = insight.severity === "critical" ? "rgba(232,164,176,0.35)" : insight.severity === "warning" ? "rgba(212,175,136,0.25)" : "rgba(126,203,161,0.25)"
+                    return (
+                      <div key={idx} style={{
+                        background: cardBg,
+                        border: "1px solid rgba(245,237,232,0.06)",
+                        borderLeft: `3px solid ${borderSide}`,
+                        borderRadius: "4px 14px 14px 4px",
+                        padding: "16px 18px",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <div style={{
+                            width: 6, height: 6, borderRadius: "50%",
+                            background: borderColor,
+                            boxShadow: `0 0 6px ${borderColor}66`,
+                            flexShrink: 0,
+                          }} />
+                          <span style={{ fontSize: 13, fontWeight: 700, color: borderColor }}>{insight.title}</span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.65, margin: "0 0 10px" }}>
+                          {insight.text}
+                        </p>
+                        <p style={{ fontSize: 10, color: "rgba(245,237,232,0.28)", lineHeight: 1.4, margin: 0, fontStyle: "italic" }}>
+                          {insight.evidence}
                         </p>
                       </div>
                     )

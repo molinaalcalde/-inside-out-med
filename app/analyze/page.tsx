@@ -1572,6 +1572,12 @@ export default function AnalyzePage() {
           inflammation: scores.inflammation,
           sunDamage: scores.sunDamage,
           vascularity: scores.vascularity,
+          texture: scores.texture,
+          wrinkleDepth: scores.wrinkleDepth,
+          darkCircles: scores.darkCircles,
+          symmetry: scores.symmetry,
+          ageApparent: scores.ageApparent,
+          zoneScores: scores.zoneScores,
           ...preQuizData, ...data,
         }))
       }
@@ -1615,6 +1621,12 @@ export default function AnalyzePage() {
           inflammation: scores.inflammation,
           sunDamage: scores.sunDamage,
           vascularity: scores.vascularity,
+          texture: scores.texture,
+          wrinkleDepth: scores.wrinkleDepth,
+          darkCircles: scores.darkCircles,
+          symmetry: scores.symmetry,
+          ageApparent: scores.ageApparent,
+          zoneScores: scores.zoneScores,
           ...preQuizData, ...contactData, ...data,
         }))
       }
@@ -1918,11 +1930,15 @@ export default function AnalyzePage() {
           const isOlder = ageDiff > 0
           const isSame = ageDiff === 0
 
-          const humanFindings = criticalFindings.slice(0, 3).map(b => {
-            const yearMap: Record<string, string> = {
-              "Daño solar": "~2 años", "Inflamación": "~1.5 años", "Glicación": "~1 año",
-              "Vascularidad": "~0.5 años", "Luminosidad": "~1 año", "Suavidad": "~1 año", "Uniformidad": "~0.5 años",
-            }
+          // Distribute ageDiff proportionally across top 3 findings based on severity
+          const top3 = criticalFindings.slice(0, 3)
+          const totalSeverity = top3.reduce((s, b) => s + b.severity, 0) || 1
+          const humanFindings = top3.map((b, idx) => {
+            // Each finding's year impact is proportional to its severity relative to the total
+            const proportion = b.severity / totalSeverity
+            const yearContribution = Math.abs(ageDiff) * proportion
+            const roundedYears = Math.round(yearContribution * 2) / 2 // round to nearest 0.5
+            const yearsStr = roundedYears <= 0.5 ? "~0.5 años" : roundedYears === 1 ? "~1 año" : `~${roundedYears} años`
             const descMap: Record<string, string> = {
               "Daño solar": "Fotodaño acumulado — textura irregular y manchas",
               "Inflamación": "Rojez activa en mejillas — irritación crónica",
@@ -1932,7 +1948,7 @@ export default function AnalyzePage() {
               "Suavidad": "Textura irregular — superficie áspera y microescamas",
               "Uniformidad": "Tono desigual — manchas y rojez visible",
             }
-            return { desc: descMap[b.label] || b.friendlyLabel, years: yearMap[b.label] || "~1 año", color: b.color }
+            return { desc: descMap[b.label] || b.friendlyLabel, years: yearsStr, color: b.color }
           })
 
           return (
@@ -2284,14 +2300,14 @@ export default function AnalyzePage() {
           const brainInsights = generateBrainInsights(scores, userProfile, brainPapers)
 
           // Human-readable findings with year impact
-          const yearImpact: Record<string, string> = {
-            "Daño solar": "hasta +2 años",
-            "Inflamación": "hasta +1.5 años",
-            "Glicación": "hasta +1 año",
-            "Vascularidad": "hasta +0.5 años",
-            "Luminosidad": "hasta +1 año",
-            "Suavidad": "hasta +1 año",
-            "Uniformidad": "hasta +0.5 años",
+          // Calculate year impact proportionally based on actual ageDiff
+          const r2Top3 = [...criticalFindings].sort((a, b) => b.severity - a.severity).slice(0, 3)
+          const r2TotalSev = r2Top3.reduce((s, b) => s + b.severity, 0) || 1
+          const yearImpact: Record<string, string> = {}
+          for (const b of r2Top3) {
+            const proportion = b.severity / r2TotalSev
+            const yrs = Math.round(Math.abs(ageDiff) * proportion * 2) / 2
+            yearImpact[b.label] = yrs <= 0.5 ? "hasta +0.5 años" : yrs === 1 ? "hasta +1 año" : `hasta +${yrs} años`
           }
 
           const findingDescriptions: Record<string, { title: string; desc: string }> = {
@@ -2671,6 +2687,12 @@ export default function AnalyzePage() {
                       inflammation: scores.inflammation,
                       sunDamage: scores.sunDamage,
                       vascularity: scores.vascularity,
+                      texture: scores.texture,
+                      wrinkleDepth: scores.wrinkleDepth,
+                      darkCircles: scores.darkCircles,
+                      symmetry: scores.symmetry,
+                      ageApparent: scores.ageApparent,
+                      zoneScores: scores.zoneScores,
                       ...preQuizData, ...contactData, ...gateData,
                     }))
                   }

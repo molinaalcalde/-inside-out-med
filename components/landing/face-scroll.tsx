@@ -336,12 +336,12 @@ export function FaceScrollSection() {
         @media (max-width: 640px) {
           .scroll-grid {
             grid-template-columns: 1fr !important;
-            gap: 20px !important;
-            padding: 0 20px !important;
-            align-items: center !important;
+            gap: 16px !important;
+            padding: 0 24px !important;
+            display: flex !important;
+            flex-direction: column !important;
             justify-content: flex-end !important;
-            padding-bottom: 100px !important;
-            padding-top: 0 !important;
+            padding-bottom: 90px !important;
             height: 100% !important;
           }
           .face-video {

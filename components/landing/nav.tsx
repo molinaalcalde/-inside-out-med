@@ -181,7 +181,7 @@ export function Nav() {
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 100,
+            zIndex: 300,
             background: "#0e0c12",
             display: "flex",
             flexDirection: "column",

@@ -33,6 +33,7 @@ export function Nav() {
   }
 
   return (
+    <>
     <nav
       ref={navRef}
       style={{
@@ -175,69 +176,71 @@ export function Nav() {
         </svg>
       </button>
 
-      {/* Fullscreen mobile menu */}
-      {menuOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 300,
-            background: "#0e0c12",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {/* Top bar — logo + close */}
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "0 24px", height: 72, borderBottom: "1px solid rgba(245,237,232,0.06)",
-          }}>
-            <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="#e8a4b0" strokeWidth="1.5"/><circle cx="14" cy="14" r="7" stroke="#e8a4b0" strokeWidth="1" strokeDasharray="3 2"/><circle cx="14" cy="14" r="3" fill="#e8a4b0"/></svg>
-              <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 18, fontWeight: 500, color: "#f5ede8" }}>InsideOutMed</span>
-            </a>
-            <button onClick={() => setMenuOpen(false)} aria-label="Close" style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer" }}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#f5ede8" strokeWidth="1.5" strokeLinecap="round"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
-            </button>
-          </div>
+    </nav>
 
-          {/* Links */}
-          <nav style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 40px" }}>
-            {links.map((l, i) => (
-              <button
-                key={l.href}
-                onClick={() => { setMenuOpen(false); handleClick(l.href) }}
-                style={{
-                  background: "none", border: "none", cursor: "pointer", textAlign: "left",
-                  padding: "24px 0",
-                  borderBottom: i < links.length - 1 ? "1px solid rgba(245,237,232,0.06)" : "none",
-                  fontFamily: "var(--font-fraunces)", fontSize: 24, fontWeight: 400,
-                  color: "#f5ede8", letterSpacing: "-0.02em",
-                }}
-              >
-                {l.label}
-              </button>
-            ))}
-          </nav>
+    {/* Mobile menu — OUTSIDE nav to avoid nested fixed issues on Safari */}
+    {menuOpen && (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
+          background: "#0e0c12",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Top bar — logo + close */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 24px", height: 72, borderBottom: "1px solid rgba(245,237,232,0.06)", flexShrink: 0,
+        }}>
+          <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="#e8a4b0" strokeWidth="1.5"/><circle cx="14" cy="14" r="7" stroke="#e8a4b0" strokeWidth="1" strokeDasharray="3 2"/><circle cx="14" cy="14" r="3" fill="#e8a4b0"/></svg>
+            <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 18, fontWeight: 500, color: "#f5ede8" }}>InsideOutMed</span>
+          </a>
+          <button onClick={() => setMenuOpen(false)} aria-label="Cerrar" style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer" }}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#f5ede8" strokeWidth="1.5" strokeLinecap="round"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
+          </button>
+        </div>
 
-          {/* Bottom CTA */}
-          <div style={{ padding: "24px 40px 48px" }}>
-            <a
-              href="/analyze"
-              onClick={() => setMenuOpen(false)}
+        {/* Links */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 40px" }}>
+          {links.map((l, i) => (
+            <button
+              key={l.href}
+              onClick={() => { setMenuOpen(false); handleClick(l.href) }}
               style={{
-                display: "block", textAlign: "center", width: "100%",
-                padding: "16px", fontSize: 15, fontWeight: 700,
-                color: "#fff", background: "linear-gradient(135deg, #e8a4b0, #c97e8e)",
-                borderRadius: 12, textDecoration: "none",
-                boxShadow: "0 4px 20px rgba(232,164,176,0.25)",
+                background: "none", border: "none", cursor: "pointer", textAlign: "left",
+                padding: "24px 0",
+                borderBottom: i < links.length - 1 ? "1px solid rgba(245,237,232,0.06)" : "none",
+                fontFamily: "var(--font-fraunces)", fontSize: 24, fontWeight: 400,
+                color: "#f5ede8", letterSpacing: "-0.02em",
               }}
             >
-              Analizar mi rostro
-            </a>
-          </div>
+              {l.label}
+            </button>
+          ))}
         </div>
-      )}
-    </nav>
+
+        {/* CTA */}
+        <div style={{ padding: "24px 40px 48px", flexShrink: 0 }}>
+          <a
+            href="/analyze"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: "block", textAlign: "center", width: "100%",
+              padding: "16px", fontSize: 15, fontWeight: 700,
+              color: "#fff", background: "linear-gradient(135deg, #e8a4b0, #c97e8e)",
+              borderRadius: 12, textDecoration: "none",
+              boxShadow: "0 4px 20px rgba(232,164,176,0.25)",
+            }}
+          >
+            Analizar mi rostro
+          </a>
+        </div>
+      </div>
+    )}
+    </>
   )
 }

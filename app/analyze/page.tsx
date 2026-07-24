@@ -10,7 +10,7 @@ import { ScanFace, Bandage } from "lucide-react"
 
 const WHATSAPP_NUMBER = "5491112345678" // TODO: Replace with real number
 
-type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "plan-choice" | "gate-quiz" | "consultation" | "results-2" | "error"
+type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results" | "plan-choice" | "gate-quiz" | "consultation" | "error"
 
 // ── MediaPipe landmark indices per zone (upload path — 9 zones) ──
 const ZONES = {
@@ -78,7 +78,7 @@ const RESULT_ZONES = [
   { key: "neck",        label: "Cuello",       dotX: 50, dotY: 82 },
 ]
 
-// ── Accordion zone metadata for results-2 ─────────────────────
+// ── Accordion zone metadata for results ─────────────────────
 const ACCORDION_META: Record<string, { label: string; icon: string }> = {
   frente:     { label: "Frente",      icon: "F" },
   periocular: { label: "Periocular",  icon: "P" },
@@ -1392,8 +1392,6 @@ export default function AnalyzePage() {
   const [gateData, setGateData] = useState<Record<string, string>>({})
   const [activeZone, setActiveZone] = useState<string | null>(null)
   const [showBiomarkers, setShowBiomarkers] = useState(false)
-  const [activeResultZone, setActiveResultZone] = useState(0)
-  const [autoPlay, setAutoPlay] = useState(true)
   const [revealPhase, setRevealPhase] = useState(0)
   const [revealedZones, setRevealedZones] = useState<number[]>([])
   const [counterAge, setCounterAge] = useState(0)
@@ -1516,18 +1514,9 @@ export default function AnalyzePage() {
     trackFunnelEvent("started")
   }, [])
 
-  // Auto-advance zones in results-2
+  // ── Cinematic reveal sequence for results ─────────────────────
   useEffect(() => {
-    if (stage !== "results-2" || !autoPlay) return
-    const timer = setInterval(() => {
-      setActiveResultZone(prev => (prev + 1) % RESULT_ZONES.length)
-    }, 3500)
-    return () => clearInterval(timer)
-  }, [stage, autoPlay])
-
-  // ── Cinematic reveal sequence for results-1 ─────────────────────
-  useEffect(() => {
-    if (stage !== "results-1") { setRevealPhase(0); return }
+    if (stage !== "results") { setRevealPhase(0); return }
     setRevealPhase(0); setRevealedZones([]); setCounterAge(0); setRevealedFindings(0)
     const t1 = setTimeout(() => setRevealPhase(1), 500)
     const zoneTimers = RESULT_ZONES.map((_, i) =>
@@ -1592,7 +1581,7 @@ export default function AnalyzePage() {
     }
   }
 
-  // ── Contact complete → results-1 ──────────────────────────────
+  // ── Contact complete → results ──────────────────────────────
   const handleContactComplete = (data: Record<string, string>) => {
     setContactData(data)
     trackFunnelEvent("contact_complete", { email: data.email, phone: data.phone })
@@ -1653,41 +1642,29 @@ export default function AnalyzePage() {
         .finally(() => setVisionLoading(false))
     }
 
-    setStage("results-1")
+    setStage("results")
   }
 
-  // ── Gate quiz complete → results-2 ─────────────────────────────
+  // ── Gate quiz complete → save data and go to /plan ─────────────
   const handleGateComplete = (data: Record<string, string>) => {
     setGateData(data)
     trackFunnelEvent("full_results_viewed", data)
     updateLead({ funnelStage: "full_results_viewed" })
-    setActiveResultZone(0)
-    setAutoPlay(true)
-    setShowBiomarkers(false)
     // Save all data to localStorage
     try {
       localStorage.setItem("insideoutmed_profile", JSON.stringify({ ...preQuizData, ...contactData, ...data }))
       if (scores) {
         localStorage.setItem("insideoutmed_scores", JSON.stringify({
-          overall: scores.overall,
-          luminosity: scores.luminosity,
-          hydration: scores.hydration,
-          uniformity: scores.uniformity,
-          glycation: scores.glycation,
-          inflammation: scores.inflammation,
-          sunDamage: scores.sunDamage,
-          vascularity: scores.vascularity,
-          texture: scores.texture,
-          wrinkleDepth: scores.wrinkleDepth,
-          darkCircles: scores.darkCircles,
-          symmetry: scores.symmetry,
-          ageApparent: scores.ageApparent,
-          zoneScores: scores.zoneScores,
+          overall: scores.overall, luminosity: scores.luminosity, hydration: scores.hydration,
+          uniformity: scores.uniformity, glycation: scores.glycation, inflammation: scores.inflammation,
+          sunDamage: scores.sunDamage, vascularity: scores.vascularity, texture: scores.texture,
+          wrinkleDepth: scores.wrinkleDepth, darkCircles: scores.darkCircles, symmetry: scores.symmetry,
+          ageApparent: scores.ageApparent, zoneScores: scores.zoneScores,
           ...preQuizData, ...contactData, ...data,
         }))
       }
     } catch {}
-    setStage("results-2")
+    window.location.href = "/plan"
   }
 
   // ── Build biomarker list ──────────────────────────────────────
@@ -1977,8 +1954,8 @@ export default function AnalyzePage() {
           </div>
         )}
 
-        {/* ── RESULTS LAYER 1 — top 3 critical findings ── */}
-        {stage === "results-1" && scores && (() => {
+        {/* ── UNIFIED RESULTS — all findings in one scrollable view ── */}
+        {stage === "results" && scores && (() => {
           const userName = preQuizData.name || ""
           const userAge = parseInt(preQuizData.age || "30", 10)
           const skinAge = Math.round(scores.ageApparent || userAge + 3)
@@ -1989,11 +1966,10 @@ export default function AnalyzePage() {
           // Distribute ageDiff proportionally across top 3 findings based on severity
           const top3 = criticalFindings.slice(0, 3)
           const totalSeverity = top3.reduce((s, b) => s + b.severity, 0) || 1
-          const humanFindings = top3.map((b, idx) => {
-            // Each finding's year impact is proportional to its severity relative to the total
+          const humanFindings = top3.map((b) => {
             const proportion = b.severity / totalSeverity
             const yearContribution = Math.abs(ageDiff) * proportion
-            const roundedYears = Math.round(yearContribution * 2) / 2 // round to nearest 0.5
+            const roundedYears = Math.round(yearContribution * 2) / 2
             const yearsStr = roundedYears <= 0.5 ? "~0.5 años" : roundedYears === 1 ? "~1 año" : `~${roundedYears} años`
             const descMap: Record<string, string> = {
               "Daño solar": "Fotodaño acumulado — textura irregular y manchas",
@@ -2007,10 +1983,121 @@ export default function AnalyzePage() {
             return { desc: descMap[b.label] || b.friendlyLabel, years: yearsStr, color: b.color }
           })
 
-          return (
-          <div style={{ maxWidth: 480, width: "100%" }}>
+          // ── Derive sub-metrics from zone scores ──
+          const s = scores.zoneScores as Record<string, number>
+          const derivedSubMetrics: Record<string, {label: string, score: number}[]> = {
+            frente: [
+              { label: "Líneas horizontales", score: Math.round(clamp(s.forehead * 0.85, 15, 95)) },
+              { label: "Glabela / entrecejo", score: Math.round(clamp(s.forehead * 0.80 + 5, 15, 95)) },
+              { label: "Simetría de cejas", score: Math.round(clamp(s.forehead * 0.6 + 35, 40, 99)) },
+              { label: "Posición de cejas", score: Math.round(clamp(s.forehead * 0.5 + 40, 40, 100)) },
+            ],
+            periocular: [
+              { label: "Apertura ocular", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.9 + 5, 20, 95)) },
+              { label: "Simetría L/R", score: Math.round(clamp(100 - Math.abs(s.periocularL - s.periocularR) * 3, 50, 99)) },
+              { label: "Ojeras / pigmento", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.75, 15, 95)) },
+              { label: "Ojeras / oscurecimiento", score: Math.round(clamp(scores.darkCircles ?? 70, 15, 95)) },
+              { label: "Bolsas / hinchazón", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.80 - 5, 15, 90)) },
+              { label: "Patas de gallo", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.85, 15, 90)) },
+              { label: "Densidad de pestañas", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.5 + 40, 40, 99)) },
+            ],
+            nariz: [
+              { label: "Proporción", score: Math.round(clamp(s.nose * 0.9 + 5, 30, 98)) },
+              { label: "Simetría de narinas", score: Math.round(clamp(s.nose * 0.7 + 25, 40, 99)) },
+            ],
+            labios: [
+              { label: "Volumen", score: Math.round(clamp(s.lips * 0.85 + 5, 20, 95)) },
+              { label: "Ratio superior/inferior", score: Math.round(clamp(s.lips * 0.6 + 30, 40, 99)) },
+              { label: "Arco de Cupido", score: Math.round(clamp(s.lips * 0.7 + 20, 30, 98)) },
+              { label: "Suavidad", score: Math.round(clamp(s.lips * 0.9, 20, 98)) },
+              { label: "Líneas peribucales", score: Math.round(clamp(s.lips * 0.75 - 5, 15, 90)) },
+              { label: "Color / saturación", score: Math.round(clamp(s.lips * 0.65 + 15, 20, 95)) },
+            ],
+            mejillas: [
+              { label: "Proyección de pómulos", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.85, 20, 90)) },
+              { label: "Volumen", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.80 + 5, 20, 90)) },
+              { label: "Textura", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.75, 15, 90)) },
+              { label: "Surco nasogeniano", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.85 + 5, 20, 95)) },
+              { label: "Drenaje / rojez", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.7 + 20, 30, 98)) },
+            ],
+            mandibula: [
+              { label: "Definición mandibular", score: Math.round(clamp(s.jaw * 0.9, 20, 95)) },
+              { label: "Ángulo gonial", score: Math.round(clamp(s.jaw * 0.85 + 5, 20, 95)) },
+              { label: "Flacidez (jowl)", score: Math.round(clamp(s.jaw * 0.80, 20, 90)) },
+              { label: "Simetría L/R", score: Math.round(clamp(s.jaw * 0.6 + 35, 40, 99)) },
+            ],
+            cuello: [
+              { label: "Definición submentoniana", score: Math.round(clamp(s.neck * 0.85, 20, 90)) },
+              { label: "Líneas horizontales", score: Math.round(clamp(s.neck * 0.80 - 5, 15, 90)) },
+              { label: "Postura", score: 70 },
+            ],
+            piel: [
+              { label: "Suavidad", score: Math.round(clamp(scores.overall * 0.85, 15, 95)) },
+              { label: "Poros / textura", score: Math.round(clamp(scores.uniformity * 0.80, 15, 90)) },
+              { label: "Glicación", score: Math.round(clamp(100 - scores.glycation, 10, 95)) },
+              { label: "Manchas / uniformidad", score: Math.round(scores.uniformity) },
+              { label: "Luminosidad", score: Math.round(scores.luminosity) },
+              { label: "Daño solar", score: Math.round(clamp(100 - scores.sunDamage, 10, 95)) },
+              { label: "Simetría facial", score: Math.round(scores.symmetry ?? 85) },
+            ],
+          }
 
-            {/* ── PHOTO — protagonist, full-width with zone reveals ── */}
+          // ── Build UserProfile for cross-reference insights ──
+          const allData = { ...preQuizData, ...contactData, ...gateData }
+          const userProfile: UserProfile = {
+            name: allData.name || "",
+            age: userAge,
+            email: allData.email || "",
+            phone: allData.phone || "",
+            goals: (allData.goals || "").split(",").filter(Boolean),
+            sensitivity: allData.sensitivity || "",
+            budget: allData.budget || "",
+            invasive: allData.invasive || "",
+            fitzpatrick: parseInt(allData.fitzpatrick || "3", 10),
+            sleep: allData.sleep || "",
+            stress: allData.stress || "",
+            exercise: allData.exercise || "",
+            sun: allData.sun || "",
+            diet: allData.diet || "",
+            concern: allData.concern || "",
+            routine: allData.routine || "",
+            conditions: (allData.conditions || "").split(",").filter(Boolean),
+            consent: true,
+          }
+
+          const scoresWithSubs = { ...scores, subMetrics: derivedSubMetrics }
+          const crossRefInsights = generateCrossRefInsights(scoresWithSubs as any, userProfile)
+
+          // ── Brain insights: evidence-based analysis ──
+          const brainPapers = [
+            { key_findings: "El uso diario de FPS redujo el fotoenvejecimiento un 24%.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["Protector solar SPF 50"], authors: "Hughes MCB et al.", year: 2013, title: "Sunscreen and prevention of skin aging", tags: ["SPF", "fotoenvejecimiento", "photoaging", "sunscreen"] },
+            { key_findings: "La vitamina C topica aumenta la sintesis de colageno y protege del fotodano.", applicable_zones: ["piel", "mejillas"], applicable_treatments: ["Vitamina C 15-20% (AM)"], authors: "Pinnell SR", year: 2001, title: "Topical vitamin C increases collagen synthesis", tags: ["vitamina C", "colageno", "antioxidante"] },
+            { key_findings: "Los retinoides reducen arrugas y aumentan colageno de forma comprobada.", applicable_zones: ["piel", "frente", "periocular", "labios"], applicable_treatments: ["Retinol 0.3% -> 1% (PM)"], authors: "Mukherjee S et al.", year: 2006, title: "Retinoids in the treatment of skin aging", tags: ["retinol", "retinoid", "anti-aging", "colageno", "arrugas"] },
+            { key_findings: "Peptidos de colageno orales mejoraron elasticidad cutanea en 8 semanas.", applicable_zones: ["piel", "mandibula"], applicable_treatments: ["Colageno hidrolizado tipo I y III"], authors: "Proksch E et al.", year: 2014, title: "Oral collagen peptides improve skin elasticity", tags: ["colageno", "elasticidad", "suplemento", "peptidos"] },
+            { key_findings: "Niacinamida topica mejoro arrugas, manchas, rojez y elasticidad.", applicable_zones: ["piel", "mejillas", "frente"], applicable_treatments: ["Niacinamida 5-10%"], authors: "Bissett DL et al.", year: 2005, title: "Niacinamide improves aging facial skin", tags: ["niacinamida", "niacinamide", "poros", "manchas", "barrera"] },
+            { key_findings: "Cafeina topica reduce edema periorbital.", applicable_zones: ["periocular"], applicable_treatments: ["Contorno de ojos con cafeina + peptidos"], authors: "Herman A, Herman AP", year: 2013, title: "Caffeine reduces periorbital edema", tags: ["cafeina", "ojeras", "hinchazon", "periocular"] },
+            { key_findings: "La luz roja mejora densidad de colageno y reduce arrugas.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["LED rojo terapeutico"], authors: "Wunsch A, Matuschka K", year: 2014, title: "Red light and skin rejuvenation", tags: ["LED", "fotobiomodulacion", "colageno", "luz roja"] },
+            { key_findings: "El envejecimiento cutaneo resulta de UV (80%), genetica, hormonas, contaminacion y tabaco.", applicable_zones: ["piel", "frente", "periocular", "mejillas", "mandibula", "cuello"], applicable_treatments: ["Protector solar SPF 50", "Retinol 0.3% -> 1% (PM)"], authors: "Farage MA et al.", year: 2008, title: "Intrinsic and extrinsic factors in skin ageing", tags: ["aging", "skin aging", "envejecimiento", "UV"] },
+            { key_findings: "El estres oxidativo es un mecanismo central del envejecimiento cutaneo.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["Vitamina C 15-20% (AM)", "Antioxidantes topicos"], authors: "Kammeyer A, Luiten RM", year: 2015, title: "Oxidation events and skin aging", tags: ["oxidacion", "antioxidante", "aging", "radicales libres"] },
+            { key_findings: "Fotoproteccion + antioxidantes + retinoides = abordaje multimodal necesario.", applicable_zones: ["piel", "frente", "mejillas", "cuello"], applicable_treatments: ["Protector solar SPF 50", "Retinol 0.3% -> 1% (PM)"], authors: "Krutmann J et al.", year: 2017, title: "The skin aging exposome", tags: ["exposome", "aging", "UV", "prevencion"] },
+            { key_findings: "La exposicion solar cronica genera manchas, arrugas y perdida de elasticidad acumulativa.", applicable_zones: ["piel", "frente", "mejillas", "periocular", "cuello"], applicable_treatments: ["Protector solar SPF 50"], authors: "Flament F et al.", year: 2013, title: "Effect of sun on visible clinical signs of aging", tags: ["sun", "photoaging", "arrugas", "manchas", "exposicion solar"] },
+            { key_findings: "Retinol al 0.4% mejoro arrugas finas en piel envejecida en 24 semanas.", applicable_zones: ["piel", "frente", "periocular", "mejillas"], applicable_treatments: ["Retinol 0.3% -> 1% (PM)"], authors: "Kafi R et al.", year: 2007, title: "Improvement of naturally aged skin with retinol", tags: ["retinol", "retinoid", "arrugas", "colageno", "anti-aging"] },
+            { key_findings: "Vitamina C topica al 10-20% maximiza absorcion, estimula colageno e inhibe melanogenesis.", applicable_zones: ["piel", "mejillas", "frente", "periocular"], applicable_treatments: ["Vitamina C 15-20% (AM)"], authors: "Pullar JM et al.", year: 2017, title: "The roles of vitamin C in skin health", tags: ["vitamina C", "vitamin C", "antioxidante", "colageno", "fotoproteccion"] },
+            { key_findings: "Mala calidad de sueno acelera signos de envejecimiento y retrasa recuperacion de barrera.", applicable_zones: ["piel", "periocular", "frente"], applicable_treatments: ["Mejora de calidad de sueno"], authors: "Oyetakin-White P et al.", year: 2015, title: "Poor sleep quality affects skin ageing", tags: ["sueno", "sleep", "aging", "barrera cutanea"] },
+            { key_findings: "Estres cronico degrada colageno y amplifica rosacea, dermatitis e inflamacion.", applicable_zones: ["piel", "mejillas"], applicable_treatments: ["Manejo de estres"], authors: "Kahan V et al.", year: 2009, title: "Stress and skin collagen integrity", tags: ["estres", "stress", "cortisol", "inflamacion", "barrera cutanea"] },
+            { key_findings: "La barrera cutanea esta comprometida en rosacea; ceramidas y niacinamida son clave.", applicable_zones: ["mejillas", "nariz"], applicable_treatments: ["Niacinamida 5-10%", "Limpiador suave + hidratante con ceramidas"], authors: "Addor FAS", year: 2017, title: "Skin barrier in rosacea", tags: ["rosacea", "barrera cutanea", "inflamacion", "ceramidas"] },
+            { key_findings: "La rosacea se clasifica por fenotipos. El tratamiento debe personalizarse.", applicable_zones: ["mejillas", "nariz", "frente"], applicable_treatments: ["Niacinamida 5-10%", "Azelaic acid 15%"], authors: "Gallo RL et al.", year: 2018, title: "Standard classification of rosacea", tags: ["rosacea", "inflamacion", "rojez", "eritema"] },
+            { key_findings: "El acido hialuronico disminuye con la edad. HA topico de bajo peso molecular mejora hidratacion.", applicable_zones: ["piel", "mejillas", "labios", "periocular"], applicable_treatments: ["Acido hialuronico topico"], authors: "Papakonstantinou E et al.", year: 2012, title: "Hyaluronic acid: key molecule in skin aging", tags: ["acido hialuronico", "hyaluronic", "hidratacion", "volumen", "aging"] },
+            { key_findings: "Colageno oral (2.5g/dia x 12 semanas) mejora hidratacion +28%, elasticidad +19%.", applicable_zones: ["piel", "mejillas", "mandibula", "cuello"], applicable_treatments: ["Colageno hidrolizado tipo I y III"], authors: "Bolke L et al.", year: 2019, title: "Collagen supplement improves skin hydration and elasticity", tags: ["colageno", "suplemento", "hidratacion", "elasticidad"] },
+            { key_findings: "Acido ferulico + vitamina C + E duplica la fotoproteccion cutanea.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["Vitamina C 15-20% (AM)", "Antioxidantes topicos"], authors: "Lin FH et al.", year: 2005, title: "Ferulic acid doubles photoprotection of vitamins C and E", tags: ["acido ferulico", "vitamina C", "antioxidante", "fotoproteccion"] },
+            { key_findings: "Proteccion solar + retinoides + antioxidantes son las estrategias anti-aging con mayor evidencia.", applicable_zones: ["piel", "frente", "mejillas", "periocular", "mandibula", "cuello"], applicable_treatments: ["Protector solar SPF 50", "Retinol 0.3% -> 1% (PM)", "Vitamina C 15-20% (AM)"], authors: "Ganceviciene R et al.", year: 2012, title: "Skin anti-aging strategies", tags: ["anti-aging", "estrategias", "multimodal", "evidencia"] },
+          ]
+          const brainInsights = generateBrainInsights(scores, userProfile, brainPapers)
+
+          return (
+          <div style={{ maxWidth: 560, width: "100%" }}>
+
+            {/* ── 1. PHOTO — protagonist, full-width with zone reveals ── */}
             {capturedUrl && (
               <div style={{
                 position: "relative", width: "100%", aspectRatio: "3/4", borderRadius: 24,
@@ -2093,7 +2180,7 @@ export default function AnalyzePage() {
               </div>
             )}
 
-            {/* ── AGE REVEAL — counter animation ── */}
+            {/* ── 2. AGE REVEAL — counter animation ── */}
             <div style={{
               textAlign: "center", marginBottom: 28,
               opacity: revealPhase >= 2 ? 1 : 0,
@@ -2111,27 +2198,25 @@ export default function AnalyzePage() {
               }}>
                 {counterAge || skinAge}
               </p>
-              {/* Hidden until counter finishes — preserves surprise */}
-              <div style={{
-                opacity: counterAge >= skinAge ? 1 : 0,
-                transform: counterAge >= skinAge ? "translateY(0)" : "translateY(8px)",
-                transition: "all 0.5s ease",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 10 }}>
-                  <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tienes <strong style={{ color: "rgba(245,237,232,0.7)" }}>{userAge}</strong></span>
-                  <span style={{ color: "rgba(245,237,232,0.12)", fontSize: 14 }}>→</span>
-                  <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tu cara dice <strong style={{ color: isOlder ? "#e8a4b0" : "#7ecba1" }}>{skinAge}</strong></span>
+              {/* ── 3. "Tu cara dice X" — ONLY rendered after counter finishes (no spoiler) ── */}
+              {counterAge >= skinAge && (
+                <div style={{ animation: "fadeUp 0.5s ease" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 10 }}>
+                    <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tienes <strong style={{ color: "rgba(245,237,232,0.7)" }}>{userAge}</strong></span>
+                    <span style={{ color: "rgba(245,237,232,0.12)", fontSize: 14 }}>→</span>
+                    <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tu cara dice <strong style={{ color: isOlder ? "#e8a4b0" : "#7ecba1" }}>{skinAge}</strong></span>
+                  </div>
+                  <span style={{
+                    display: "inline-block", padding: "5px 18px", borderRadius: 99,
+                    fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+                    color: isOlder ? "#e8a4b0" : "#7ecba1",
+                    background: isOlder ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
+                    border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
+                  }}>
+                    {isOlder ? `+${ageDiff} años por encima` : isSame ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
+                  </span>
                 </div>
-                <span style={{
-                  display: "inline-block", padding: "5px 18px", borderRadius: 99,
-                  fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
-                  color: isOlder ? "#e8a4b0" : "#7ecba1",
-                  background: isOlder ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
-                  border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
-                }}>
-                  {isOlder ? `+${ageDiff} años por encima` : isSame ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
-                </span>
-              </div>
+              )}
               <h2 style={{
                 fontFamily: "var(--font-fraunces)", fontSize: "clamp(18px, 3.5vw, 26px)",
                 fontWeight: 400, marginTop: 18, letterSpacing: "-0.02em", lineHeight: 1.2,
@@ -2141,7 +2226,7 @@ export default function AnalyzePage() {
               </h2>
             </div>
 
-            {/* ── FINDINGS — human language, no bars ── */}
+            {/* ── 4. TOP 3 FINDINGS — human language with proportional year impact ── */}
             <div style={{
               marginBottom: 24,
               opacity: revealPhase >= 3 ? 1 : 0,
@@ -2179,7 +2264,253 @@ export default function AnalyzePage() {
               </div>
             </div>
 
-            {/* ── CTA ── */}
+            {/* ── 5. VISION AI — Condiciones detectadas ── */}
+            {(visionResults || visionLoading) && (
+              <div style={{
+                marginBottom: 24,
+                opacity: revealPhase >= 4 ? 1 : 0,
+                transform: revealPhase >= 4 ? "translateY(0)" : "translateY(12px)",
+                transition: "all 0.5s ease",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                  <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", fontWeight: 700 }}>
+                    Análisis con IA
+                  </p>
+                  <span style={{ fontSize: 8, color: "#7ecba1", background: "rgba(126,203,161,0.1)", border: "1px solid rgba(126,203,161,0.2)", padding: "2px 8px", borderRadius: 99, fontWeight: 600, letterSpacing: "0.06em" }}>
+                    CLAUDE VISION
+                  </span>
+                </div>
+
+                {visionLoading && !visionResults && (
+                  <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.06)", borderRadius: 16, padding: "20px", textAlign: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                      <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(232,164,176,0.2)", borderTopColor: "#e8a4b0", animation: "spin 0.8s linear infinite" }} />
+                      <span style={{ fontSize: 12, color: "rgba(245,237,232,0.4)" }}>Analizando condiciones con IA...</span>
+                    </div>
+                  </div>
+                )}
+
+                {visionResults && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {visionResults.acne && visionResults.acne.severity !== "none" && (
+                      <div style={{
+                        background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
+                        borderRadius: 14, padding: "16px 18px",
+                        borderLeft: `3px solid ${visionResults.acne.severity === "severe" ? "#e8a4b0" : visionResults.acne.severity === "moderate" ? "#d4af88" : "#7ecba1"}`,
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Acné</span>
+                          <span style={{ fontSize: 11, color: visionResults.acne.severity === "severe" ? "#e8a4b0" : visionResults.acne.severity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
+                            {visionResults.acne.count} {visionResults.acne.count === 1 ? "lesión" : "lesiones"}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
+                          Severidad: {visionResults.acne.severity === "mild" ? "leve" : visionResults.acne.severity === "moderate" ? "moderada" : visionResults.acne.severity === "severe" ? "severa" : visionResults.acne.severity}
+                          {visionResults.acne.locations?.length > 0 && ` · ${visionResults.acne.locations.join(", ")}`}
+                        </p>
+                      </div>
+                    )}
+                    {visionResults.spots && visionResults.spots.severity !== "none" && (
+                      <div style={{
+                        background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
+                        borderRadius: 14, padding: "16px 18px",
+                        borderLeft: `3px solid ${visionResults.spots.severity === "severe" ? "#e8a4b0" : visionResults.spots.severity === "moderate" ? "#d4af88" : "#7ecba1"}`,
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Manchas</span>
+                          <span style={{ fontSize: 11, color: visionResults.spots.severity === "severe" ? "#e8a4b0" : visionResults.spots.severity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
+                            {visionResults.spots.count} {visionResults.spots.count === 1 ? "mancha" : "manchas"}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
+                          Severidad: {visionResults.spots.severity === "mild" ? "leve" : visionResults.spots.severity === "moderate" ? "moderada" : visionResults.spots.severity === "severe" ? "severa" : visionResults.spots.severity}
+                          {visionResults.spots.locations?.length > 0 && ` · ${visionResults.spots.locations.join(", ")}`}
+                        </p>
+                      </div>
+                    )}
+                    {visionResults.redness && visionResults.redness.intensity !== "none" && (
+                      <div style={{
+                        background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
+                        borderRadius: 14, padding: "16px 18px",
+                        borderLeft: `3px solid ${visionResults.redness.intensity === "severe" ? "#e8a4b0" : visionResults.redness.intensity === "moderate" ? "#d4af88" : "#7ecba1"}`,
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Rojez</span>
+                          <span style={{ fontSize: 11, color: visionResults.redness.intensity === "severe" ? "#e8a4b0" : visionResults.redness.intensity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
+                            {visionResults.redness.intensity === "mild" ? "Leve" : visionResults.redness.intensity === "moderate" ? "Moderada" : visionResults.redness.intensity === "severe" ? "Severa" : visionResults.redness.intensity}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
+                          {visionResults.redness.zones?.length > 0 ? `Zonas: ${visionResults.redness.zones.join(", ")}` : ""}
+                        </p>
+                      </div>
+                    )}
+                    {visionResults.acne?.severity === "none" && visionResults.spots?.severity === "none" && visionResults.redness?.intensity === "none" && (
+                      <div style={{
+                        background: "rgba(126,203,161,0.06)", border: "1px solid rgba(126,203,161,0.15)",
+                        borderRadius: 14, padding: "16px 18px", textAlign: "center",
+                      }}>
+                        <span style={{ fontSize: 13, color: "#7ecba1", fontWeight: 600 }}>No se detectaron condiciones activas</span>
+                      </div>
+                    )}
+                    {visionResults.summary && (
+                      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.35)", fontStyle: "italic", lineHeight: 1.55, marginTop: 4, paddingLeft: 4 }}>
+                        {visionResults.summary}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── 6. BRAIN INSIGHTS — lo que dice la ciencia ── */}
+            {brainInsights.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>
+                  Lo que dice la ciencia
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {brainInsights.map((insight, idx) => {
+                    const borderColor = insight.severity === "critical" ? "#e8a4b0" : insight.severity === "warning" ? "#d4af88" : "#7ecba1"
+                    const cardBg = insight.severity === "critical" ? "rgba(232,164,176,0.06)" : insight.severity === "warning" ? "rgba(212,175,136,0.04)" : "rgba(126,203,161,0.04)"
+                    const borderSide = insight.severity === "critical" ? "rgba(232,164,176,0.35)" : insight.severity === "warning" ? "rgba(212,175,136,0.25)" : "rgba(126,203,161,0.25)"
+                    return (
+                      <div key={idx} style={{
+                        background: cardBg,
+                        border: "1px solid rgba(245,237,232,0.06)",
+                        borderLeft: `3px solid ${borderSide}`,
+                        borderRadius: "4px 14px 14px 4px",
+                        padding: "16px 18px",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <div style={{
+                            width: 6, height: 6, borderRadius: "50%",
+                            background: borderColor,
+                            boxShadow: `0 0 6px ${borderColor}66`,
+                            flexShrink: 0,
+                          }} />
+                          <span style={{ fontSize: 13, fontWeight: 700, color: borderColor }}>{insight.title}</span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.65, margin: "0 0 10px" }}>
+                          {insight.text}
+                        </p>
+                        <p style={{ fontSize: 10, color: "rgba(245,237,232,0.28)", lineHeight: 1.4, margin: 0, fontStyle: "italic" }}>
+                          {insight.evidence}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── 7. ZONE ACCORDION — sub-metrics per zone ── */}
+            <div style={{ marginBottom: 24 }}>
+              <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: 22, fontWeight: 400, marginBottom: 16 }}>
+                Analisis por zona
+              </h2>
+              {Object.entries(ACCORDION_META).map(([key, meta]) => {
+                const subs = derivedSubMetrics[key]
+                const accScore = subs ? Math.round(subs.reduce((a, sm) => a + sm.score, 0) / subs.length) : 50
+                const isOpen = activeZone === key
+                const statusColor = accScore >= 75 ? "#7ecba1" : accScore >= 55 ? "#d4af88" : "#e8a4b0"
+                return (
+                  <div key={key} style={{
+                    background: "rgba(245,237,232,0.03)", border: `1px solid ${isOpen ? "rgba(232,164,176,0.2)" : "rgba(245,237,232,0.06)"}`,
+                    borderRadius: 16, marginBottom: 10, overflow: "hidden", transition: "all 0.3s",
+                  }}>
+                    <button onClick={() => setActiveZone(isOpen ? null : key)} style={{
+                      width: "100%", padding: "16px 20px", background: "none", border: "none", cursor: "pointer", color: "#f5ede8",
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{
+                          width: 28, height: 28, borderRadius: "50%",
+                          background: `${statusColor}15`, border: `1.5px solid ${statusColor}40`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 11, fontWeight: 700, color: statusColor,
+                        }}>
+                          {meta.icon}
+                        </div>
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>{meta.label}</span>
+                        {key === "cuello" && <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)", fontStyle: "italic" }}>estimado</span>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400, color: statusColor }}>{accScore}</span>
+                        <span style={{ fontSize: 12, color: "rgba(245,237,232,0.3)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>&#x25BE;</span>
+                      </div>
+                    </button>
+                    {isOpen && subs && (
+                      <div style={{ padding: "0 20px 20px" }}>
+                        {subs.map((sub, i) => {
+                          const barColor = sub.score >= 75 ? "#7ecba1" : sub.score >= 55 ? "#d4af88" : "#e8a4b0"
+                          return (
+                            <div key={i} style={{ marginBottom: 14 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                                <span style={{ fontSize: 13, color: "rgba(245,237,232,0.65)" }}>{sub.label}</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: barColor }}>{sub.score}</span>
+                              </div>
+                              <div style={{ height: 4, borderRadius: 2, background: "rgba(245,237,232,0.06)" }}>
+                                <div style={{ height: "100%", borderRadius: 2, background: barColor, width: `${sub.score}%`, transition: "width 0.5s ease" }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* ── 8. BIOMARKERS (collapsible) ── */}
+            <div style={{ marginBottom: 24 }}>
+              <button
+                onClick={() => setShowBiomarkers(prev => !prev)}
+                style={{
+                  width: "100%", padding: "14px 20px",
+                  background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
+                  borderRadius: showBiomarkers ? "14px 14px 0 0" : 14,
+                  color: "rgba(245,237,232,0.6)", fontSize: 13, fontWeight: 600,
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between",
+                  transition: "all 0.2s",
+                }}
+              >
+                <span>Ver biomarcadores detallados</span>
+                <span style={{ fontSize: 14, transition: "transform 0.2s", transform: showBiomarkers ? "rotate(180deg)" : "rotate(0)" }}>▾</span>
+              </button>
+              {showBiomarkers && (
+                <div style={{
+                  background: "rgba(245,237,232,0.03)",
+                  border: "1px solid rgba(245,237,232,0.08)", borderTop: "none",
+                  borderRadius: "0 0 14px 14px", padding: "20px",
+                }}>
+                  <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.22)", marginBottom: 20, lineHeight: 1.5 }}>Todas las barras miden salud: más llena = mejor estado</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                    {biomarkers.map(b => (
+                      <div key={b.label}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 13, color: "rgba(245,237,232,0.75)", fontWeight: 600 }}>{b.friendlyLabel}</span>
+                            {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>MEJORABLE</span>}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 9, color: "rgba(245,237,232,0.28)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{b.note}</span>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: b.color, minWidth: 36, textAlign: "right" }}>{b.value}%</span>
+                          </div>
+                        </div>
+                        <div style={{ height: 4, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 7 }}>
+                          <div style={{ height: "100%", width: `${b.value}%`, background: `linear-gradient(90deg, ${b.color}88, ${b.color})`, borderRadius: 2, transition: "width 0.8s ease" }} />
+                        </div>
+                        <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.38)", lineHeight: 1.55 }}>{b.insight}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── 9. CTA: "¿Cómo quieres revertirlo?" ── */}
             <div style={{
               opacity: revealPhase >= 4 ? 1 : 0,
               transform: revealPhase >= 4 ? "translateY(0)" : "translateY(14px)",
@@ -2199,7 +2530,7 @@ export default function AnalyzePage() {
                 ¿Cómo quieres revertirlo? →
               </button>
 
-              <div style={{ borderTop: "1px solid rgba(245,237,232,0.1)", marginTop: 24, paddingTop: 16, display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "center" }}>
+              <div style={{ borderTop: "1px solid rgba(245,237,232,0.1)", marginTop: 24, paddingTop: 16, display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "center", paddingBottom: 40 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
                   <circle cx="12" cy="12" r="10" stroke="rgba(245,237,232,0.4)" strokeWidth="1.5"/>
                   <line x1="12" y1="8" x2="12" y2="13" stroke="rgba(245,237,232,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
@@ -2342,687 +2673,6 @@ export default function AnalyzePage() {
           <ProfileQuiz mode="gate" onComplete={handleGateComplete} scores={scores} />
         )}
 
-        {/* ── RESULTS LAYER 2 — cinematic face analysis ── */}
-        {stage === "results-2" && scores && (() => {
-          const userName = preQuizData.name || ""
-          const userAge = parseInt(preQuizData.age || "30", 10)
-          const skinAge = Math.round(scores.ageApparent || userAge + 3)
-          const ageDiff = Math.round(skinAge - userAge)
-          const isOlder = ageDiff > 0
-
-          const zone = RESULT_ZONES[activeResultZone]
-          const zoneScore = (scores.zoneScores as Record<string, number>)[zone.key] ?? 50
-          const { color: zoneColor, label: statusLabel } = getZoneStatus(zoneScore)
-          const description = getZoneDescription(zone.key, zoneScore)
-
-          // ── Derive sub-metrics from zone scores ──
-          const s = scores.zoneScores as Record<string, number>
-          const derivedSubMetrics: Record<string, {label: string, score: number}[]> = {
-            frente: [
-              { label: "Líneas horizontales", score: Math.round(clamp(s.forehead * 0.85, 15, 95)) },
-              { label: "Glabela / entrecejo", score: Math.round(clamp(s.forehead * 0.80 + 5, 15, 95)) },
-              { label: "Simetría de cejas", score: Math.round(clamp(s.forehead * 0.6 + 35, 40, 99)) },
-              { label: "Posición de cejas", score: Math.round(clamp(s.forehead * 0.5 + 40, 40, 100)) },
-            ],
-            periocular: [
-              { label: "Apertura ocular", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.9 + 5, 20, 95)) },
-              { label: "Simetría L/R", score: Math.round(clamp(100 - Math.abs(s.periocularL - s.periocularR) * 3, 50, 99)) },
-              { label: "Ojeras / pigmento", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.75, 15, 95)) },
-              { label: "Ojeras / oscurecimiento", score: Math.round(clamp(scores.darkCircles ?? 70, 15, 95)) },
-              { label: "Bolsas / hinchazón", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.80 - 5, 15, 90)) },
-              { label: "Patas de gallo", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.85, 15, 90)) },
-              { label: "Densidad de pestañas", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.5 + 40, 40, 99)) },
-            ],
-            nariz: [
-              { label: "Proporción", score: Math.round(clamp(s.nose * 0.9 + 5, 30, 98)) },
-              { label: "Simetría de narinas", score: Math.round(clamp(s.nose * 0.7 + 25, 40, 99)) },
-            ],
-            labios: [
-              { label: "Volumen", score: Math.round(clamp(s.lips * 0.85 + 5, 20, 95)) },
-              { label: "Ratio superior/inferior", score: Math.round(clamp(s.lips * 0.6 + 30, 40, 99)) },
-              { label: "Arco de Cupido", score: Math.round(clamp(s.lips * 0.7 + 20, 30, 98)) },
-              { label: "Suavidad", score: Math.round(clamp(s.lips * 0.9, 20, 98)) },
-              { label: "Líneas peribucales", score: Math.round(clamp(s.lips * 0.75 - 5, 15, 90)) },
-              { label: "Color / saturación", score: Math.round(clamp(s.lips * 0.65 + 15, 20, 95)) },
-            ],
-            mejillas: [
-              { label: "Proyección de pómulos", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.85, 20, 90)) },
-              { label: "Volumen", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.80 + 5, 20, 90)) },
-              { label: "Textura", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.75, 15, 90)) },
-              { label: "Surco nasogeniano", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.85 + 5, 20, 95)) },
-              { label: "Drenaje / rojez", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.7 + 20, 30, 98)) },
-            ],
-            mandibula: [
-              { label: "Definición mandibular", score: Math.round(clamp(s.jaw * 0.9, 20, 95)) },
-              { label: "Ángulo gonial", score: Math.round(clamp(s.jaw * 0.85 + 5, 20, 95)) },
-              { label: "Flacidez (jowl)", score: Math.round(clamp(s.jaw * 0.80, 20, 90)) },
-              { label: "Simetría L/R", score: Math.round(clamp(s.jaw * 0.6 + 35, 40, 99)) },
-            ],
-            cuello: [
-              { label: "Definición submentoniana", score: Math.round(clamp(s.neck * 0.85, 20, 90)) },
-              { label: "Líneas horizontales", score: Math.round(clamp(s.neck * 0.80 - 5, 15, 90)) },
-              { label: "Postura", score: 70 },
-            ],
-            piel: [
-              { label: "Suavidad", score: Math.round(clamp(scores.overall * 0.85, 15, 95)) },
-              { label: "Poros / textura", score: Math.round(clamp(scores.uniformity * 0.80, 15, 90)) },
-              { label: "Glicación", score: Math.round(clamp(100 - scores.glycation, 10, 95)) },
-              { label: "Manchas / uniformidad", score: Math.round(scores.uniformity) },
-              { label: "Luminosidad", score: Math.round(scores.luminosity) },
-              { label: "Daño solar", score: Math.round(clamp(100 - scores.sunDamage, 10, 95)) },
-              { label: "Simetría facial", score: Math.round(scores.symmetry ?? 85) },
-            ],
-          }
-
-          // ── Build UserProfile for cross-reference insights ──
-          // Merge all data sources — gate now contains lifestyle questions that moved from pre-quiz
-          const allData = { ...preQuizData, ...contactData, ...gateData }
-          const userProfile: UserProfile = {
-            name: allData.name || "",
-            age: userAge,
-            email: allData.email || "",
-            phone: allData.phone || "",
-            goals: (allData.goals || "").split(",").filter(Boolean),
-            sensitivity: allData.sensitivity || "",
-            budget: allData.budget || "",
-            invasive: allData.invasive || "",
-            fitzpatrick: parseInt(allData.fitzpatrick || "3", 10),
-            sleep: allData.sleep || "",
-            stress: allData.stress || "",
-            exercise: allData.exercise || "",
-            sun: allData.sun || "",
-            diet: allData.diet || "",
-            concern: allData.concern || "",
-            routine: allData.routine || "",
-            conditions: (allData.conditions || "").split(",").filter(Boolean),
-            consent: true,
-          }
-
-          // Build scores with subMetrics for cross-reference engine
-          const scoresWithSubs = { ...scores, subMetrics: derivedSubMetrics }
-          const crossRefInsights = generateCrossRefInsights(scoresWithSubs as any, userProfile)
-
-          // ── Brain insights: evidence-based analysis ──
-          const brainPapers = [
-            { key_findings: "El uso diario de FPS redujo el fotoenvejecimiento un 24%.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["Protector solar SPF 50"], authors: "Hughes MCB et al.", year: 2013, title: "Sunscreen and prevention of skin aging", tags: ["SPF", "fotoenvejecimiento", "photoaging", "sunscreen"] },
-            { key_findings: "La vitamina C topica aumenta la sintesis de colageno y protege del fotodano.", applicable_zones: ["piel", "mejillas"], applicable_treatments: ["Vitamina C 15-20% (AM)"], authors: "Pinnell SR", year: 2001, title: "Topical vitamin C increases collagen synthesis", tags: ["vitamina C", "colageno", "antioxidante"] },
-            { key_findings: "Los retinoides reducen arrugas y aumentan colageno de forma comprobada.", applicable_zones: ["piel", "frente", "periocular", "labios"], applicable_treatments: ["Retinol 0.3% -> 1% (PM)"], authors: "Mukherjee S et al.", year: 2006, title: "Retinoids in the treatment of skin aging", tags: ["retinol", "retinoid", "anti-aging", "colageno", "arrugas"] },
-            { key_findings: "Peptidos de colageno orales mejoraron elasticidad cutanea en 8 semanas.", applicable_zones: ["piel", "mandibula"], applicable_treatments: ["Colageno hidrolizado tipo I y III"], authors: "Proksch E et al.", year: 2014, title: "Oral collagen peptides improve skin elasticity", tags: ["colageno", "elasticidad", "suplemento", "peptidos"] },
-            { key_findings: "Niacinamida topica mejoro arrugas, manchas, rojez y elasticidad.", applicable_zones: ["piel", "mejillas", "frente"], applicable_treatments: ["Niacinamida 5-10%"], authors: "Bissett DL et al.", year: 2005, title: "Niacinamide improves aging facial skin", tags: ["niacinamida", "niacinamide", "poros", "manchas", "barrera"] },
-            { key_findings: "Cafeina topica reduce edema periorbital.", applicable_zones: ["periocular"], applicable_treatments: ["Contorno de ojos con cafeina + peptidos"], authors: "Herman A, Herman AP", year: 2013, title: "Caffeine reduces periorbital edema", tags: ["cafeina", "ojeras", "hinchazon", "periocular"] },
-            { key_findings: "La luz roja mejora densidad de colageno y reduce arrugas.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["LED rojo terapeutico"], authors: "Wunsch A, Matuschka K", year: 2014, title: "Red light and skin rejuvenation", tags: ["LED", "fotobiomodulacion", "colageno", "luz roja"] },
-            { key_findings: "El envejecimiento cutaneo resulta de UV (80%), genetica, hormonas, contaminacion y tabaco.", applicable_zones: ["piel", "frente", "periocular", "mejillas", "mandibula", "cuello"], applicable_treatments: ["Protector solar SPF 50", "Retinol 0.3% -> 1% (PM)"], authors: "Farage MA et al.", year: 2008, title: "Intrinsic and extrinsic factors in skin ageing", tags: ["aging", "skin aging", "envejecimiento", "UV"] },
-            { key_findings: "El estres oxidativo es un mecanismo central del envejecimiento cutaneo.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["Vitamina C 15-20% (AM)", "Antioxidantes topicos"], authors: "Kammeyer A, Luiten RM", year: 2015, title: "Oxidation events and skin aging", tags: ["oxidacion", "antioxidante", "aging", "radicales libres"] },
-            { key_findings: "Fotoproteccion + antioxidantes + retinoides = abordaje multimodal necesario.", applicable_zones: ["piel", "frente", "mejillas", "cuello"], applicable_treatments: ["Protector solar SPF 50", "Retinol 0.3% -> 1% (PM)"], authors: "Krutmann J et al.", year: 2017, title: "The skin aging exposome", tags: ["exposome", "aging", "UV", "prevencion"] },
-            { key_findings: "La exposicion solar cronica genera manchas, arrugas y perdida de elasticidad acumulativa.", applicable_zones: ["piel", "frente", "mejillas", "periocular", "cuello"], applicable_treatments: ["Protector solar SPF 50"], authors: "Flament F et al.", year: 2013, title: "Effect of sun on visible clinical signs of aging", tags: ["sun", "photoaging", "arrugas", "manchas", "exposicion solar"] },
-            { key_findings: "Retinol al 0.4% mejoro arrugas finas en piel envejecida en 24 semanas.", applicable_zones: ["piel", "frente", "periocular", "mejillas"], applicable_treatments: ["Retinol 0.3% -> 1% (PM)"], authors: "Kafi R et al.", year: 2007, title: "Improvement of naturally aged skin with retinol", tags: ["retinol", "retinoid", "arrugas", "colageno", "anti-aging"] },
-            { key_findings: "Vitamina C topica al 10-20% maximiza absorcion, estimula colageno e inhibe melanogenesis.", applicable_zones: ["piel", "mejillas", "frente", "periocular"], applicable_treatments: ["Vitamina C 15-20% (AM)"], authors: "Pullar JM et al.", year: 2017, title: "The roles of vitamin C in skin health", tags: ["vitamina C", "vitamin C", "antioxidante", "colageno", "fotoproteccion"] },
-            { key_findings: "Mala calidad de sueno acelera signos de envejecimiento y retrasa recuperacion de barrera.", applicable_zones: ["piel", "periocular", "frente"], applicable_treatments: ["Mejora de calidad de sueno"], authors: "Oyetakin-White P et al.", year: 2015, title: "Poor sleep quality affects skin ageing", tags: ["sueno", "sleep", "aging", "barrera cutanea"] },
-            { key_findings: "Estres cronico degrada colageno y amplifica rosacea, dermatitis e inflamacion.", applicable_zones: ["piel", "mejillas"], applicable_treatments: ["Manejo de estres"], authors: "Kahan V et al.", year: 2009, title: "Stress and skin collagen integrity", tags: ["estres", "stress", "cortisol", "inflamacion", "barrera cutanea"] },
-            { key_findings: "La barrera cutanea esta comprometida en rosacea; ceramidas y niacinamida son clave.", applicable_zones: ["mejillas", "nariz"], applicable_treatments: ["Niacinamida 5-10%", "Limpiador suave + hidratante con ceramidas"], authors: "Addor FAS", year: 2017, title: "Skin barrier in rosacea", tags: ["rosacea", "barrera cutanea", "inflamacion", "ceramidas"] },
-            { key_findings: "La rosacea se clasifica por fenotipos. El tratamiento debe personalizarse.", applicable_zones: ["mejillas", "nariz", "frente"], applicable_treatments: ["Niacinamida 5-10%", "Azelaic acid 15%"], authors: "Gallo RL et al.", year: 2018, title: "Standard classification of rosacea", tags: ["rosacea", "inflamacion", "rojez", "eritema"] },
-            { key_findings: "El acido hialuronico disminuye con la edad. HA topico de bajo peso molecular mejora hidratacion.", applicable_zones: ["piel", "mejillas", "labios", "periocular"], applicable_treatments: ["Acido hialuronico topico"], authors: "Papakonstantinou E et al.", year: 2012, title: "Hyaluronic acid: key molecule in skin aging", tags: ["acido hialuronico", "hyaluronic", "hidratacion", "volumen", "aging"] },
-            { key_findings: "Colageno oral (2.5g/dia x 12 semanas) mejora hidratacion +28%, elasticidad +19%.", applicable_zones: ["piel", "mejillas", "mandibula", "cuello"], applicable_treatments: ["Colageno hidrolizado tipo I y III"], authors: "Bolke L et al.", year: 2019, title: "Collagen supplement improves skin hydration and elasticity", tags: ["colageno", "suplemento", "hidratacion", "elasticidad"] },
-            { key_findings: "Acido ferulico + vitamina C + E duplica la fotoproteccion cutanea.", applicable_zones: ["piel", "frente", "mejillas"], applicable_treatments: ["Vitamina C 15-20% (AM)", "Antioxidantes topicos"], authors: "Lin FH et al.", year: 2005, title: "Ferulic acid doubles photoprotection of vitamins C and E", tags: ["acido ferulico", "vitamina C", "antioxidante", "fotoproteccion"] },
-            { key_findings: "Proteccion solar + retinoides + antioxidantes son las estrategias anti-aging con mayor evidencia.", applicable_zones: ["piel", "frente", "mejillas", "periocular", "mandibula", "cuello"], applicable_treatments: ["Protector solar SPF 50", "Retinol 0.3% -> 1% (PM)", "Vitamina C 15-20% (AM)"], authors: "Ganceviciene R et al.", year: 2012, title: "Skin anti-aging strategies", tags: ["anti-aging", "estrategias", "multimodal", "evidencia"] },
-          ]
-          const brainInsights = generateBrainInsights(scores, userProfile, brainPapers)
-
-          // Human-readable findings with year impact
-          // Calculate year impact proportionally based on actual ageDiff
-          const r2Top3 = [...criticalFindings].sort((a, b) => b.severity - a.severity).slice(0, 3)
-          const r2TotalSev = r2Top3.reduce((s, b) => s + b.severity, 0) || 1
-          const yearImpact: Record<string, string> = {}
-          for (const b of r2Top3) {
-            const proportion = b.severity / r2TotalSev
-            const yrs = Math.round(Math.abs(ageDiff) * proportion * 2) / 2
-            yearImpact[b.label] = yrs <= 0.5 ? "hasta +0.5 años" : yrs === 1 ? "hasta +1 año" : `hasta +${yrs} años`
-          }
-
-          const findingDescriptions: Record<string, { title: string; desc: string }> = {
-            "Protección solar": { title: "Protección solar insuficiente", desc: "Tu piel muestra fotodaño acumulado que acelera la pérdida de elasticidad y genera manchas." },
-            "Control de inflamación": { title: "Inflamación activa", desc: "Rojez e irritación crónica que amplifica el envejecimiento y debilita la barrera cutánea." },
-            "Salud del colágeno": { title: "Colágeno debilitado", desc: "Las fibras de colágeno se degradan más rápido de lo esperado, afectando firmeza y elasticidad." },
-            "Luminosidad": { title: "Piel apagada", desc: "Falta de brillo natural que refleja deshidratación profunda y acumulación de células muertas." },
-            "Suavidad": { title: "Textura irregular", desc: "La superficie de la piel muestra rugosidad y aspereza, indicando barrera cutánea comprometida." },
-            "Uniformidad de tono": { title: "Tono desigual", desc: "Manchas e irregularidades de pigmento que dan un aspecto envejecido y cansado." },
-            "Salud vascular": { title: "Fragilidad vascular", desc: "Vasos sanguíneos visibles o rojez persistente que indican sensibilidad e inflamación subyacente." },
-          }
-
-          return (
-          <div style={{ maxWidth: 560, width: "100%" }}>
-            {/* Header */}
-            <div style={{ textAlign: "center", marginBottom: 24 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 8px rgba(126,203,161,0.8)" }} />
-                <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "#7ecba1", textTransform: "uppercase", fontWeight: 700 }}>Informe completo · 9 zonas · 7 biomarcadores</span>
-              </div>
-              <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(24px, 4vw, 34px)", fontWeight: 400, marginBottom: 8, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-                {userName ? `${userName}, tu` : "Tu"} rostro aparenta{" "}
-                <em style={{ color: isOlder ? "#e8a4b0" : "#7ecba1", fontStyle: "italic" }}>
-                  {skinAge} años
-                </em>
-              </h1>
-              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", lineHeight: 1.6 }}>
-                {isOlder ? "Pero se puede revertir. Te mostramos cómo." : ageDiff === 0 ? "Buen punto de partida. Te ayudamos a mejorarlo." : "Vas por buen camino. Te ayudamos a mantenerlo."}
-              </p>
-            </div>
-
-            {/* ── FACE VIEWER — full photo with all dots ── */}
-            {capturedUrl && (
-              <div style={{
-                position: "relative", width: "100%", maxWidth: 420, margin: "0 auto",
-                aspectRatio: "3/4", borderRadius: 20, overflow: "hidden",
-                background: "#060409",
-              }}>
-                {/* Photo — full view, no zoom */}
-                <img
-                  src={capturedUrl}
-                  alt="Tu análisis facial"
-                  style={{
-                    position: "absolute", inset: 0, width: "100%", height: "100%",
-                    objectFit: "cover",
-                    transition: "filter 0.4s ease",
-                    filter: "none",
-                  }}
-                />
-
-                {/* Subtle vignette */}
-                <div style={{
-                  position: "absolute", inset: 0,
-                  background: "linear-gradient(180deg, rgba(14,12,18,0.15) 0%, transparent 20%, transparent 75%, rgba(14,12,18,0.5) 100%)",
-                  pointerEvents: "none",
-                }} />
-
-                {/* Zone dots — subtle pulsing indicators */}
-                {RESULT_ZONES.map((z, i) => {
-                  const dotScore = (scores.zoneScores as Record<string, number>)[z.key] ?? 50
-                  const glowColor = dotScore >= 75 ? "126,203,161" : dotScore >= 55 ? "212,175,136" : "232,164,176"
-                  const isActive = activeResultZone === i
-
-                  return (
-                    <button
-                      key={z.key}
-                      onClick={() => {
-                        setActiveResultZone(i)
-                        setAutoPlay(false)
-                        const accKey = z.key === "periocularL" || z.key === "periocularR" ? "periocular"
-                                     : z.key === "cheekL" || z.key === "cheekR" ? "mejillas"
-                                     : z.key === "forehead" ? "frente"
-                                     : z.key === "nose" ? "nariz"
-                                     : z.key === "lips" ? "labios"
-                                     : z.key === "jaw" ? "mandibula"
-                                     : z.key === "neck" ? "cuello" : null
-                        if (accKey) setActiveZone(accKey)
-                      }}
-                      style={{
-                        position: "absolute",
-                        left: `${z.dotX}%`, top: `${z.dotY}%`,
-                        transform: "translate(-50%, -50%)",
-                        width: isActive ? 28 : 24, height: isActive ? 28 : 24,
-                        borderRadius: "50%",
-                        border: `1.5px solid rgba(${glowColor}, ${isActive ? 0.8 : 0.5})`,
-                        background: `rgba(${glowColor}, ${isActive ? 0.15 : 0.08})`,
-                        boxShadow: isActive
-                          ? `0 0 16px rgba(${glowColor}, 0.6), 0 0 32px rgba(${glowColor}, 0.2)`
-                          : `0 0 10px rgba(${glowColor}, 0.35), 0 0 20px rgba(${glowColor}, 0.1)`,
-                        cursor: "pointer",
-                        transition: "all 0.3s ease",
-                        zIndex: isActive ? 5 : 3,
-                        padding: 0,
-                        animation: "zoneDotPulse 2.8s ease-in-out infinite",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                      }}
-                    >
-                      <div style={{
-                        width: isActive ? 7 : 5, height: isActive ? 7 : 5,
-                        borderRadius: "50%",
-                        background: `rgb(${glowColor})`,
-                        transition: "all 0.3s ease",
-                      }} />
-                      {/* Label on hover / active */}
-                      {isActive && (
-                        <span style={{
-                          position: "absolute",
-                          top: "calc(100% + 6px)", left: "50%",
-                          transform: "translateX(-50%)",
-                          whiteSpace: "nowrap",
-                          fontSize: 9, fontWeight: 700, letterSpacing: "0.05em",
-                          color: `rgba(${glowColor}, 0.95)`,
-                          textShadow: "0 1px 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.6)",
-                          animation: "labelSlide 0.25s ease forwards",
-                          pointerEvents: "none",
-                        }}>
-                          {z.label}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
-
-                {/* Active zone label on photo */}
-                <div style={{
-                  position: "absolute", top: 14, left: 14,
-                  background: "rgba(14,12,18,0.7)", backdropFilter: "blur(12px)",
-                  borderRadius: 10, padding: "7px 14px",
-                  transition: "all 0.3s ease",
-                  border: `1px solid ${zoneColor}33`,
-                }}>
-                  <span style={{ fontSize: 12, color: "#f5ede8", fontWeight: 600 }}>{zone.label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: zoneColor, marginLeft: 8 }}>{zoneScore}</span>
-                </div>
-
-              </div>
-            )}
-
-            {/* ── CROSS-REFERENCE INSIGHTS — lifestyle x analysis ── */}
-            {crossRefInsights.length > 0 && (
-              <div style={{ marginTop: 20, marginBottom: 8 }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>
-                  Tu estilo de vida en tu cara
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {crossRefInsights.map((insight, idx) => {
-                    const severityColor = insight.severity === "critical" ? "#e8a4b0" : insight.severity === "warning" ? "#d4af88" : "#7ecba1"
-                    const severityBg = insight.severity === "critical" ? "rgba(232,164,176,0.08)" : insight.severity === "warning" ? "rgba(212,175,136,0.06)" : "rgba(126,203,161,0.06)"
-                    const severityBorder = insight.severity === "critical" ? "rgba(232,164,176,0.2)" : insight.severity === "warning" ? "rgba(212,175,136,0.15)" : "rgba(126,203,161,0.15)"
-                    return (
-                      <div key={idx} style={{
-                        background: severityBg, border: `1px solid ${severityBorder}`,
-                        borderRadius: 14, padding: "16px 18px",
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                          <span style={{ fontSize: 18 }}>{insight.icon}</span>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: severityColor }}>{insight.title}</span>
-                        </div>
-                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.65, margin: 0 }}>
-                          {insight.text}
-                        </p>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* ── BRAIN INSIGHTS — lo que dice la ciencia ── */}
-            {brainInsights.length > 0 && (
-              <div style={{ marginTop: 20, marginBottom: 8 }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>
-                  Lo que dice la ciencia
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {brainInsights.map((insight, idx) => {
-                    const borderColor = insight.severity === "critical" ? "#e8a4b0" : insight.severity === "warning" ? "#d4af88" : "#7ecba1"
-                    const cardBg = insight.severity === "critical" ? "rgba(232,164,176,0.06)" : insight.severity === "warning" ? "rgba(212,175,136,0.04)" : "rgba(126,203,161,0.04)"
-                    const borderSide = insight.severity === "critical" ? "rgba(232,164,176,0.35)" : insight.severity === "warning" ? "rgba(212,175,136,0.25)" : "rgba(126,203,161,0.25)"
-                    return (
-                      <div key={idx} style={{
-                        background: cardBg,
-                        border: "1px solid rgba(245,237,232,0.06)",
-                        borderLeft: `3px solid ${borderSide}`,
-                        borderRadius: "4px 14px 14px 4px",
-                        padding: "16px 18px",
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                          <div style={{
-                            width: 6, height: 6, borderRadius: "50%",
-                            background: borderColor,
-                            boxShadow: `0 0 6px ${borderColor}66`,
-                            flexShrink: 0,
-                          }} />
-                          <span style={{ fontSize: 13, fontWeight: 700, color: borderColor }}>{insight.title}</span>
-                        </div>
-                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.65, margin: "0 0 10px" }}>
-                          {insight.text}
-                        </p>
-                        <p style={{ fontSize: 10, color: "rgba(245,237,232,0.28)", lineHeight: 1.4, margin: 0, fontStyle: "italic" }}>
-                          {insight.evidence}
-                        </p>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* ── VISION AI — Condiciones detectadas ── */}
-            {(visionResults || visionLoading) && (
-              <div style={{ marginTop: 24, marginBottom: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                  <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", fontWeight: 700 }}>
-                    Análisis con IA
-                  </p>
-                  <span style={{ fontSize: 8, color: "#7ecba1", background: "rgba(126,203,161,0.1)", border: "1px solid rgba(126,203,161,0.2)", padding: "2px 8px", borderRadius: 99, fontWeight: 600, letterSpacing: "0.06em" }}>
-                    CLAUDE VISION
-                  </span>
-                </div>
-
-                {visionLoading && !visionResults && (
-                  <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.06)", borderRadius: 16, padding: "20px", textAlign: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                      <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(232,164,176,0.2)", borderTopColor: "#e8a4b0", animation: "spin 0.8s linear infinite" }} />
-                      <span style={{ fontSize: 12, color: "rgba(245,237,232,0.4)" }}>Analizando condiciones con IA...</span>
-                    </div>
-                  </div>
-                )}
-
-                {visionResults && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {/* Acné */}
-                    {visionResults.acne && visionResults.acne.severity !== "none" && (
-                      <div style={{
-                        background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
-                        borderRadius: 14, padding: "16px 18px",
-                        borderLeft: `3px solid ${visionResults.acne.severity === "severe" ? "#e8a4b0" : visionResults.acne.severity === "moderate" ? "#d4af88" : "#7ecba1"}`,
-                      }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Acné</span>
-                          <span style={{ fontSize: 11, color: visionResults.acne.severity === "severe" ? "#e8a4b0" : visionResults.acne.severity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
-                            {visionResults.acne.count} {visionResults.acne.count === 1 ? "lesión" : "lesiones"}
-                          </span>
-                        </div>
-                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
-                          Severidad: {visionResults.acne.severity === "mild" ? "leve" : visionResults.acne.severity === "moderate" ? "moderada" : visionResults.acne.severity === "severe" ? "severa" : visionResults.acne.severity}
-                          {visionResults.acne.locations?.length > 0 && ` · ${visionResults.acne.locations.join(", ")}`}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Manchas */}
-                    {visionResults.spots && visionResults.spots.severity !== "none" && (
-                      <div style={{
-                        background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
-                        borderRadius: 14, padding: "16px 18px",
-                        borderLeft: `3px solid ${visionResults.spots.severity === "severe" ? "#e8a4b0" : visionResults.spots.severity === "moderate" ? "#d4af88" : "#7ecba1"}`,
-                      }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Manchas</span>
-                          <span style={{ fontSize: 11, color: visionResults.spots.severity === "severe" ? "#e8a4b0" : visionResults.spots.severity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
-                            {visionResults.spots.count} {visionResults.spots.count === 1 ? "mancha" : "manchas"}
-                          </span>
-                        </div>
-                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
-                          Severidad: {visionResults.spots.severity === "mild" ? "leve" : visionResults.spots.severity === "moderate" ? "moderada" : visionResults.spots.severity === "severe" ? "severa" : visionResults.spots.severity}
-                          {visionResults.spots.locations?.length > 0 && ` · ${visionResults.spots.locations.join(", ")}`}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Rojez */}
-                    {visionResults.redness && visionResults.redness.intensity !== "none" && (
-                      <div style={{
-                        background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
-                        borderRadius: 14, padding: "16px 18px",
-                        borderLeft: `3px solid ${visionResults.redness.intensity === "severe" ? "#e8a4b0" : visionResults.redness.intensity === "moderate" ? "#d4af88" : "#7ecba1"}`,
-                      }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Rojez</span>
-                          <span style={{ fontSize: 11, color: visionResults.redness.intensity === "severe" ? "#e8a4b0" : visionResults.redness.intensity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
-                            {visionResults.redness.intensity === "mild" ? "Leve" : visionResults.redness.intensity === "moderate" ? "Moderada" : visionResults.redness.intensity === "severe" ? "Severa" : visionResults.redness.intensity}
-                          </span>
-                        </div>
-                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
-                          {visionResults.redness.zones?.length > 0 ? `Zonas: ${visionResults.redness.zones.join(", ")}` : ""}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* No conditions found */}
-                    {visionResults.acne?.severity === "none" && visionResults.spots?.severity === "none" && visionResults.redness?.intensity === "none" && (
-                      <div style={{
-                        background: "rgba(126,203,161,0.06)", border: "1px solid rgba(126,203,161,0.15)",
-                        borderRadius: 14, padding: "16px 18px", textAlign: "center",
-                      }}>
-                        <span style={{ fontSize: 13, color: "#7ecba1", fontWeight: 600 }}>No se detectaron condiciones activas</span>
-                      </div>
-                    )}
-
-                    {/* Summary */}
-                    {visionResults.summary && (
-                      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.35)", fontStyle: "italic", lineHeight: 1.55, marginTop: 4, paddingLeft: 4 }}>
-                        {visionResults.summary}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── ZONE ACCORDION — sub-metrics per zone ── */}
-            <div style={{ marginTop: 24 }}>
-              <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: 22, fontWeight: 400, marginBottom: 16 }}>
-                Analisis por zona
-              </h2>
-              {Object.entries(ACCORDION_META).map(([key, meta]) => {
-                const subs = derivedSubMetrics[key]
-                const accScore = subs ? Math.round(subs.reduce((a, sm) => a + sm.score, 0) / subs.length) : 50
-                const isOpen = activeZone === key
-                const statusColor = accScore >= 75 ? "#7ecba1" : accScore >= 55 ? "#d4af88" : "#e8a4b0"
-                return (
-                  <div key={key} style={{
-                    background: "rgba(245,237,232,0.03)", border: `1px solid ${isOpen ? "rgba(232,164,176,0.2)" : "rgba(245,237,232,0.06)"}`,
-                    borderRadius: 16, marginBottom: 10, overflow: "hidden", transition: "all 0.3s",
-                  }}>
-                    <button onClick={() => setActiveZone(isOpen ? null : key)} style={{
-                      width: "100%", padding: "16px 20px", background: "none", border: "none", cursor: "pointer", color: "#f5ede8",
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{
-                          width: 28, height: 28, borderRadius: "50%",
-                          background: `${statusColor}15`, border: `1.5px solid ${statusColor}40`,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 11, fontWeight: 700, color: statusColor,
-                        }}>
-                          {meta.icon}
-                        </div>
-                        <span style={{ fontSize: 14, fontWeight: 600 }}>{meta.label}</span>
-                        {key === "cuello" && <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)", fontStyle: "italic" }}>estimado</span>}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400, color: statusColor }}>{accScore}</span>
-                        <span style={{ fontSize: 12, color: "rgba(245,237,232,0.3)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>&#x25BE;</span>
-                      </div>
-                    </button>
-                    {isOpen && subs && (
-                      <div style={{ padding: "0 20px 20px" }}>
-                        {subs.map((sub, i) => {
-                          const barColor = sub.score >= 75 ? "#7ecba1" : sub.score >= 55 ? "#d4af88" : "#e8a4b0"
-                          return (
-                            <div key={i} style={{ marginBottom: 14 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                                <span style={{ fontSize: 13, color: "rgba(245,237,232,0.65)" }}>{sub.label}</span>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: barColor }}>{sub.score}</span>
-                              </div>
-                              <div style={{ height: 4, borderRadius: 2, background: "rgba(245,237,232,0.06)" }}>
-                                <div style={{ height: "100%", borderRadius: 2, background: barColor, width: `${sub.score}%`, transition: "width 0.5s ease" }} />
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* ── AGE COMPARISON (compact) ── */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 24, marginBottom: 8 }}>
-              <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tu edad: <strong style={{ color: "#f5ede8" }}>{userAge} años</strong></span>
-              <span style={{ color: "rgba(245,237,232,0.15)" }}>→</span>
-              <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Aparentas: <strong style={{ color: isOlder ? "#e8a4b0" : "#7ecba1" }}>{skinAge} años</strong></span>
-            </div>
-            <div style={{ textAlign: "center", marginBottom: 24 }}>
-              <span style={{
-                display: "inline-block", padding: "4px 14px", borderRadius: 99,
-                fontSize: 11, fontWeight: 700,
-                color: isOlder ? "#e8a4b0" : "#7ecba1",
-                background: isOlder ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
-                border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
-              }}>
-                {isOlder ? `+${ageDiff} años por encima` : ageDiff === 0 ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
-              </span>
-            </div>
-
-            {/* ── TOP 3 FINDINGS ── */}
-            <div style={{
-              background: "rgba(245,237,232,0.03)",
-              border: "1px solid rgba(245,237,232,0.08)",
-              borderRadius: 16, padding: "24px 20px", marginBottom: 20,
-            }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>
-                {isOlder ? "Lo que está sumando años" : "Áreas de oportunidad"}
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {criticalFindings.map((b, idx) => {
-                  const fd = findingDescriptions[b.friendlyLabel] || { title: b.friendlyLabel, desc: b.insight }
-                  const years = yearImpact[b.label] || "hasta +1 año"
-                  return (
-                    <div key={b.label} style={{ paddingBottom: idx < criticalFindings.length - 1 ? 20 : 0, borderBottom: idx < criticalFindings.length - 1 ? "1px solid rgba(245,237,232,0.05)" : "none" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                        <span style={{ fontSize: 14, color: "rgba(245,237,232,0.8)", fontWeight: 600, fontFamily: "var(--font-fraunces)" }}>{fd.title}</span>
-                        <span style={{
-                          fontSize: 10, fontWeight: 700, color: "#e8a4b0",
-                          background: "rgba(232,164,176,0.1)", border: "1px solid rgba(232,164,176,0.2)",
-                          borderRadius: 99, padding: "2px 10px", whiteSpace: "nowrap", flexShrink: 0, marginLeft: 8,
-                        }}>{years}</span>
-                      </div>
-                      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", lineHeight: 1.6, margin: "0 0 4px" }}>{fd.desc}</p>
-                      <p style={{ fontSize: 11, color: "rgba(245,237,232,0.3)", lineHeight: 1.5, margin: 0, fontStyle: "italic" }}>{b.insight}</p>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* ── BIOMARKERS (collapsible) ── */}
-            <div style={{ marginBottom: 24 }}>
-              <button
-                onClick={() => setShowBiomarkers(prev => !prev)}
-                style={{
-                  width: "100%", padding: "14px 20px",
-                  background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
-                  borderRadius: showBiomarkers ? "14px 14px 0 0" : 14,
-                  color: "rgba(245,237,232,0.6)", fontSize: 13, fontWeight: 600,
-                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between",
-                  transition: "all 0.2s",
-                }}
-              >
-                <span>Ver biomarcadores detallados</span>
-                <span style={{ fontSize: 14, transition: "transform 0.2s", transform: showBiomarkers ? "rotate(180deg)" : "rotate(0)" }}>▾</span>
-              </button>
-              {showBiomarkers && (
-                <div style={{
-                  background: "rgba(245,237,232,0.03)",
-                  border: "1px solid rgba(245,237,232,0.08)", borderTop: "none",
-                  borderRadius: "0 0 14px 14px", padding: "20px",
-                }}>
-                  <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.22)", marginBottom: 20, lineHeight: 1.5 }}>Todas las barras miden salud: más llena = mejor estado</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                    {biomarkers.map(b => (
-                      <div key={b.label}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontSize: 13, color: "rgba(245,237,232,0.75)", fontWeight: 600 }}>{b.friendlyLabel}</span>
-                            {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>MEJORABLE</span>}
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontSize: 9, color: "rgba(245,237,232,0.28)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{b.note}</span>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: b.color, minWidth: 36, textAlign: "right" }}>{b.value}%</span>
-                          </div>
-                        </div>
-                        <div style={{ height: 4, background: "rgba(245,237,232,0.06)", borderRadius: 2, overflow: "hidden", marginBottom: 7 }}>
-                          <div style={{ height: "100%", width: `${b.value}%`, background: `linear-gradient(90deg, ${b.color}88, ${b.color})`, borderRadius: 2, transition: "width 0.8s ease" }} />
-                        </div>
-                        <p style={{ fontSize: 11.5, color: "rgba(245,237,232,0.38)", lineHeight: 1.55 }}>{b.insight}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ── CTAs ── */}
-            {/* Free plan CTA */}
-            <button
-              onClick={() => {
-                try {
-                  if (scores) {
-                    localStorage.setItem("insideoutmed_scores", JSON.stringify({
-                      overall: scores.overall,
-                      luminosity: scores.luminosity,
-                      hydration: scores.hydration,
-                      uniformity: scores.uniformity,
-                      glycation: scores.glycation,
-                      inflammation: scores.inflammation,
-                      sunDamage: scores.sunDamage,
-                      vascularity: scores.vascularity,
-                      texture: scores.texture,
-                      wrinkleDepth: scores.wrinkleDepth,
-                      darkCircles: scores.darkCircles,
-                      symmetry: scores.symmetry,
-                      ageApparent: scores.ageApparent,
-                      zoneScores: scores.zoneScores,
-                      ...preQuizData, ...contactData, ...gateData,
-                    }))
-                  }
-                } catch {}
-                window.location.href = "/plan"
-              }}
-              style={{
-                width: "100%", padding: "17px 28px", marginBottom: 12,
-                background: "linear-gradient(135deg,#e8a4b0,#c97e8e)",
-                border: "none", borderRadius: 14, color: "#fff",
-                fontSize: 15, fontWeight: 700, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                boxShadow: "0 6px 24px rgba(232,164,176,0.3)",
-              }}
-            >
-              Ver mi plan gratuito →
-            </button>
-
-            {/* Gold CTA — consultation */}
-            <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100.`)}`}
-              target="_blank" rel="noopener noreferrer"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                width: "100%", padding: "18px 28px",
-                background: "linear-gradient(135deg, rgba(212,175,136,0.12) 0%, rgba(232,164,176,0.08) 100%)",
-                border: "1.5px solid rgba(212,175,136,0.3)",
-                borderRadius: 14, color: "#d4af88",
-                fontSize: 14, fontWeight: 700, textDecoration: "none",
-                boxShadow: "0 4px 20px rgba(212,175,136,0.15)",
-                transition: "all 0.2s", marginBottom: 12,
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-              </svg>
-              Asesoría personalizada con especialista
-            </a>
-
-            {/* Reset */}
-            <div style={{ textAlign: "center", marginTop: 10 }}>
-              <button onClick={reset} style={{ background: "none", border: "none", color: "rgba(245,237,232,0.28)", fontSize: 12, cursor: "pointer", padding: "8px 16px" }}>Hacer nuevo análisis</button>
-            </div>
-
-            {/* ── DISCLAIMER ── */}
-            <div style={{ borderTop: "1px solid rgba(245,237,232,0.1)", marginTop: 32, paddingTop: 16, display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "center", paddingBottom: 40 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
-                <circle cx="12" cy="12" r="10" stroke="rgba(245,237,232,0.4)" strokeWidth="1.5"/>
-                <line x1="12" y1="8" x2="12" y2="13" stroke="rgba(245,237,232,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
-                <circle cx="12" cy="16.5" r="0.8" fill="rgba(245,237,232,0.4)"/>
-              </svg>
-              <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", textAlign: "center", lineHeight: 1.6 }}>
-                Estimación visual educativa basada en biomarcadores faciales. No constituye diagnóstico médico ni reemplaza la evaluación de un profesional de la salud.
-              </p>
-            </div>
-          </div>
-          )
-        })()}
       </main>
 
       <style>{`
@@ -3038,6 +2688,7 @@ export default function AnalyzePage() {
         @keyframes scanReveal { from { opacity: 0; } to { opacity: 1; } }
         @keyframes revealPulse { 0%,100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 1; } }
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .age-scroll::-webkit-scrollbar { display: none; }
       `}</style>
     </div>

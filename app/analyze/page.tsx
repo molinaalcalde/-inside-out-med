@@ -2187,14 +2187,12 @@ export default function AnalyzePage() {
               }}>
                 {counterAge > 0 ? counterAge : ""}
               </p>
-              {/* ── 3. "Tu cara dice X" — ONLY rendered after counter finishes (no spoiler) ── */}
+              {/* ── 3. Age context — shows after counter finishes ── */}
+              <p style={{ fontSize: 14, color: "rgba(245,237,232,0.45)", marginBottom: 12, letterSpacing: "0.02em" }}>
+                Tienes <strong style={{ color: "rgba(245,237,232,0.75)" }}>{userAge}</strong> años
+              </p>
               {counterAge >= skinAge && (
                 <div style={{ animation: "fadeUp 0.5s ease" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 10 }}>
-                    <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tienes <strong style={{ color: "rgba(245,237,232,0.7)" }}>{userAge}</strong></span>
-                    <span style={{ color: "rgba(245,237,232,0.12)", fontSize: 14 }}>→</span>
-                    <span style={{ fontSize: 13, color: "rgba(245,237,232,0.4)" }}>Tu cara dice <strong style={{ color: isOlder ? "#e8a4b0" : "#7ecba1" }}>{skinAge}</strong></span>
-                  </div>
                   <span style={{
                     display: "inline-block", padding: "5px 18px", borderRadius: 99,
                     fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",

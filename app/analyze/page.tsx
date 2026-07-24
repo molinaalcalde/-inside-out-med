@@ -10,7 +10,7 @@ import { ScanFace, Bandage } from "lucide-react"
 
 const WHATSAPP_NUMBER = "5491112345678" // TODO: Replace with real number
 
-type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results" | "plan-choice" | "gate-quiz" | "consultation" | "error"
+type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "results" | "plan-choice" | "gate-quiz" | "consultation" | "error"
 
 // ── MediaPipe landmark indices per zone (upload path — 9 zones) ──
 const ZONES = {
@@ -461,6 +461,13 @@ const GATE_STEPS: QuizStep[] = [
       { value: "basica", label: "Limpiador + hidratante", sub: "Base sólida" },
       { value: "completa", label: "Rutina completa", sub: "Serum, SPF y más" },
     ],
+  },
+  {
+    id: "phone",
+    headline: "Tu WhatsApp para recomendaciones",
+    sub: "Te avisamos cuando encontremos productos ideales para tu perfil",
+    type: "phone",
+    options: [],
   },
 ]
 
@@ -1424,7 +1431,7 @@ export default function AnalyzePage() {
         clearInterval(scanIntervalRef.current!)
         setTimeout(() => {
           setScores(preScores)
-          setStage("contact")
+          setStage("results")
         }, 500)
       }
       setScanProgress(Math.min(progress, 100))
@@ -1467,7 +1474,7 @@ export default function AnalyzePage() {
             setStage("error")
           } else {
             setScores(analysisResult)
-            setStage("contact")
+            setStage("results")
           }
         }
         setTimeout(finish, 500)
@@ -1582,32 +1589,19 @@ export default function AnalyzePage() {
   }
 
   // ── Contact complete → results ──────────────────────────────
-  const handleContactComplete = (data: Record<string, string>) => {
-    setContactData(data)
-    trackFunnelEvent("contact_complete", { email: data.email, phone: data.phone })
-    updateLead({ phone: data.phone, funnelStage: "contact_complete" })
+  // Save data and trigger Vision when entering results stage
+  useEffect(() => {
+    if (stage !== "results" || !scores) return
     // Save to localStorage
     try {
-      localStorage.setItem("insideoutmed_profile", JSON.stringify({ ...preQuizData, ...data }))
-      if (scores) {
-        localStorage.setItem("insideoutmed_scores", JSON.stringify({
-          overall: scores.overall,
-          luminosity: scores.luminosity,
-          hydration: scores.hydration,
-          uniformity: scores.uniformity,
-          glycation: scores.glycation,
-          inflammation: scores.inflammation,
-          sunDamage: scores.sunDamage,
-          vascularity: scores.vascularity,
-          texture: scores.texture,
-          wrinkleDepth: scores.wrinkleDepth,
-          darkCircles: scores.darkCircles,
-          symmetry: scores.symmetry,
-          ageApparent: scores.ageApparent,
-          zoneScores: scores.zoneScores,
-          ...preQuizData, ...data,
-        }))
-      }
+      localStorage.setItem("insideoutmed_profile", JSON.stringify({ ...preQuizData }))
+      localStorage.setItem("insideoutmed_scores", JSON.stringify({
+        overall: scores.overall, luminosity: scores.luminosity, hydration: scores.hydration,
+        uniformity: scores.uniformity, glycation: scores.glycation, inflammation: scores.inflammation,
+        sunDamage: scores.sunDamage, vascularity: scores.vascularity, texture: scores.texture,
+        wrinkleDepth: scores.wrinkleDepth, darkCircles: scores.darkCircles, symmetry: scores.symmetry,
+        ageApparent: scores.ageApparent, zoneScores: scores.zoneScores, ...preQuizData,
+      }))
     } catch {}
     // Save to Supabase (non-blocking)
     try {
@@ -1616,7 +1610,7 @@ export default function AnalyzePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId: typeof window !== "undefined" ? (window as any).__iom_session : undefined,
-          email: preQuizData.email || data.email || "",
+          email: preQuizData.email || "",
           scores: { overall: scores?.overall, luminosity: scores?.luminosity, hydration: scores?.hydration, uniformity: scores?.uniformity, glycation: scores?.glycation, inflammation: scores?.inflammation, sunDamage: scores?.sunDamage, vascularity: scores?.vascularity, texture: scores?.texture, wrinkleDepth: scores?.wrinkleDepth, darkCircles: scores?.darkCircles, symmetry: scores?.symmetry, ageApparent: scores?.ageApparent, zoneScores: scores?.zoneScores },
           profile: preQuizData,
         }),
@@ -1626,7 +1620,7 @@ export default function AnalyzePage() {
     updateLead({ scanData: scores, funnelStage: "results_viewed" })
 
     // Trigger Vision analysis (non-blocking)
-    if (capturedUrl && scores) {
+    if (capturedUrl) {
       setVisionLoading(true)
       fetch("/api/analyze-vision", {
         method: "POST",
@@ -1641,9 +1635,7 @@ export default function AnalyzePage() {
         .catch(() => {})
         .finally(() => setVisionLoading(false))
     }
-
-    setStage("results")
-  }
+  }, [stage, scores]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Gate quiz complete → save data and go to /plan ─────────────
   const handleGateComplete = (data: Record<string, string>) => {
@@ -1929,10 +1921,7 @@ export default function AnalyzePage() {
           </div>
         )}
 
-        {/* ── CONTACT — email + phone quiz ── */}
-        {stage === "contact" && scores && (
-          <ProfileQuiz mode="contact" onComplete={handleContactComplete} scores={scores} />
-        )}
+        {/* contact stage removed — phone moved to gate quiz */}
 
         {/* ── ERROR ── */}
         {stage === "error" && (

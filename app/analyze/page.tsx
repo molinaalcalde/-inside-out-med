@@ -1396,6 +1396,14 @@ export default function AnalyzePage() {
   const [revealedZones, setRevealedZones] = useState<number[]>([])
   const [counterAge, setCounterAge] = useState(0)
   const [revealedFindings, setRevealedFindings] = useState(0)
+  const [visionResults, setVisionResults] = useState<{
+    acne?: { count: number; severity: string; locations: string[] }
+    spots?: { count: number; severity: string; locations: string[] }
+    redness?: { intensity: string; zones: string[] }
+    summary?: string
+    concerns?: string[]
+  } | null>(null)
+  const [visionLoading, setVisionLoading] = useState(false)
 
   const fileRef = useRef<HTMLInputElement>(null)
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -1565,6 +1573,8 @@ export default function AnalyzePage() {
     setRevealedZones([])
     setCounterAge(0)
     setRevealedFindings(0)
+    setVisionResults(null)
+    setVisionLoading(false)
     setStage("choose")
   }
 
@@ -1623,6 +1633,24 @@ export default function AnalyzePage() {
     } catch {}
     trackFunnelEvent("results_viewed", { overall: scores?.overall, ageApparent: scores?.ageApparent })
     updateLead({ scanData: scores, funnelStage: "results_viewed" })
+
+    // Trigger Vision analysis (non-blocking)
+    if (capturedUrl && scores) {
+      setVisionLoading(true)
+      fetch("/api/analyze-vision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageBase64: capturedUrl,
+          profile: { age: preQuizData.age, fitzpatrick: preQuizData.fitzpatrick },
+        }),
+      })
+        .then(r => r.json())
+        .then(d => { if (d.results) setVisionResults(d.results) })
+        .catch(() => {})
+        .finally(() => setVisionLoading(false))
+    }
+
     setStage("results-1")
   }
 
@@ -2547,6 +2575,109 @@ export default function AnalyzePage() {
                     )
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* ── VISION AI — Condiciones detectadas ── */}
+            {(visionResults || visionLoading) && (
+              <div style={{ marginTop: 24, marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                  <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", fontWeight: 700 }}>
+                    Análisis con IA
+                  </p>
+                  <span style={{ fontSize: 8, color: "#7ecba1", background: "rgba(126,203,161,0.1)", border: "1px solid rgba(126,203,161,0.2)", padding: "2px 8px", borderRadius: 99, fontWeight: 600, letterSpacing: "0.06em" }}>
+                    CLAUDE VISION
+                  </span>
+                </div>
+
+                {visionLoading && !visionResults && (
+                  <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.06)", borderRadius: 16, padding: "20px", textAlign: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                      <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(232,164,176,0.2)", borderTopColor: "#e8a4b0", animation: "spin 0.8s linear infinite" }} />
+                      <span style={{ fontSize: 12, color: "rgba(245,237,232,0.4)" }}>Analizando condiciones con IA...</span>
+                    </div>
+                  </div>
+                )}
+
+                {visionResults && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {/* Acné */}
+                    {visionResults.acne && visionResults.acne.severity !== "none" && (
+                      <div style={{
+                        background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
+                        borderRadius: 14, padding: "16px 18px",
+                        borderLeft: `3px solid ${visionResults.acne.severity === "severe" ? "#e8a4b0" : visionResults.acne.severity === "moderate" ? "#d4af88" : "#7ecba1"}`,
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Acné</span>
+                          <span style={{ fontSize: 11, color: visionResults.acne.severity === "severe" ? "#e8a4b0" : visionResults.acne.severity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
+                            {visionResults.acne.count} {visionResults.acne.count === 1 ? "lesión" : "lesiones"}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
+                          Severidad: {visionResults.acne.severity === "mild" ? "leve" : visionResults.acne.severity === "moderate" ? "moderada" : visionResults.acne.severity === "severe" ? "severa" : visionResults.acne.severity}
+                          {visionResults.acne.locations?.length > 0 && ` · ${visionResults.acne.locations.join(", ")}`}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Manchas */}
+                    {visionResults.spots && visionResults.spots.severity !== "none" && (
+                      <div style={{
+                        background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
+                        borderRadius: 14, padding: "16px 18px",
+                        borderLeft: `3px solid ${visionResults.spots.severity === "severe" ? "#e8a4b0" : visionResults.spots.severity === "moderate" ? "#d4af88" : "#7ecba1"}`,
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Manchas</span>
+                          <span style={{ fontSize: 11, color: visionResults.spots.severity === "severe" ? "#e8a4b0" : visionResults.spots.severity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
+                            {visionResults.spots.count} {visionResults.spots.count === 1 ? "mancha" : "manchas"}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
+                          Severidad: {visionResults.spots.severity === "mild" ? "leve" : visionResults.spots.severity === "moderate" ? "moderada" : visionResults.spots.severity === "severe" ? "severa" : visionResults.spots.severity}
+                          {visionResults.spots.locations?.length > 0 && ` · ${visionResults.spots.locations.join(", ")}`}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Rojez */}
+                    {visionResults.redness && visionResults.redness.intensity !== "none" && (
+                      <div style={{
+                        background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
+                        borderRadius: 14, padding: "16px 18px",
+                        borderLeft: `3px solid ${visionResults.redness.intensity === "severe" ? "#e8a4b0" : visionResults.redness.intensity === "moderate" ? "#d4af88" : "#7ecba1"}`,
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Rojez</span>
+                          <span style={{ fontSize: 11, color: visionResults.redness.intensity === "severe" ? "#e8a4b0" : visionResults.redness.intensity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
+                            {visionResults.redness.intensity === "mild" ? "Leve" : visionResults.redness.intensity === "moderate" ? "Moderada" : visionResults.redness.intensity === "severe" ? "Severa" : visionResults.redness.intensity}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
+                          {visionResults.redness.zones?.length > 0 ? `Zonas: ${visionResults.redness.zones.join(", ")}` : ""}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* No conditions found */}
+                    {visionResults.acne?.severity === "none" && visionResults.spots?.severity === "none" && visionResults.redness?.intensity === "none" && (
+                      <div style={{
+                        background: "rgba(126,203,161,0.06)", border: "1px solid rgba(126,203,161,0.15)",
+                        borderRadius: 14, padding: "16px 18px", textAlign: "center",
+                      }}>
+                        <span style={{ fontSize: 13, color: "#7ecba1", fontWeight: 600 }}>No se detectaron condiciones activas</span>
+                      </div>
+                    )}
+
+                    {/* Summary */}
+                    {visionResults.summary && (
+                      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.35)", fontStyle: "italic", lineHeight: 1.55, marginTop: 4, paddingLeft: 4 }}>
+                        {visionResults.summary}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

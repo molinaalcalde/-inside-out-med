@@ -2169,12 +2169,12 @@ export default function AnalyzePage() {
               </div>
             )}
 
-            {/* ── 2. AGE REVEAL — counter animation ── */}
+            {/* ── 2. AGE REVEAL — counter animation (not in DOM until phase 2) ── */}
+            {revealPhase < 2 ? <div style={{ height: 160 }} /> : null}
             <div style={{
               textAlign: "center", marginBottom: 28,
-              opacity: revealPhase >= 2 ? 1 : 0,
-              transform: revealPhase >= 2 ? "translateY(0)" : "translateY(20px)",
-              transition: "all 0.6s ease",
+              display: revealPhase >= 2 ? "block" : "none",
+              animation: revealPhase >= 2 ? "fadeUp 0.6s ease" : "none",
             }}>
               <p style={{ fontSize: 10, letterSpacing: "0.18em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 6, fontWeight: 600 }}>
                 Tu rostro aparenta
@@ -2185,7 +2185,7 @@ export default function AnalyzePage() {
                 color: isOlder ? "#e8a4b0" : isSame ? "#f5ede8" : "#7ecba1",
                 textShadow: isOlder ? "0 0 40px rgba(232,164,176,0.25)" : "0 0 40px rgba(126,203,161,0.25)",
               }}>
-                {counterAge || skinAge}
+                {counterAge > 0 ? counterAge : ""}
               </p>
               {/* ── 3. "Tu cara dice X" — ONLY rendered after counter finishes (no spoiler) ── */}
               {counterAge >= skinAge && (

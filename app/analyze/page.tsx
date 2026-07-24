@@ -2261,67 +2261,88 @@ export default function AnalyzePage() {
               <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16, fontWeight: 700 }}>
                 Estado de tu piel
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                 {[
                   {
                     label: "Ojeras",
                     score: scores.darkCircles,
-                    getSeverity: (s: number) => s >= 80 ? "No visibles" : s >= 60 ? "Leves" : s >= 40 ? "Moderadas" : "Marcadas",
-                    getDesc: (s: number) => s >= 80 ? "Tu contorno ocular se ve descansado" : s >= 60 ? "Algo de oscurecimiento bajo los ojos" : s >= 40 ? "Oscurecimiento notable bajo los ojos" : "Contraste fuerte entre ojera y mejilla",
-                    getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
+                    levels: ["Marcadas", "Moderadas", "Leves", "Mínimas", "No visibles"],
+                    getLevel: (s: number) => s >= 85 ? 4 : s >= 70 ? 3 : s >= 55 ? 2 : s >= 40 ? 1 : 0,
+                    getAction: (s: number) => s >= 70 ? "Mantén tu rutina de descanso" : s >= 40 ? "Un contorno de ojos con cafeína + vitamina K ayuda en 4 semanas" : "Prioriza sueño + contorno con retinol. Casos severos: ácido hialurónico",
+                    ageContext: (s: number) => s >= 70 ? `Normal para ${userAge} años` : s >= 50 ? `Algo elevado para ${userAge} años` : `Por encima del promedio para ${userAge} años`,
                   },
                   {
                     label: "Textura",
                     score: scores.texture,
-                    getSeverity: (s: number) => s >= 80 ? "Lisa" : s >= 60 ? "Algo irregular" : s >= 40 ? "Irregular" : "Rugosa",
-                    getDesc: (s: number) => s >= 80 ? "Superficie suave y uniforme" : s >= 60 ? "Algunas zonas con aspereza" : s >= 40 ? "Textura desigual en varias zonas" : "Rugosidad generalizada, barrera comprometida",
-                    getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
+                    levels: ["Muy rugosa", "Irregular", "Algo irregular", "Suave", "Muy lisa"],
+                    getLevel: (s: number) => s >= 85 ? 4 : s >= 70 ? 3 : s >= 55 ? 2 : s >= 40 ? 1 : 0,
+                    getAction: (s: number) => s >= 70 ? "Tu piel tiene buena renovación celular" : s >= 40 ? "Una exfoliación suave 2x/semana mejora esto en semanas" : "Exfoliación química (AHA/BHA) + hidratación con ceramidas",
+                    ageContext: (s: number) => s >= 70 ? `Normal para ${userAge} años` : s >= 50 ? `Algo elevado para ${userAge} años` : `Por encima del promedio para ${userAge} años`,
                   },
                   {
                     label: "Arrugas",
                     score: scores.wrinkleDepth,
-                    getSeverity: (s: number) => s >= 80 ? "Mínimas" : s >= 60 ? "Líneas finas" : s >= 40 ? "Visibles" : "Profundas",
-                    getDesc: (s: number) => s >= 80 ? "Sin líneas de expresión marcadas" : s >= 60 ? "Líneas finas en zonas de expresión" : s >= 40 ? "Arrugas visibles en frente u ojos" : "Arrugas profundas que se notan en reposo",
-                    getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
+                    levels: ["Profundas", "Visibles", "Líneas finas", "Mínimas", "Sin arrugas"],
+                    getLevel: (s: number) => s >= 85 ? 4 : s >= 70 ? 3 : s >= 55 ? 2 : s >= 40 ? 1 : 0,
+                    getAction: (s: number) => s >= 70 ? "Sigue con protección solar + retinol preventivo" : s >= 40 ? "Retinol nocturno + péptidos aceleran la reparación" : "Retinol + tratamientos profesionales (LED, botox preventivo)",
+                    ageContext: (s: number) => s >= 70 ? `Normal para ${userAge} años` : s >= 50 ? `Algo elevado para ${userAge} años` : `Por encima del promedio para ${userAge} años`,
                   },
                   {
                     label: "Rojez",
                     score: Math.round(100 - scores.inflammation),
-                    getSeverity: (s: number) => s >= 80 ? "Sin rojez" : s >= 60 ? "Leve" : s >= 40 ? "Moderada" : "Intensa",
-                    getDesc: (s: number) => s >= 80 ? "Tono uniforme sin irritación" : s >= 60 ? "Rojez sutil en mejillas o nariz" : s >= 40 ? "Rojez visible en varias zonas" : "Eritema marcado, posible rosácea",
-                    getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
+                    levels: ["Intensa", "Moderada", "Leve", "Mínima", "Sin rojez"],
+                    getLevel: (s: number) => s >= 85 ? 4 : s >= 70 ? 3 : s >= 55 ? 2 : s >= 40 ? 1 : 0,
+                    getAction: (s: number) => s >= 70 ? "Tu piel está calmada, buen trabajo" : s >= 40 ? "Niacinamida + centella asiática reducen inflamación" : "Evita agua caliente, alcohol, picante. Niacinamida 10% + azelaic acid",
+                    ageContext: (s: number) => s >= 70 ? "Dentro del rango saludable" : s >= 50 ? "Algo elevado — monitorear" : "Fuera del rango — requiere atención",
                   },
                   {
                     label: "Manchas",
                     score: scores.uniformity,
-                    getSeverity: (s: number) => s >= 80 ? "Tono parejo" : s >= 60 ? "Pocas manchas" : s >= 40 ? "Visibles" : "Hiperpigmentación",
-                    getDesc: (s: number) => s >= 80 ? "Pigmentación uniforme y limpia" : s >= 60 ? "Algunas manchas leves o pecas" : s >= 40 ? "Manchas solares o melasma visible" : "Discromía marcada en varias zonas",
-                    getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
+                    levels: ["Hiperpigmentación", "Manchas visibles", "Pocas manchas", "Casi uniforme", "Tono parejo"],
+                    getLevel: (s: number) => s >= 85 ? 4 : s >= 70 ? 3 : s >= 55 ? 2 : s >= 40 ? 1 : 0,
+                    getAction: (s: number) => s >= 70 ? "SPF diario para mantener tu tono" : s >= 40 ? "Vitamina C mañana + SPF 50 frenan nuevas manchas" : "Despigmentante (ácido tranexámico) + SPF estricto + vitamina C",
+                    ageContext: (s: number) => s >= 70 ? `Normal para ${userAge} años` : s >= 50 ? `Algo elevado para ${userAge} años` : `Por encima del promedio para ${userAge} años`,
                   },
                   {
-                    label: "Simetría",
+                    label: "Simetría facial",
                     score: scores.symmetry ?? 85,
-                    getSeverity: (s: number) => s >= 90 ? "Muy alta" : s >= 75 ? "Normal" : s >= 60 ? "Leve asimetría" : "Asimetría notable",
-                    getDesc: (s: number) => s >= 90 ? "Rasgos bien alineados entre ambos lados" : s >= 75 ? "Diferencias menores, completamente normal" : s >= 60 ? "Diferencia perceptible entre lados" : "Asimetría visible, puede ser postural",
-                    getColor: (s: number) => s >= 90 ? "#7ecba1" : s >= 75 ? "#d4af88" : "#e8a4b0",
+                    levels: ["Asimetría notable", "Leve asimetría", "Normal", "Alta", "Muy alta"],
+                    getLevel: (s: number) => s >= 92 ? 4 : s >= 82 ? 3 : s >= 72 ? 2 : s >= 60 ? 1 : 0,
+                    getAction: (s: number) => s >= 80 ? "Tu rostro tiene buena armonía" : s >= 60 ? "Asimetría leve — completamente normal, puede ser postural" : "Evaluar con especialista si te preocupa",
+                    ageContext: (s: number) => s >= 80 ? "Dentro del rango normal" : "Variación natural — no es un problema de salud",
                   },
                 ].map((item, i) => {
-                  const severity = item.getSeverity(item.score)
-                  const color = item.getColor(item.score)
-                  const desc = item.getDesc(item.score)
+                  const level = item.getLevel(item.score)
+                  const colors = ["#e8a4b0", "#d4af88", "#d4af88", "#7ecba1", "#7ecba1"]
+                  const color = colors[level]
                   return (
                     <div key={i} style={{
-                      background: "rgba(245,237,232,0.03)",
-                      border: `1px solid rgba(245,237,232,0.08)`,
-                      borderRadius: 14, padding: "14px 16px",
-                      borderLeft: `3px solid ${color}`,
+                      padding: "18px 0",
+                      borderBottom: i < 5 ? "1px solid rgba(245,237,232,0.06)" : "none",
                     }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                        <p style={{ fontSize: 10, color: "rgba(245,237,232,0.4)", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>{item.label}</p>
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: color, boxShadow: `0 0 6px ${color}` }} />
+                      {/* Header row */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <span style={{ fontSize: 14, color: "#f5ede8", fontWeight: 600 }}>{item.label}</span>
+                        <span style={{ fontSize: 13, color, fontWeight: 700 }}>{item.levels[level]}</span>
                       </div>
-                      <p style={{ fontSize: 15, color: "#f5ede8", fontWeight: 600, marginBottom: 4 }}>{severity}</p>
-                      <p style={{ fontSize: 11, color: "rgba(245,237,232,0.35)", lineHeight: 1.4 }}>{desc}</p>
+                      {/* 5-dot severity scale */}
+                      <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                        {[0,1,2,3,4].map(dot => (
+                          <div key={dot} style={{
+                            flex: 1, height: 4, borderRadius: 2,
+                            background: dot <= level ? color : "rgba(245,237,232,0.08)",
+                            transition: "background 0.3s",
+                          }} />
+                        ))}
+                      </div>
+                      {/* Age context */}
+                      <p style={{ fontSize: 11, color: "rgba(245,237,232,0.3)", marginBottom: 4, fontStyle: "italic" }}>
+                        {item.ageContext(item.score)}
+                      </p>
+                      {/* Actionable tip */}
+                      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.5)", lineHeight: 1.5 }}>
+                        {item.getAction(item.score)}
+                      </p>
                     </div>
                   )
                 })}

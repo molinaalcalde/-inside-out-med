@@ -2251,7 +2251,74 @@ export default function AnalyzePage() {
               </div>
             </div>
 
-            {/* ── 5. VISION AI — Condiciones detectadas ── */}
+            {/* ── 5. ESTADO DE TU PIEL — condiciones detectadas por el motor ── */}
+            <div style={{
+              marginBottom: 24,
+              opacity: revealPhase >= 3 ? 1 : 0,
+              transform: revealPhase >= 3 ? "translateY(0)" : "translateY(12px)",
+              transition: "all 0.5s ease 0.2s",
+            }}>
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16, fontWeight: 700 }}>
+                Estado de tu piel
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {[
+                  {
+                    label: "Ojeras",
+                    score: scores.darkCircles,
+                    getSeverity: (s: number) => s >= 80 ? "No visibles" : s >= 60 ? "Leves" : s >= 40 ? "Moderadas" : "Marcadas",
+                    getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
+                  },
+                  {
+                    label: "Textura",
+                    score: scores.texture,
+                    getSeverity: (s: number) => s >= 80 ? "Lisa y uniforme" : s >= 60 ? "Algo irregular" : s >= 40 ? "Irregular" : "Muy rugosa",
+                    getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
+                  },
+                  {
+                    label: "Arrugas",
+                    score: scores.wrinkleDepth,
+                    getSeverity: (s: number) => s >= 80 ? "Mínimas" : s >= 60 ? "Líneas finas" : s >= 40 ? "Visibles" : "Profundas",
+                    getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
+                  },
+                  {
+                    label: "Rojez",
+                    score: Math.round(100 - scores.inflammation),
+                    getSeverity: (s: number) => s >= 80 ? "Sin rojez" : s >= 60 ? "Leve" : s >= 40 ? "Moderada" : "Intensa",
+                    getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
+                  },
+                  {
+                    label: "Manchas",
+                    score: scores.uniformity,
+                    getSeverity: (s: number) => s >= 80 ? "Tono uniforme" : s >= 60 ? "Pocas manchas" : s >= 40 ? "Manchas visibles" : "Hiperpigmentación",
+                    getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
+                  },
+                  {
+                    label: "Simetría",
+                    score: scores.symmetry ?? 85,
+                    getSeverity: (s: number) => s >= 90 ? "Muy alta" : s >= 75 ? "Normal" : s >= 60 ? "Leve asimetría" : "Asimetría notable",
+                    getColor: (s: number) => s >= 90 ? "#7ecba1" : s >= 75 ? "#d4af88" : "#e8a4b0",
+                  },
+                ].map((item, i) => {
+                  const severity = item.getSeverity(item.score)
+                  const color = item.getColor(item.score)
+                  return (
+                    <div key={i} style={{
+                      background: "rgba(245,237,232,0.03)",
+                      border: `1px solid rgba(245,237,232,0.08)`,
+                      borderRadius: 14, padding: "14px 16px",
+                      borderLeft: `3px solid ${color}`,
+                    }}>
+                      <p style={{ fontSize: 10, color: "rgba(245,237,232,0.35)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4, fontWeight: 600 }}>{item.label}</p>
+                      <p style={{ fontSize: 14, color, fontWeight: 600, marginBottom: 2 }}>{severity}</p>
+                      <p style={{ fontSize: 10, color: "rgba(245,237,232,0.25)" }}>{item.score}/100</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* ── 6. VISION AI — Condiciones detectadas con IA ── */}
             {(visionResults || visionLoading) && (
               <div style={{
                 marginBottom: 24,

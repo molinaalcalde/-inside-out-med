@@ -58,10 +58,10 @@ interface ScoredRec extends Rec {
 }
 
 // ── Constants ──────────────────────────────────────────────────────
-const AFFILIATE_TAG = "insideoutmed-21"
+const AMAZON_AFFILIATE_TAG = process.env.NEXT_PUBLIC_AMAZON_AFFILIATE_TAG || "insideoutmed-20"
 
 function amazonUrl(query: string) {
-  return `https://www.amazon.com/s?k=${encodeURIComponent(query)}&tag=${AFFILIATE_TAG}`
+  return `https://www.amazon.com/s?k=${encodeURIComponent(query)}&tag=${AMAZON_AFFILIATE_TAG}`
 }
 
 const CATEGORY_TABS: { key: Category; label: string }[] = [
@@ -986,32 +986,25 @@ function renderRecCard(
 
       {/* Bottom row: Amazon + Evidence */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        {rec.amazonQuery && (rec.category === "skincare" || rec.category === "supplements") && (
+        {rec.amazonQuery && (
           <a
             href={amazonUrl(rec.amazonQuery)}
             target="_blank" rel="noopener noreferrer"
             style={{
-              display: "inline-flex", alignItems: "center", gap: 7,
-              background: "rgba(245,237,232,0.06)",
-              border: "1px solid rgba(245,237,232,0.12)",
-              color: "#f5ede8", borderRadius: 10,
-              padding: "9px 16px", fontSize: 12, fontWeight: 600,
-              textDecoration: "none", whiteSpace: "nowrap",
-              transition: "background 0.2s, border-color 0.2s",
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = "rgba(245,237,232,0.11)"
-              e.currentTarget.style.borderColor = "rgba(245,237,232,0.22)"
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = "rgba(245,237,232,0.06)"
-              e.currentTarget.style.borderColor = "rgba(245,237,232,0.12)"
+              display: "inline-flex", alignItems: "center", gap: 6,
+              marginTop: 10, padding: "7px 14px",
+              background: "rgba(212,175,136,0.08)",
+              border: "1px solid rgba(212,175,136,0.2)",
+              borderRadius: 10, fontSize: 11, fontWeight: 600,
+              color: "#d4af88", textDecoration: "none",
+              transition: "all 0.2s",
             }}
           >
-            Ver en Amazon
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-              <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
             </svg>
+            Ver producto
           </a>
         )}
         <button
@@ -1151,7 +1144,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             marginBottom: 20,
           }}>
             <span style={{ fontSize: 11, letterSpacing: "0.12em", color: "#7ecba1", fontWeight: 600 }}>
-              Tu plan personalizado
+              Tu plan gratuito
             </span>
           </div>
 
@@ -1199,6 +1192,33 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
               Con este plan puedes recuperar hasta <strong style={{ color: "#e8a4b0" }}>{diff} a{"\u00f1"}os</strong> en 12 semanas.
             </p>
           )}
+        </div>
+
+        {/* Upgrade CTA */}
+        <div style={{
+          background: "linear-gradient(135deg, rgba(212,175,136,0.08), rgba(232,164,176,0.06))",
+          border: "1px solid rgba(212,175,136,0.2)",
+          borderRadius: 16, padding: "20px 24px", marginBottom: 32,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 16, flexWrap: "wrap",
+          animation: "cardIn 0.6s ease 0.15s both",
+        }}>
+          <div>
+            <p style={{ fontSize: 14, color: "#d4af88", fontWeight: 600, marginBottom: 4 }}>{"\u00bf"}Quieres resultados m{"\u00e1"}s r{"\u00e1"}pidos?</p>
+            <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)" }}>Un especialista eval{"\u00fa"}a tu caso y crea un plan a tu medida</p>
+          </div>
+          <a
+            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`}
+            target="_blank" rel="noopener noreferrer"
+            style={{
+              padding: "10px 20px", borderRadius: 10,
+              background: "linear-gradient(135deg, #d4af88, #c9976e)",
+              color: "#fff", fontSize: 12, fontWeight: 700,
+              textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0,
+            }}
+          >
+            Asesor{"\u00ed"}a personalizada
+          </a>
         </div>
 
         {/* ── Section B: Empieza Hoy ── */}

@@ -10,7 +10,7 @@ import { ScanFace, Bandage } from "lucide-react"
 
 const WHATSAPP_NUMBER = "5491112345678" // TODO: Replace with real number
 
-type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "gate-quiz" | "results-2" | "error"
+type Stage = "choose" | "upload-guide" | "pre-quiz" | "camera" | "scanning" | "contact" | "results-1" | "plan-choice" | "gate-quiz" | "consultation" | "results-2" | "error"
 
 // ── MediaPipe landmark indices per zone (upload path — 9 zones) ──
 const ZONES = {
@@ -271,7 +271,7 @@ interface QuizStep {
   options: QuizOption[]
 }
 
-// ── Pre-scan steps (13 questions before scan) ────────────────────
+// ── Pre-scan steps (4 questions before scan) ────────────────────
 const PRE_SCAN_STEPS: QuizStep[] = [
   {
     id: "name",
@@ -288,62 +288,6 @@ const PRE_SCAN_STEPS: QuizStep[] = [
     options: [],
   },
   {
-    id: "email",
-    headline: "¿A dónde enviamos tu informe?",
-    sub: "Tu análisis completo + plan personalizado directo a tu correo",
-    type: "email",
-    options: [],
-  },
-  {
-    id: "goals",
-    headline: "¿Qué quieres mejorar?",
-    sub: "Selecciona todo lo que aplique — priorizamos tu plan según esto",
-    type: "multiSelect",
-    options: [
-      { value: "edad",       label: "Edad visible" },
-      { value: "piel",       label: "Piel" },
-      { value: "mandibula",  label: "Mandíbula" },
-      { value: "ojos",       label: "Ojos" },
-      { value: "cabello",    label: "Cabello" },
-      { value: "labios",     label: "Labios" },
-      { value: "longevidad", label: "Longevidad" },
-      { value: "evento",     label: "Evento pronto" },
-    ],
-  },
-  {
-    id: "sensitivity",
-    headline: "¿Qué tan sensible es tu piel?",
-    sub: "Para ajustar la intensidad de los activos que te recomendamos",
-    type: "list3",
-    options: [
-      { value: "baja",  label: "Baja",  sub: "Tolero casi todo sin problema" },
-      { value: "media", label: "Media", sub: "Algunos productos me irritan" },
-      { value: "alta",  label: "Alta",  sub: "Mi piel reacciona con facilidad" },
-    ],
-  },
-  {
-    id: "budget",
-    headline: "¿Cuánto inviertes en skincare al mes?",
-    sub: "Para recomendarte productos dentro de tu rango",
-    type: "list3",
-    options: [
-      { value: "gratis",  label: "Lo mínimo ($0–30)",  sub: "Solo lo esencial" },
-      { value: "medio",   label: "Intermedio ($30–100)", sub: "Dispuesto a invertir" },
-      { value: "premium", label: "Premium ($100+)",     sub: "Lo mejor disponible" },
-    ],
-  },
-  {
-    id: "invasive",
-    headline: "¿Qué tipo de tratamientos considerarías?",
-    sub: "Para filtrar las recomendaciones según tu tolerancia",
-    type: "list3",
-    options: [
-      { value: "casa",     label: "Solo en casa",     sub: "Cremas, serums, hábitos" },
-      { value: "no-aguja", label: "Consultorio sin agujas", sub: "Peels, LED, láser" },
-      { value: "todo",     label: "Todo, incluso agujas", sub: "Botox, rellenos, PRP" },
-    ],
-  },
-  {
     id: "fitzpatrick",
     headline: "¿Cuál es tu tono de piel?",
     sub: "Calibramos el análisis según tu fototipo para resultados precisos",
@@ -351,63 +295,11 @@ const PRE_SCAN_STEPS: QuizStep[] = [
     options: FITZ_TILES,
   },
   {
-    id: "sleep",
-    headline: "¿Cuántas horas duermes?",
-    sub: "El sueño es el reparador #1 de tu piel",
-    type: "grid4",
-    options: [
-      { value: "<5h",  label: "<5h",  sub: "Poco descanso" },
-      { value: "5-6h", label: "5–6h", sub: "Por debajo" },
-      { value: "7-8h", label: "7–8h", sub: "Recomendado" },
-      { value: "9+h",  label: "9+h",  sub: "Buen descanso" },
-    ],
-  },
-  {
-    id: "stress",
-    headline: "¿Cómo describes tu nivel de estrés?",
-    sub: "El cortisol impacta directamente la salud de tu piel",
-    type: "list3",
-    options: [
-      { value: "bajo",  label: "Bajo",  sub: "Relajado la mayor parte del tiempo" },
-      { value: "medio", label: "Medio", sub: "Picos ocasionales de estrés" },
-      { value: "alto",  label: "Alto",  sub: "Estrés constante o crónico" },
-    ],
-  },
-  {
-    id: "exercise",
-    headline: "¿Con qué frecuencia haces ejercicio?",
-    sub: "La circulación impacta la oxigenación y el brillo de tu piel",
-    type: "list3",
-    options: [
-      { value: "nunca",  label: "Nunca / casi nunca", sub: "Sedentario" },
-      { value: "2-3",    label: "2–3 días",           sub: "Actividad moderada" },
-      { value: "4+",     label: "4+ días",            sub: "Muy activo" },
-    ],
-  },
-  {
-    id: "sun",
-    headline: "¿Cuánta exposición solar tienes?",
-    sub: "El sol es el factor #1 de envejecimiento prematuro",
-    type: "list3",
-    options: [
-      { value: "baja",  label: "Baja",  sub: "Mayormente en interiores" },
-      { value: "media", label: "Media", sub: "Algo de sol diario" },
-      { value: "alta",  label: "Alta",  sub: "Exposición frecuente o prolongada" },
-    ],
-  },
-  {
-    id: "conditions",
-    headline: "¿Tienes alguna condición de piel?",
-    sub: "Para evitar recomendarte algo que pueda irritar o empeorar — selecciona todo lo que aplique",
-    type: "multiSelect",
-    options: [
-      { value: "rosacea",    label: "Rosácea",         icon: "rosacea" },
-      { value: "melasma",    label: "Melasma",         icon: "melasma" },
-      { value: "acne",       label: "Acné activo",     icon: "acne_c" },
-      { value: "dermatitis", label: "Dermatitis/eccema",icon: "dermatitis" },
-      { value: "psoriasis",  label: "Psoriasis",       icon: "psoriasis" },
-      { value: "ninguna",    label: "Ninguna",         icon: "ninguna" },
-    ],
+    id: "email",
+    headline: "¿A dónde enviamos tu informe?",
+    sub: "Tu análisis completo + plan personalizado directo a tu correo",
+    type: "email",
+    options: [],
   },
 ]
 
@@ -424,28 +316,138 @@ const CONTACT_STEPS: QuizStep[] = [
 
 // ── Gate steps (lifestyle deep-dive to unlock full report) ──────
 const GATE_STEPS: QuizStep[] = [
+  // Moved from pre-quiz
+  {
+    id: "goals",
+    headline: "¿Qué quieres mejorar?",
+    sub: "Selecciona todo lo que aplique — priorizamos tu plan según esto",
+    type: "multiSelect",
+    options: [
+      { value: "edad", label: "Edad visible" },
+      { value: "piel", label: "Piel" },
+      { value: "mandibula", label: "Mandíbula" },
+      { value: "ojos", label: "Ojos" },
+      { value: "cabello", label: "Cabello" },
+      { value: "labios", label: "Labios" },
+      { value: "longevidad", label: "Longevidad" },
+      { value: "evento", label: "Evento pronto" },
+    ],
+  },
+  {
+    id: "sensitivity",
+    headline: "¿Qué tan sensible es tu piel?",
+    sub: "Para ajustar la intensidad de los activos",
+    type: "list3",
+    options: [
+      { value: "baja", label: "Baja", sub: "Tolero casi todo sin problema" },
+      { value: "media", label: "Media", sub: "Algunos productos me irritan" },
+      { value: "alta", label: "Alta", sub: "Mi piel reacciona con facilidad" },
+    ],
+  },
+  {
+    id: "budget",
+    headline: "¿Cuánto inviertes en skincare al mes?",
+    sub: "Para recomendarte productos dentro de tu rango",
+    type: "list3",
+    options: [
+      { value: "gratis", label: "Lo mínimo ($0–30)", sub: "Solo lo esencial" },
+      { value: "medio", label: "Intermedio ($30–100)", sub: "Dispuesto a invertir" },
+      { value: "premium", label: "Premium ($100+)", sub: "Lo mejor disponible" },
+    ],
+  },
+  {
+    id: "sleep",
+    headline: "¿Cuántas horas duermes?",
+    sub: "El sueño es el reparador #1 de tu piel",
+    type: "grid4",
+    options: [
+      { value: "<5h", label: "<5h", sub: "Poco descanso" },
+      { value: "5-6h", label: "5–6h", sub: "Por debajo" },
+      { value: "7-8h", label: "7–8h", sub: "Recomendado" },
+      { value: "9+h", label: "9+h", sub: "Buen descanso" },
+    ],
+  },
+  {
+    id: "stress",
+    headline: "¿Cómo describes tu nivel de estrés?",
+    sub: "El cortisol impacta directamente la salud de tu piel",
+    type: "list3",
+    options: [
+      { value: "bajo", label: "Bajo", sub: "Relajado la mayor parte del tiempo" },
+      { value: "medio", label: "Medio", sub: "Picos ocasionales de estrés" },
+      { value: "alto", label: "Alto", sub: "Estrés constante o crónico" },
+    ],
+  },
+  {
+    id: "exercise",
+    headline: "¿Con qué frecuencia haces ejercicio?",
+    sub: "La circulación impacta la oxigenación y el brillo",
+    type: "list3",
+    options: [
+      { value: "nunca", label: "Nunca / casi nunca", sub: "Sedentario" },
+      { value: "2-3", label: "2–3 días", sub: "Actividad moderada" },
+      { value: "4+", label: "4+ días", sub: "Muy activo" },
+    ],
+  },
+  {
+    id: "sun",
+    headline: "¿Cuánta exposición solar tienes?",
+    sub: "El sol es el factor #1 de envejecimiento prematuro",
+    type: "list3",
+    options: [
+      { value: "baja", label: "Baja", sub: "Mayormente en interiores" },
+      { value: "media", label: "Media", sub: "Algo de sol diario" },
+      { value: "alta", label: "Alta", sub: "Exposición frecuente" },
+    ],
+  },
+  {
+    id: "invasive",
+    headline: "¿Qué tipo de tratamientos considerarías?",
+    sub: "Para filtrar las recomendaciones según tu tolerancia",
+    type: "list3",
+    options: [
+      { value: "casa", label: "Solo en casa", sub: "Cremas, serums, hábitos" },
+      { value: "no-aguja", label: "Consultorio sin agujas", sub: "Peels, LED, láser" },
+      { value: "todo", label: "Todo, incluso agujas", sub: "Botox, rellenos, PRP" },
+    ],
+  },
+  {
+    id: "conditions",
+    headline: "¿Tienes alguna condición de piel?",
+    sub: "Para evitar recomendarte algo que pueda irritar",
+    type: "multiSelect",
+    options: [
+      { value: "rosacea", label: "Rosácea", icon: "rosacea" },
+      { value: "melasma", label: "Melasma", icon: "melasma" },
+      { value: "acne", label: "Acné activo", icon: "acne_c" },
+      { value: "dermatitis", label: "Dermatitis/eccema", icon: "dermatitis" },
+      { value: "psoriasis", label: "Psoriasis", icon: "psoriasis" },
+      { value: "ninguna", label: "Ninguna", icon: "ninguna" },
+    ],
+  },
+  // Original gate steps
   {
     id: "diet",
     headline: "¿Cómo es tu alimentación?",
-    sub: "Lo que comes se refleja en tu piel — el azúcar acelera el envejecimiento",
+    sub: "Lo que comes se refleja en tu piel",
     type: "list3",
     options: [
-      { value: "omnivora",    label: "Omnívora",             sub: "Dieta variada" },
-      { value: "vegetariana", label: "Vegetariana / vegana",  sub: "Sin carne o productos animales" },
-      { value: "keto",        label: "Keto / otra",          sub: "Dieta específica o restrictiva" },
+      { value: "omnivora", label: "Omnívora", sub: "Dieta variada" },
+      { value: "vegetariana", label: "Vegetariana / vegana", sub: "Sin carne o productos animales" },
+      { value: "keto", label: "Keto / otra", sub: "Dieta específica o restrictiva" },
     ],
   },
   {
     id: "concern",
     headline: "¿Qué te preocupa más de tu cara?",
-    sub: "Elige tu prioridad #1 — esto define el orden de tu plan",
+    sub: "Elige tu prioridad #1",
     type: "grid6",
     options: [
-      { value: "manchas",     label: "Manchas",     icon: "manchas" },
-      { value: "arrugas",     label: "Arrugas",     icon: "arrugas" },
-      { value: "poros",       label: "Poros",       icon: "poros" },
-      { value: "acne",        label: "Acné",        icon: "acne" },
-      { value: "suavidad", label: "Suavidad", icon: "hidratacion" },
+      { value: "manchas", label: "Manchas", icon: "manchas" },
+      { value: "arrugas", label: "Arrugas", icon: "arrugas" },
+      { value: "poros", label: "Poros", icon: "poros" },
+      { value: "acne", label: "Acné", icon: "acne" },
+      { value: "hidratacion", label: "Suavidad", icon: "hidratacion" },
       { value: "luminosidad", label: "Luminosidad", icon: "luminosidad" },
     ],
   },
@@ -455,9 +457,9 @@ const GATE_STEPS: QuizStep[] = [
     sub: "Sin juicios — cada punto de partida es válido",
     type: "list3",
     options: [
-      { value: "ninguna",  label: "Nada todavía",          sub: "Empezamos desde cero" },
-      { value: "basica",   label: "Limpiador + hidratante", sub: "Base sólida" },
-      { value: "completa", label: "Rutina completa",        sub: "Serum, SPF y más" },
+      { value: "ninguna", label: "Nada todavía", sub: "Empezamos desde cero" },
+      { value: "basica", label: "Limpiador + hidratante", sub: "Base sólida" },
+      { value: "completa", label: "Rutina completa", sub: "Serum, SPF y más" },
     ],
   },
 ]
@@ -2177,14 +2179,14 @@ export default function AnalyzePage() {
               </div>
             </div>
 
-            {/* ── CTAs ── */}
+            {/* ── CTA ── */}
             <div style={{
               opacity: revealPhase >= 4 ? 1 : 0,
               transform: revealPhase >= 4 ? "translateY(0)" : "translateY(14px)",
               transition: "all 0.5s ease",
             }}>
               <button
-                onClick={() => setStage("gate-quiz")}
+                onClick={() => setStage("plan-choice")}
                 style={{
                   width: "100%", padding: "17px 28px", marginBottom: 12,
                   background: "linear-gradient(135deg,#e8a4b0,#c97e8e)",
@@ -2194,27 +2196,8 @@ export default function AnalyzePage() {
                   boxShadow: "0 6px 24px rgba(232,164,176,0.3)",
                 }}
               >
-                Ver mi plan gratuito →
+                ¿Cómo quieres revertirlo? →
               </button>
-
-              <a
-                href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hola%2C%20quiero%20una%20asesor%C3%ADa%20personalizada.%20Mi%20score%20fue%20`}
-                target="_blank" rel="noopener noreferrer"
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                  width: "100%", padding: "18px 28px",
-                  background: "linear-gradient(135deg, rgba(212,175,136,0.12) 0%, rgba(232,164,176,0.08) 100%)",
-                  border: "1.5px solid rgba(212,175,136,0.3)",
-                  borderRadius: 14, color: "#d4af88",
-                  fontSize: 14, fontWeight: 700, textDecoration: "none",
-                  boxShadow: "0 4px 20px rgba(212,175,136,0.15)",
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                </svg>
-                Asesoría personalizada con especialista
-              </a>
 
               <div style={{ borderTop: "1px solid rgba(245,237,232,0.1)", marginTop: 24, paddingTop: 16, display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "center" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
@@ -2231,7 +2214,130 @@ export default function AnalyzePage() {
           )
         })()}
 
-        {/* ── GATE QUIZ — 3 questions to unlock full report ── */}
+        {/* ── PLAN CHOICE — free plan vs consultation ── */}
+        {stage === "plan-choice" && scores && (() => {
+          const skinAge = Math.round(scores.ageApparent || parseInt(preQuizData.age || "30") + 3)
+          return (
+            <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
+              <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 400, marginBottom: 12, letterSpacing: "-0.02em" }}>
+                ¿Cómo quieres revertirlo?
+              </h2>
+              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", marginBottom: 36, lineHeight: 1.6 }}>
+                Tu rostro aparenta {skinAge} años. Elige cómo quieres trabajar en ello.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* Free plan card */}
+                <button onClick={() => setStage("gate-quiz")} style={{
+                  padding: "28px 24px", background: "rgba(245,237,232,0.04)",
+                  border: "1.5px solid rgba(245,237,232,0.1)", borderRadius: 18,
+                  cursor: "pointer", color: "#f5ede8", textAlign: "left",
+                  transition: "all 0.2s",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400 }}>Plan gratuito</span>
+                    <span style={{ fontSize: 10, letterSpacing: "0.1em", color: "#7ecba1", background: "rgba(126,203,161,0.1)", border: "1px solid rgba(126,203,161,0.2)", padding: "3px 10px", borderRadius: 99, fontWeight: 700, textTransform: "uppercase" }}>Gratis</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {["Rutina AM/PM con productos recomendados", "Suplementos + hábitos personalizados", "Links directos para comprar"].map(item => (
+                      <div key={item} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#7ecba1", flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, color: "rgba(245,237,232,0.5)" }}>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 11, color: "rgba(245,237,232,0.25)", marginTop: 12 }}>Responde unas preguntas sobre tu estilo de vida →</p>
+                </button>
+
+                {/* Personalized consultation card */}
+                <button onClick={() => setStage("consultation")} style={{
+                  padding: "28px 24px",
+                  background: "linear-gradient(135deg, rgba(232,164,176,0.08), rgba(212,175,136,0.06))",
+                  border: "1.5px solid rgba(232,164,176,0.25)", borderRadius: 18,
+                  cursor: "pointer", color: "#f5ede8", textAlign: "left",
+                  transition: "all 0.2s",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400 }}>Asesoría personalizada</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af88" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {["Evaluación profunda 1 a 1 con especialista", "Plan 100% a tu medida", "Seguimiento mensual de progreso"].map(item => (
+                      <div key={item} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#d4af88", flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, color: "rgba(245,237,232,0.5)" }}>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 11, color: "#d4af88", marginTop: 12, fontWeight: 600 }}>Habla directo con un experto →</p>
+                </button>
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* ── CONSULTATION — WhatsApp CTA ── */}
+        {stage === "consultation" && scores && (() => {
+          const skinAge = Math.round(scores.ageApparent || parseInt(preQuizData.age || "30") + 3)
+          const waMsg = encodeURIComponent(`Hola, acabo de analizar mi rostro en InsideOutMed. Mi score fue ${scores.overall}/100 y aparento ${skinAge} años. Me gustaría una asesoría personalizada.`)
+          return (
+            <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 20 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4af88" strokeWidth="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                <span style={{ fontSize: 10, letterSpacing: "0.14em", color: "#d4af88", textTransform: "uppercase", fontWeight: 700 }}>Asesoría personalizada</span>
+              </div>
+
+              <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 400, marginBottom: 10, letterSpacing: "-0.02em" }}>
+                Un especialista va a evaluar tu caso
+              </h2>
+              <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", marginBottom: 32, lineHeight: 1.6 }}>
+                Tu análisis muestra un score de {scores.overall}/100 y {skinAge} años de edad aparente. Un experto revisará cada detalle contigo.
+              </p>
+
+              {/* What's included */}
+              <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 18, padding: "24px", marginBottom: 24, textAlign: "left" }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16, fontWeight: 700 }}>¿Qué incluye?</p>
+                {[
+                  { icon: "◎", text: "Videollamada 1:1 con dermatólogo/esteticista" },
+                  { icon: "◈", text: "Revisión detallada de tu informe facial" },
+                  { icon: "◇", text: "Plan 100% personalizado para tu caso" },
+                  { icon: "◐", text: "Seguimiento mensual de tu progreso" },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < 3 ? "1px solid rgba(245,237,232,0.05)" : "none" }}>
+                    <span style={{ fontSize: 14, color: "#d4af88" }}>{item.icon}</span>
+                    <span style={{ fontSize: 13, color: "rgba(245,237,232,0.65)" }}>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <a
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`}
+                target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                  width: "100%", padding: "17px", marginBottom: 12,
+                  background: "linear-gradient(135deg, #d4af88, #c9976e)",
+                  border: "none", borderRadius: 14, color: "#fff",
+                  fontSize: 15, fontWeight: 700, textDecoration: "none",
+                  boxShadow: "0 6px 24px rgba(212,175,136,0.3)",
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Agendar mi consulta
+              </a>
+
+              <button onClick={() => setStage("plan-choice")} style={{
+                background: "none", border: "none", color: "rgba(245,237,232,0.3)",
+                fontSize: 12, cursor: "pointer", padding: "8px 16px",
+              }}>
+                ← Volver a opciones
+              </button>
+            </div>
+          )
+        })()}
+
+        {/* ── GATE QUIZ — lifestyle questions to unlock full report ── */}
         {stage === "gate-quiz" && (
           <ProfileQuiz mode="gate" onComplete={handleGateComplete} scores={scores} />
         )}
@@ -2309,24 +2415,26 @@ export default function AnalyzePage() {
           }
 
           // ── Build UserProfile for cross-reference insights ──
+          // Merge all data sources — gate now contains lifestyle questions that moved from pre-quiz
+          const allData = { ...preQuizData, ...contactData, ...gateData }
           const userProfile: UserProfile = {
-            name: preQuizData.name || "",
+            name: allData.name || "",
             age: userAge,
-            email: preQuizData.email || "",
-            phone: contactData.phone || "",
-            goals: (preQuizData.goals || "").split(",").filter(Boolean),
-            sensitivity: preQuizData.sensitivity || "",
-            budget: preQuizData.budget || "",
-            invasive: preQuizData.invasive || "",
-            fitzpatrick: parseInt(preQuizData.fitzpatrick || "3", 10),
-            sleep: preQuizData.sleep || "",
-            stress: preQuizData.stress || "",
-            exercise: preQuizData.exercise || "",
-            sun: preQuizData.sun || "",
-            diet: gateData.diet || "",
-            concern: gateData.concern || "",
-            routine: gateData.routine || "",
-            conditions: (preQuizData.conditions || "").split(",").filter(Boolean),
+            email: allData.email || "",
+            phone: allData.phone || "",
+            goals: (allData.goals || "").split(",").filter(Boolean),
+            sensitivity: allData.sensitivity || "",
+            budget: allData.budget || "",
+            invasive: allData.invasive || "",
+            fitzpatrick: parseInt(allData.fitzpatrick || "3", 10),
+            sleep: allData.sleep || "",
+            stress: allData.stress || "",
+            exercise: allData.exercise || "",
+            sun: allData.sun || "",
+            diet: allData.diet || "",
+            concern: allData.concern || "",
+            routine: allData.routine || "",
+            conditions: (allData.conditions || "").split(",").filter(Boolean),
             consent: true,
           }
 

@@ -493,7 +493,16 @@ export default function BrainPage() {
                     <p style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>
                       {paper.authors} -- {paper.year} -- {paper.journal}
                     </p>
-                    <p style={{ fontSize: 13, color: "#444", lineHeight: 1.5, marginBottom: 8 }}>{paper.key_findings}</p>
+                    <p style={{ fontSize: 13, color: "#444", lineHeight: 1.5, marginBottom: 6 }}>{paper.key_findings}</p>
+                    {paper.doi && (
+                      <a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#c97e8e", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        Ver paper original
+                      </a>
+                    )}
+                    {paper.full_citation && (
+                      <p style={{ fontSize: 10, color: "#aaa", fontStyle: "italic", lineHeight: 1.4, marginBottom: 8 }}>{paper.full_citation}</p>
+                    )}
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                       {paper.applicable_zones.map(z => (
                         <span key={z} style={{ padding: "2px 8px", borderRadius: 6, background: "#fdf2f4", color: "#c97e8e", fontSize: 10, fontWeight: 600 }}>{z}</span>

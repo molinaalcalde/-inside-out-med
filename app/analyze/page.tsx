@@ -2267,41 +2267,48 @@ export default function AnalyzePage() {
                     label: "Ojeras",
                     score: scores.darkCircles,
                     getSeverity: (s: number) => s >= 80 ? "No visibles" : s >= 60 ? "Leves" : s >= 40 ? "Moderadas" : "Marcadas",
+                    getDesc: (s: number) => s >= 80 ? "Tu contorno ocular se ve descansado" : s >= 60 ? "Algo de oscurecimiento bajo los ojos" : s >= 40 ? "Oscurecimiento notable bajo los ojos" : "Contraste fuerte entre ojera y mejilla",
                     getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
                   },
                   {
                     label: "Textura",
                     score: scores.texture,
-                    getSeverity: (s: number) => s >= 80 ? "Lisa y uniforme" : s >= 60 ? "Algo irregular" : s >= 40 ? "Irregular" : "Muy rugosa",
+                    getSeverity: (s: number) => s >= 80 ? "Lisa" : s >= 60 ? "Algo irregular" : s >= 40 ? "Irregular" : "Rugosa",
+                    getDesc: (s: number) => s >= 80 ? "Superficie suave y uniforme" : s >= 60 ? "Algunas zonas con aspereza" : s >= 40 ? "Textura desigual en varias zonas" : "Rugosidad generalizada, barrera comprometida",
                     getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
                   },
                   {
                     label: "Arrugas",
                     score: scores.wrinkleDepth,
                     getSeverity: (s: number) => s >= 80 ? "Mínimas" : s >= 60 ? "Líneas finas" : s >= 40 ? "Visibles" : "Profundas",
+                    getDesc: (s: number) => s >= 80 ? "Sin líneas de expresión marcadas" : s >= 60 ? "Líneas finas en zonas de expresión" : s >= 40 ? "Arrugas visibles en frente u ojos" : "Arrugas profundas que se notan en reposo",
                     getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
                   },
                   {
                     label: "Rojez",
                     score: Math.round(100 - scores.inflammation),
                     getSeverity: (s: number) => s >= 80 ? "Sin rojez" : s >= 60 ? "Leve" : s >= 40 ? "Moderada" : "Intensa",
+                    getDesc: (s: number) => s >= 80 ? "Tono uniforme sin irritación" : s >= 60 ? "Rojez sutil en mejillas o nariz" : s >= 40 ? "Rojez visible en varias zonas" : "Eritema marcado, posible rosácea",
                     getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
                   },
                   {
                     label: "Manchas",
                     score: scores.uniformity,
-                    getSeverity: (s: number) => s >= 80 ? "Tono uniforme" : s >= 60 ? "Pocas manchas" : s >= 40 ? "Manchas visibles" : "Hiperpigmentación",
+                    getSeverity: (s: number) => s >= 80 ? "Tono parejo" : s >= 60 ? "Pocas manchas" : s >= 40 ? "Visibles" : "Hiperpigmentación",
+                    getDesc: (s: number) => s >= 80 ? "Pigmentación uniforme y limpia" : s >= 60 ? "Algunas manchas leves o pecas" : s >= 40 ? "Manchas solares o melasma visible" : "Discromía marcada en varias zonas",
                     getColor: (s: number) => s >= 80 ? "#7ecba1" : s >= 60 ? "#d4af88" : "#e8a4b0",
                   },
                   {
                     label: "Simetría",
                     score: scores.symmetry ?? 85,
                     getSeverity: (s: number) => s >= 90 ? "Muy alta" : s >= 75 ? "Normal" : s >= 60 ? "Leve asimetría" : "Asimetría notable",
+                    getDesc: (s: number) => s >= 90 ? "Rasgos bien alineados entre ambos lados" : s >= 75 ? "Diferencias menores, completamente normal" : s >= 60 ? "Diferencia perceptible entre lados" : "Asimetría visible, puede ser postural",
                     getColor: (s: number) => s >= 90 ? "#7ecba1" : s >= 75 ? "#d4af88" : "#e8a4b0",
                   },
                 ].map((item, i) => {
                   const severity = item.getSeverity(item.score)
                   const color = item.getColor(item.score)
+                  const desc = item.getDesc(item.score)
                   return (
                     <div key={i} style={{
                       background: "rgba(245,237,232,0.03)",
@@ -2309,9 +2316,12 @@ export default function AnalyzePage() {
                       borderRadius: 14, padding: "14px 16px",
                       borderLeft: `3px solid ${color}`,
                     }}>
-                      <p style={{ fontSize: 10, color: "rgba(245,237,232,0.35)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4, fontWeight: 600 }}>{item.label}</p>
-                      <p style={{ fontSize: 14, color, fontWeight: 600, marginBottom: 2 }}>{severity}</p>
-                      <p style={{ fontSize: 10, color: "rgba(245,237,232,0.25)" }}>{item.score}/100</p>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <p style={{ fontSize: 10, color: "rgba(245,237,232,0.4)", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>{item.label}</p>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: color, boxShadow: `0 0 6px ${color}` }} />
+                      </div>
+                      <p style={{ fontSize: 15, color: "#f5ede8", fontWeight: 600, marginBottom: 4 }}>{severity}</p>
+                      <p style={{ fontSize: 11, color: "rgba(245,237,232,0.35)", lineHeight: 1.4 }}>{desc}</p>
                     </div>
                   )
                 })}

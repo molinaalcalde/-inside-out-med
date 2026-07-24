@@ -854,32 +854,35 @@ function ProfileQuiz({ mode, onComplete, scores }: {
 
   const current = steps[step]
 
+  const ITEM_H = 56
+  const lastVibrateAge = useRef(pickerAge)
+
   const handleAgeScroll = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
-    const scrollTop = el.scrollTop
-    const itemHeight = 50
-    const newAge = Math.round(scrollTop / itemHeight) + 18
+    const newAge = Math.round(el.scrollTop / ITEM_H) + 18
     const clamped = Math.max(18, Math.min(80, newAge))
-    if (clamped !== pickerAge) {
+    if (clamped !== lastVibrateAge.current) {
+      lastVibrateAge.current = clamped
       setPickerAge(clamped)
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(8)
-      }
+      // Haptic — short pulse like iOS picker
+      try { navigator?.vibrate?.(6) } catch {}
     }
-  }, [pickerAge])
+  }, [])
 
-  useEffect(() => {
-    if (scrollRef.current && current?.type === "agePicker") {
-      const targetScroll = (pickerAge - 18) * 50
-      scrollRef.current.scrollTo({ top: targetScroll, behavior: "smooth" })
-    }
-  }, [pickerAge, current?.type])
+  // Quick-jump scrolls to position
+  const scrollToAge = useCallback((age: number) => {
+    if (!scrollRef.current) return
+    scrollRef.current.scrollTo({ top: (age - 18) * ITEM_H, behavior: "smooth" })
+  }, [])
 
+  // Init scroll position once
   useEffect(() => {
     if (!pickerInitRef.current && current?.type === "agePicker" && scrollRef.current) {
       pickerInitRef.current = true
-      scrollRef.current.scrollTop = (pickerAge - 18) * 50
+      requestAnimationFrame(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = (pickerAge - 18) * ITEM_H
+      })
     }
   }, [current?.type, pickerAge])
 
@@ -979,59 +982,75 @@ function ProfileQuiz({ mode, onComplete, scores }: {
 
         {/* agePicker: iOS-style scroll wheel */}
         {current.type === "agePicker" && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
-            {/* Scroll wheel */}
-            <div style={{ position: "relative", height: 200, overflow: "hidden" }}>
-              {/* Fade overlays top and bottom */}
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 70, background: "linear-gradient(to bottom, #0e0c12, transparent)", zIndex: 2, pointerEvents: "none" }} />
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 70, background: "linear-gradient(to top, #0e0c12, transparent)", zIndex: 2, pointerEvents: "none" }} />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}>
+            {/* Scroll wheel container */}
+            <div style={{ position: "relative", height: 280, width: 160, overflow: "hidden" }}>
+              {/* Fade overlays — longer gradients for depth */}
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 110, background: "linear-gradient(to bottom, #0e0c12 20%, transparent)", zIndex: 3, pointerEvents: "none" }} />
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 110, background: "linear-gradient(to top, #0e0c12 20%, transparent)", zIndex: 3, pointerEvents: "none" }} />
 
-              {/* Center highlight bar */}
-              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 120, height: 52, borderRadius: 14, border: "1.5px solid rgba(232,164,176,0.3)", background: "rgba(232,164,176,0.06)", zIndex: 1, pointerEvents: "none" }} />
+              {/* Center selection indicator — subtle lines */}
+              <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", height: ITEM_H, zIndex: 2, pointerEvents: "none", borderTop: "1px solid rgba(232,164,176,0.2)", borderBottom: "1px solid rgba(232,164,176,0.2)" }} />
 
-              {/* Scrollable list */}
+              {/* Scrollable drum */}
               <div
                 ref={scrollRef}
                 className="age-scroll"
                 onScroll={handleAgeScroll}
                 style={{
-                  height: 200, overflowY: "auto", scrollSnapType: "y mandatory",
-                  WebkitOverflowScrolling: "touch", scrollbarWidth: "none",
-                  paddingTop: 75, paddingBottom: 75,
+                  height: 280,
+                  overflowY: "scroll",
+                  scrollSnapType: "y mandatory",
+                  WebkitOverflowScrolling: "touch",
+                  scrollbarWidth: "none",
+                  overscrollBehavior: "contain",
+                  paddingTop: 112,
+                  paddingBottom: 112,
                 }}
               >
-                {Array.from({ length: 63 }, (_, i) => i + 18).map(age => (
-                  <div
-                    key={age}
-                    style={{
-                      height: 50, display: "flex", alignItems: "center", justifyContent: "center",
-                      scrollSnapAlign: "center",
-                      fontFamily: "var(--font-fraunces)",
-                      fontSize: age === pickerAge ? 48 : 28,
-                      fontWeight: age === pickerAge ? 400 : 300,
-                      color: age === pickerAge ? "#e8a4b0" : `rgba(245,237,232,${Math.max(0.08, 0.4 - Math.abs(age - pickerAge) * 0.1)})`,
-                      transform: `scale(${age === pickerAge ? 1 : 0.85 - Math.min(Math.abs(age - pickerAge) * 0.05, 0.25)})`,
-                      transition: "all 0.15s ease",
-                      userSelect: "none",
-                    }}
-                  >
-                    {age}
-                  </div>
-                ))}
+                {Array.from({ length: 63 }, (_, i) => i + 18).map(age => {
+                  const dist = Math.abs(age - pickerAge)
+                  const isCenter = dist === 0
+                  const opacity = isCenter ? 1 : Math.max(0.06, 0.5 - dist * 0.12)
+                  const scale = isCenter ? 1 : Math.max(0.55, 1 - dist * 0.12)
+                  const fontSize = isCenter ? 52 : Math.max(18, 40 - dist * 6)
+                  return (
+                    <div
+                      key={age}
+                      style={{
+                        height: ITEM_H,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        scrollSnapAlign: "center",
+                        fontFamily: "var(--font-fraunces)",
+                        fontSize,
+                        fontWeight: isCenter ? 400 : 300,
+                        color: isCenter ? "#e8a4b0" : `rgba(245,237,232,${opacity})`,
+                        transform: `scale(${scale})`,
+                        willChange: "transform",
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
+                      }}
+                    >
+                      {age}
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
-            {/* Quick jump buttons */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+            {/* Quick jump — pill buttons */}
+            <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
               {[20, 25, 30, 35, 40, 45, 50].map(age => (
-                <button key={age} onClick={() => setPickerAge(age)}
+                <button key={age} onClick={() => scrollToAge(age)}
                   style={{
-                    padding: "7px 14px", borderRadius: 10,
-                    background: pickerAge === age ? "rgba(232,164,176,0.12)" : "rgba(245,237,232,0.04)",
-                    border: `1px solid ${pickerAge === age ? "rgba(232,164,176,0.3)" : "rgba(245,237,232,0.08)"}`,
-                    color: pickerAge === age ? "#e8a4b0" : "rgba(245,237,232,0.35)",
-                    fontSize: 12, fontWeight: 600, cursor: "pointer",
-                    transition: "all 0.15s",
+                    padding: "6px 12px", borderRadius: 99,
+                    background: pickerAge === age ? "rgba(232,164,176,0.15)" : "transparent",
+                    border: `1px solid ${pickerAge === age ? "rgba(232,164,176,0.35)" : "rgba(245,237,232,0.08)"}`,
+                    color: pickerAge === age ? "#e8a4b0" : "rgba(245,237,232,0.3)",
+                    fontSize: 11, fontWeight: 600, cursor: "pointer",
+                    transition: "all 0.2s",
                   }}
                 >
                   {age}

@@ -211,20 +211,31 @@ export default function BrainPage() {
   }
 
   async function loadPapers() {
+    const seeded = SEED_PAPERS.map((p, i) => ({ ...p, id: `seed-${i}` }))
     try {
       const res = await fetch("/api/admin/brain")
       if (res.ok) {
         const data = await res.json()
-        setPapers(data.papers || [])
-        return
+        const dbPapers = data.papers || []
+        if (dbPapers.length > 0) {
+          // Merge: DB papers + any seed papers not already in DB (by title match)
+          const dbTitles = new Set(dbPapers.map((p: Paper) => p.title))
+          const missing = seeded.filter(s => !dbTitles.has(s.title))
+          setPapers([...dbPapers, ...missing])
+          return
+        }
       }
     } catch {}
-    // Fallback: use seed papers
+    // Fallback: always load seed papers + any localStorage additions
     const stored = localStorage.getItem("iom_brain_papers")
     if (stored) {
-      setPapers(JSON.parse(stored))
+      const local: Paper[] = JSON.parse(stored)
+      const localTitles = new Set(local.map(p => p.title))
+      const missing = seeded.filter(s => !localTitles.has(s.title))
+      const merged = [...local, ...missing]
+      setPapers(merged)
+      localStorage.setItem("iom_brain_papers", JSON.stringify(merged))
     } else {
-      const seeded = SEED_PAPERS.map((p, i) => ({ ...p, id: `seed-${i}` }))
       setPapers(seeded)
       localStorage.setItem("iom_brain_papers", JSON.stringify(seeded))
     }

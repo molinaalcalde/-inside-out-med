@@ -5,14 +5,15 @@ import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { useLanguage } from "@/components/providers/language-provider"
 
-const MARKERS = [
-  "Luminosidad", "Suavidad", "Uniformidad", "Salud del colágeno",
-  "Control de inflamación", "Protección solar", "Salud vascular",
-  "Frente", "Contorno ocular", "Mejillas", "Zona T", "Mandíbula",
+const MARKER_KEYS = [
+  "bio.luminosity", "bio.smoothness", "bio.uniformity", "bio.collagen",
+  "bio.inflammation", "bio.sunProtection", "bio.vascular",
+  "bio.forehead", "bio.eyeContour", "bio.cheeks", "bio.tZone", "bio.jawline",
 ]
 
 export function Hero() {
   const { t } = useLanguage()
+  const MARKERS = MARKER_KEYS.map(k => t(k))
   const heroRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const orbRef1 = useRef<HTMLDivElement>(null)

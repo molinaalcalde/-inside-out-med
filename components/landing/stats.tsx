@@ -32,7 +32,7 @@ function Counter({
         if (!ref.current) return
         const v = Math.round(obj.val)
         ref.current.textContent =
-          value >= 1000 ? v.toLocaleString("es") + suffix : v + suffix
+          value >= 1000 ? v.toLocaleString() + suffix : v + suffix
       },
     })
 

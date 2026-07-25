@@ -2542,7 +2542,9 @@ export default function AnalyzePage() {
                 const subs = derivedSubMetrics[key]
                 const accScore = subs ? Math.round(subs.reduce((a, sm) => a + sm.score, 0) / subs.length) : 50
                 const isOpen = activeZone === key
-                const statusColor = accScore >= 75 ? "#7ecba1" : accScore >= 55 ? "#d4af88" : "#e8a4b0"
+                const statusColor = accScore >= 80 ? "#7ecba1" : accScore >= 50 ? "#d4af88" : "#e8a4b0"
+                const zoneSeverity = accScore >= 80 ? "Excelente" : accScore >= 65 ? "Bien" : accScore >= 50 ? "Mejorable" : "Atenci\u00f3n"
+                const zoneSeverityColor = accScore >= 80 ? "#7ecba1" : accScore >= 65 ? "#d4af88" : accScore >= 50 ? "#d4af88" : "#e8a4b0"
                 return (
                   <div key={key} style={{
                     background: "rgba(245,237,232,0.03)", border: `1px solid ${isOpen ? "rgba(232,164,176,0.2)" : "rgba(245,237,232,0.06)"}`,
@@ -2560,28 +2562,35 @@ export default function AnalyzePage() {
                           width: 28, height: 28, borderRadius: "50%",
                           background: `${statusColor}15`, border: `1.5px solid ${statusColor}40`,
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 11, fontWeight: 700, color: statusColor,
+                          position: "relative" as const,
                           transition: "all 0.3s ease",
                         }}>
-                          {meta.icon}
+                          <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(245,237,232,0.5)" }}>{meta.icon}</span>
+                          <span style={{
+                            position: "absolute" as const, top: -2, right: -2,
+                            width: 8, height: 8, borderRadius: "50%",
+                            background: statusColor,
+                            border: "1.5px solid rgba(28,22,19,0.9)",
+                          }} />
                         </div>
                         <span style={{ fontSize: 14, fontWeight: 600 }}>{meta.label}</span>
                         {key === "cuello" && <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)", fontStyle: "italic" }}>estimado</span>}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400, color: statusColor }}>{accScore}</span>
+                        <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 14, fontWeight: 400, color: zoneSeverityColor }}>{zoneSeverity}</span>
                         <span style={{ fontSize: 12, color: "rgba(245,237,232,0.3)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)", display: "inline-block" }}>&#x25BE;</span>
                       </div>
                     </button>
                     {isOpen && subs && (
                       <div style={{ padding: "4px 20px 20px", animation: "fadeUp 0.3s ease" }}>
                         {subs.map((sub, i) => {
-                          const barColor = sub.score >= 75 ? "#7ecba1" : sub.score >= 55 ? "#d4af88" : "#e8a4b0"
+                          const barColor = sub.score >= 80 ? "#7ecba1" : sub.score >= 60 ? "#d4af88" : sub.score >= 40 ? "#d4af88" : "#e8a4b0"
+                          const subSeverity = sub.score >= 80 ? "Bien" : sub.score >= 60 ? "Aceptable" : sub.score >= 40 ? "Mejorable" : "Bajo"
                           return (
                             <div key={i} style={{ marginBottom: 14 }}>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                                 <span style={{ fontSize: 13, color: "rgba(245,237,232,0.65)" }}>{sub.label}</span>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: barColor }}>{sub.score}</span>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: barColor }}>{subSeverity}</span>
                               </div>
                               <div style={{ height: 5, borderRadius: 3, background: "rgba(245,237,232,0.06)" }}>
                                 <div style={{ height: "100%", borderRadius: 3, background: barColor, width: `${sub.score}%`, transition: "width 0.6s cubic-bezier(0.16, 1, 0.3, 1)", transitionDelay: `${i * 0.05}s` }} />

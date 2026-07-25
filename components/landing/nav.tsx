@@ -243,7 +243,7 @@ export function Nav() {
               boxShadow: "0 4px 20px rgba(232,164,176,0.25)",
             }}
           >
-            Analizar mi rostro
+            {t("nav.mobileCta")}
           </a>
         </div>
       </div>

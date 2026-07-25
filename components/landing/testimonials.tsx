@@ -2,97 +2,32 @@
 
 import { useLanguage } from "@/components/providers/language-provider"
 
-const ROW_1 = [
-  {
-    quote: "Mi edad facial salió 4 años menor que mi edad real. No me lo esperaba. Ahora sé qué hacer para mantenerla así.",
-    name: "Renata G.",
-    role: "Consultora, 43 años",
-    score: "93",
-    avatar: "RG",
-    color: "#e8a4b0",
-  },
-  {
-    quote: "El informe fue más claro que el de mi dermatóloga. Zonas específicas, causas probables, sin tecnicismos.",
-    name: "Valentina M.",
-    role: "Médica, 34 años",
-    score: "91",
-    avatar: "VM",
-    color: "#d4af88",
-  },
-  {
-    quote: "Seguí el plan 6 semanas. Mis manchas bajaron notablemente. Por primera vez entiendo mi rutina de skincare.",
-    name: "Camila R.",
-    role: "Nutricionista, 29 años",
-    score: "88",
-    avatar: "CR",
-    color: "#7ecba1",
-  },
-  {
-    quote: "En mi clínica lo usamos como pre-screening. Los pacientes llegan con información real y ahorramos tiempo.",
-    name: "Dra. Andrea P.",
-    role: "Dermatóloga",
-    score: "94",
-    avatar: "AP",
-    color: "#e8a4b0",
-  },
-  {
-    quote: "Gastaba una fortuna en productos que no hacían nada. Ahora sé exactamente qué necesita mi piel y qué no.",
-    name: "Isabel F.",
-    role: "Diseñadora, 37 años",
-    score: "82",
-    avatar: "IF",
-    color: "#d4af88",
-  },
+const ROW_1_META = [
+  { key: "test.r1.1", score: "93", avatar: "RG", color: "#e8a4b0" },
+  { key: "test.r1.2", score: "91", avatar: "VM", color: "#d4af88" },
+  { key: "test.r1.3", score: "88", avatar: "CR", color: "#7ecba1" },
+  { key: "test.r1.4", score: "94", avatar: "AP", color: "#e8a4b0" },
+  { key: "test.r1.5", score: "82", avatar: "IF", color: "#d4af88" },
 ]
 
-const ROW_2 = [
-  {
-    quote: "Me daba miedo que fuera marketing vacío. Fue todo lo contrario: datos reales que no esperaba ver.",
-    name: "Lucía V.",
-    role: "Abogada, 32 años",
-    score: "85",
-    avatar: "LV",
-    color: "#7ecba1",
-  },
-  {
-    quote: "El protocolo personalizado cambió mi piel en 8 semanas. Nunca pensé que era tan sencillo si sabes el qué.",
-    name: "Mariana T.",
-    role: "Empresaria, 45 años",
-    score: "79",
-    avatar: "MT",
-    color: "#e8a4b0",
-  },
-  {
-    quote: "Le recomendé a mi hermana y a mis amigas. Todas quedamos con el análisis de inflamación — ni sospechábamos.",
-    name: "Daniela A.",
-    role: "Profesora, 38 años",
-    score: "87",
-    avatar: "DA",
-    color: "#d4af88",
-  },
-  {
-    quote: "Llevo años con acné hormonal sin entender por qué. El análisis me dio un mapa claro para empezar a tratarlo.",
-    name: "Paula M.",
-    role: "Farmacéutica, 26 años",
-    score: "71",
-    avatar: "PM",
-    color: "#7ecba1",
-  },
-  {
-    quote: "La precisión por zonas me sorprendió. Exactamente donde yo notaba los problemas, el análisis lo marcó.",
-    name: "Sofía L.",
-    role: "Arquitecta, 41 años",
-    score: "76",
-    avatar: "SL",
-    color: "#e8a4b0",
-  },
+const ROW_2_META = [
+  { key: "test.r2.1", score: "85", avatar: "LV", color: "#7ecba1" },
+  { key: "test.r2.2", score: "79", avatar: "MT", color: "#e8a4b0" },
+  { key: "test.r2.3", score: "87", avatar: "DA", color: "#d4af88" },
+  { key: "test.r2.4", score: "71", avatar: "PM", color: "#7ecba1" },
+  { key: "test.r2.5", score: "76", avatar: "SL", color: "#e8a4b0" },
 ]
 
-function TestimonialCard({
-  t,
-}: {
-  t: (typeof ROW_1)[number]
-}) {
+interface CardData {
+  quote: string
+  name: string
+  role: string
+  score: string
+  avatar: string
+  color: string
+}
+
+function TestimonialCard({ card }: { card: CardData }) {
   return (
     <div
       style={{
@@ -126,7 +61,7 @@ function TestimonialCard({
           marginBottom: 20,
         }}
       >
-        &ldquo;{t.quote}&rdquo;
+        &ldquo;{card.quote}&rdquo;
       </p>
 
       {/* Author */}
@@ -136,36 +71,36 @@ function TestimonialCard({
             width: 36,
             height: 36,
             borderRadius: "50%",
-            background: `${t.color}1e`,
-            border: `1px solid ${t.color}35`,
+            background: `${card.color}1e`,
+            border: `1px solid ${card.color}35`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 10,
             fontWeight: 700,
-            color: t.color,
+            color: card.color,
             flexShrink: 0,
           }}
         >
-          {t.avatar}
+          {card.avatar}
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ fontWeight: 600, fontSize: 12.5, color: "#f5ede8", marginBottom: 1 }}>{t.name}</p>
-          <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.35)" }}>{t.role}</p>
+          <p style={{ fontWeight: 600, fontSize: 12.5, color: "#f5ede8", marginBottom: 1 }}>{card.name}</p>
+          <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.35)" }}>{card.role}</p>
         </div>
         <div
           style={{
             padding: "3px 10px",
             borderRadius: 99,
-            background: `${t.color}12`,
-            border: `1px solid ${t.color}28`,
+            background: `${card.color}12`,
+            border: `1px solid ${card.color}28`,
             fontSize: 10.5,
             fontWeight: 700,
-            color: t.color,
+            color: card.color,
             flexShrink: 0,
           }}
         >
-          {t.score}/100
+          {card.score}/100
         </div>
       </div>
     </div>
@@ -174,6 +109,25 @@ function TestimonialCard({
 
 export function Testimonials() {
   const { t } = useLanguage()
+
+  const ROW_1: CardData[] = ROW_1_META.map(m => ({
+    quote: t(`${m.key}.quote`),
+    name: t(`${m.key}.name`),
+    role: t(`${m.key}.role`),
+    score: m.score,
+    avatar: m.avatar,
+    color: m.color,
+  }))
+
+  const ROW_2: CardData[] = ROW_2_META.map(m => ({
+    quote: t(`${m.key}.quote`),
+    name: t(`${m.key}.name`),
+    role: t(`${m.key}.role`),
+    score: m.score,
+    avatar: m.avatar,
+    color: m.color,
+  }))
+
   const doubled1 = [...ROW_1, ...ROW_1]
   const doubled2 = [...ROW_2, ...ROW_2]
 
@@ -207,14 +161,14 @@ export function Testimonials() {
         {/* Row 1 — left */}
         <div className="marquee-track marquee-left marquee-row" style={{ display: "flex" }}>
           {doubled1.map((card, i) => (
-            <TestimonialCard key={i} t={card} />
+            <TestimonialCard key={i} card={card} />
           ))}
         </div>
 
         {/* Row 2 — right */}
         <div className="marquee-track marquee-right marquee-row" style={{ display: "flex" }}>
           {doubled2.map((card, i) => (
-            <TestimonialCard key={i} t={card} />
+            <TestimonialCard key={i} card={card} />
           ))}
         </div>
       </div>

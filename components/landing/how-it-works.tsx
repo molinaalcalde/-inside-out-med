@@ -187,7 +187,7 @@ export function HowItWorks() {
                       paddingTop: 4,
                     }}
                   >
-                    Paso {step.n}
+                    {t("how.step")} {step.n}
                   </p>
                 </div>
 

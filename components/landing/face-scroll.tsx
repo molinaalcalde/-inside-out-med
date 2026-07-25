@@ -235,12 +235,12 @@ export function FaceScrollSection() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 10 }}>
                 <div>
                   <p style={{ fontSize: 9, color: "rgba(245,237,232,0.35)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>{t("scroll.panel.realAge")}</p>
-                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 34, fontWeight: 300, color: "rgba(245,237,232,0.5)", lineHeight: 1 }}>42 <span style={{ fontSize: 14, color: "rgba(245,237,232,0.3)" }}>años</span></p>
+                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 34, fontWeight: 300, color: "rgba(245,237,232,0.5)", lineHeight: 1 }}>42 <span style={{ fontSize: 14, color: "rgba(245,237,232,0.3)" }}>{t("scroll.panel.years")}</span></p>
                 </div>
                 <span style={{ fontSize: 18, color: "rgba(245,237,232,0.15)", marginTop: 14 }}>→</span>
                 <div>
-                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.35)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>Aparenta</p>
-                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 34, fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>45 <span style={{ fontSize: 14, color: "rgba(232,164,176,0.5)" }}>años</span></p>
+                  <p style={{ fontSize: 9, color: "rgba(245,237,232,0.35)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>{t("scroll.panel.looksLike")}</p>
+                  <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 34, fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>45 <span style={{ fontSize: 14, color: "rgba(232,164,176,0.5)" }}>{t("scroll.panel.years")}</span></p>
                 </div>
               </div>
               <p style={{ fontSize: 11, color: "#e8a4b0", fontWeight: 600, letterSpacing: "0.02em" }}>{t("scroll.panel.above")}</p>

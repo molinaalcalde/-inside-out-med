@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 // ── Types ──────────────────────────────────────────────────────────
 type Scores = {
@@ -64,12 +65,7 @@ function amazonUrl(query: string) {
   return `https://www.amazon.com/s?k=${encodeURIComponent(query)}&tag=${AMAZON_AFFILIATE_TAG}`
 }
 
-const CATEGORY_TABS: { key: Category; label: string }[] = [
-  { key: "skincare", label: "Skincare" },
-  { key: "supplements", label: "Suplementos" },
-  { key: "habits", label: "Hábitos" },
-  { key: "treatments", label: "Tratamientos" },
-]
+// CATEGORY_TABS built inside PlanContent for i18n
 
 // ── Catalog ────────────────────────────────────────────────────────
 const CATALOG: Rec[] = [
@@ -680,19 +676,24 @@ function getPersonalizedWhy(rec: Rec, scores: Scores): string {
 }
 
 // ── Analysis steps ─────────────────────────────────────────────────
-const ANALYSIS_STEPS = [
-  "Procesando tus 7 biomarcadores",
-  "Cruzando con 12.847 perfiles clínicos",
-  "Identificando déficits por zona facial",
-  "Seleccionando ingredientes activos compatibles",
-  "Verificando compatibilidad entre activos",
-  "Protocolo personalizado listo",
-]
+// ANALYSIS_STEPS built inside AnalyzingScreen for i18n
 
 const STEP_DURATIONS = [650, 900, 750, 650, 550, 400]
 
 // ── Analyzing screen ────────────────────────────────────────────────
 function AnalyzingScreen({ scores, onDone }: { scores: Scores; onDone: () => void }) {
+  const { locale } = useLanguage()
+  const L = (es: string, en: string) => locale === "en" ? en : es
+
+  const ANALYSIS_STEPS = [
+    L("Procesando tus 7 biomarcadores", "Processing your 7 biomarkers"),
+    L("Cruzando con 12.847 perfiles clínicos", "Cross-referencing 12,847 clinical profiles"),
+    L("Identificando déficits por zona facial", "Identifying deficits by facial zone"),
+    L("Seleccionando ingredientes activos compatibles", "Selecting compatible active ingredients"),
+    L("Verificando compatibilidad entre activos", "Verifying compatibility between actives"),
+    L("Protocolo personalizado listo", "Personalized protocol ready"),
+  ]
+
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
   const [activeStep, setActiveStep] = useState(0)
   const [finished, setFinished] = useState(false)
@@ -771,10 +772,10 @@ function AnalyzingScreen({ scores, onDone }: { scores: Scores; onDone: () => voi
             color: isLast ? "#7ecba1" : "#f5ede8",
             transition: "color 0.4s ease",
           }}>
-            {isLast ? "Tu protocolo está listo" : "Analizando tu caso"}
+            {isLast ? L("Tu protocolo está listo", "Your protocol is ready") : L("Analizando tu caso", "Analyzing your case")}
           </h1>
           <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.32)", letterSpacing: "0.04em" }}>
-            Score {scores.overall}/100 · {isLast ? "Procesamiento completo" : "Un momento, por favor"}
+            Score {scores.overall}/100 · {isLast ? L("Procesamiento completo", "Processing complete") : L("Un momento, por favor", "One moment, please")}
           </p>
         </div>
 
@@ -842,7 +843,7 @@ function AnalyzingScreen({ scores, onDone }: { scores: Scores; onDone: () => voi
           }} />
         </div>
         <p style={{ fontSize: 10, color: "rgba(245,237,232,0.18)", textAlign: "center", letterSpacing: "0.1em" }}>
-          {progress}% completado
+          {progress}% {L("completado", "complete")}
         </p>
       </div>
 
@@ -877,6 +878,7 @@ function renderRecCard(
   ri: number,
   expandedEvidence: Set<string>,
   toggleEvidence: (id: string) => void,
+  L: (es: string, en: string) => string,
 ) {
   const colors = PRIORITY_COLORS[rec.priority]
   const cardId = `${rec.category}-${rec.name}-${ri}`
@@ -934,7 +936,7 @@ function renderRecCard(
             border: "1px solid rgba(212,175,136,0.2)",
             padding: "3px 8px", borderRadius: 99,
           }}>
-            NUEVO
+            {L("NUEVO", "NEW")}
           </span>
         )}
       </div>
@@ -964,7 +966,7 @@ function renderRecCard(
         borderRadius: 10, padding: "10px 14px", marginBottom: 14,
       }}>
         <p style={{ fontSize: 10, color: "#e8a4b0", fontWeight: 600, letterSpacing: "0.06em", marginBottom: 4, textTransform: "uppercase" }}>
-          Por qu{"\u00e9"} t{"\u00fa"} lo necesitas:
+          {L("Por qu\u00e9 t\u00fa lo necesitas:", "Why you need this:")}
         </p>
         <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.55 }}>
           {rec.personalizedWhy}
@@ -979,7 +981,7 @@ function renderRecCard(
           borderRadius: 8, padding: "8px 12px", marginBottom: 14,
         }}>
           <p style={{ fontSize: 11, color: "#d4af88", lineHeight: 1.5 }}>
-            Precauci{"\u00f3"}n en fototipos altos (Fitz IV-VI): riesgo de hiperpigmentaci{"\u00f3"}n. Consultar especialista.
+            {L("Precauci\u00f3n en fototipos altos (Fitz IV-VI): riesgo de hiperpigmentaci\u00f3n. Consultar especialista.", "Caution for high phototypes (Fitz IV-VI): risk of hyperpigmentation. Consult a specialist.")}
           </p>
         </div>
       )}
@@ -1004,7 +1006,7 @@ function renderRecCard(
               <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
               <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
             </svg>
-            Ver producto
+            {L("Ver producto", "View product")}
           </a>
         )}
         <button
@@ -1019,7 +1021,7 @@ function renderRecCard(
           onMouseEnter={e => { e.currentTarget.style.color = "rgba(245,237,232,0.6)" }}
           onMouseLeave={e => { e.currentTarget.style.color = "rgba(245,237,232,0.3)" }}
         >
-          Evidencia {showingEvidence ? "\u25be" : "\u25b8"}
+          {L("Evidencia", "Evidence")} {showingEvidence ? "\u25be" : "\u25b8"}
         </button>
       </div>
 
@@ -1036,7 +1038,7 @@ function renderRecCard(
           </p>
           {rec.risk && rec.risk !== "Ninguno" && rec.risk !== "Bajo" && (
             <p style={{ fontSize: 11, color: "rgba(212,175,136,0.6)", marginTop: 6, lineHeight: 1.5 }}>
-              Riesgo: {rec.risk}
+              {L("Riesgo:", "Risk:")} {rec.risk}
             </p>
           )}
         </div>
@@ -1047,6 +1049,16 @@ function renderRecCard(
 
 // ── Plan content ───────────────────────────────────────────────────
 function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserProfile; plan: ScoredRec[] }) {
+  const { locale } = useLanguage()
+  const L = (es: string, en: string) => locale === "en" ? en : es
+
+  const CATEGORY_TABS: { key: Category; label: string }[] = [
+    { key: "skincare", label: "Skincare" },
+    { key: "supplements", label: L("Suplementos", "Supplements") },
+    { key: "habits", label: L("Hábitos", "Habits") },
+    { key: "treatments", label: L("Tratamientos", "Treatments") },
+  ]
+
   const [activeTab, setActiveTab] = useState<Category>("skincare")
   const [expandedEvidence, setExpandedEvidence] = useState<Set<string>>(new Set())
   const [scanHistory, setScanHistory] = useState<Array<{ scan_date: string; overall: number; visible_age: number }>>([])
@@ -1067,7 +1079,10 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
 
   const WHATSAPP_NUMBER = "5491112345678" // TODO: Replace with real number
   const waMsg = encodeURIComponent(
-    `Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100. Me gustaría hablar con un especialista.`
+    L(
+      `Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100. Me gustaría hablar con un especialista.`,
+      `Hi, I just completed my InsideOutMed analysis. My score was ${scores.overall}/100. I'd like to talk to a specialist.`
+    )
   )
 
   // Count items per category
@@ -1130,7 +1145,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
           </svg>
-          Hablar con especialista
+          {L("Hablar con especialista", "Talk to specialist")}
         </a>
       </nav>
 
@@ -1144,7 +1159,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             marginBottom: 20,
           }}>
             <span style={{ fontSize: 11, letterSpacing: "0.12em", color: "#7ecba1", fontWeight: 600 }}>
-              Tu plan gratuito
+              {L("Tu plan gratuito", "Your free plan")}
             </span>
           </div>
 
@@ -1154,7 +1169,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             fontWeight: 400, letterSpacing: "-0.03em",
             marginBottom: 28, lineHeight: 1.1,
           }}>
-            Tu plan para volver a{" "}
+            {L("Tu plan para volver a", "Your plan to get back to")}{" "}
             <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{realAge}</em>
           </h1>
 
@@ -1168,28 +1183,28 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             marginBottom: 20,
           }}>
             <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>Edad real</p>
+              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>{L("Edad real", "Real age")}</p>
               <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "#7ecba1", lineHeight: 1 }}>{realAge}</p>
             </div>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ opacity: 0.3 }}>
               <path d="M4 10h12M12 6l4 4-4 4" stroke="#f5ede8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>Tu piel</p>
+              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>{L("Tu piel", "Your skin")}</p>
               <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>{ageApparent}</p>
             </div>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ opacity: 0.3 }}>
               <path d="M4 10h12M12 6l4 4-4 4" stroke="#f5ede8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>Meta</p>
+              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>{L("Meta", "Goal")}</p>
               <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "#d4af88", lineHeight: 1 }}>{realAge}</p>
             </div>
           </div>
 
           {diff > 0 && (
             <p style={{ fontSize: 14, color: "rgba(245,237,232,0.48)", lineHeight: 1.65, maxWidth: 480, margin: "0 auto" }}>
-              Con este plan puedes recuperar hasta <strong style={{ color: "#e8a4b0" }}>{diff} a{"\u00f1"}os</strong> en 12 semanas.
+              {L("Con este plan puedes recuperar hasta", "With this plan you can recover up to")} <strong style={{ color: "#e8a4b0" }}>{diff} {L("a\u00f1os", "years")}</strong> {L("en 12 semanas.", "in 12 weeks.")}
             </p>
           )}
         </div>
@@ -1204,8 +1219,8 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
           animation: "cardIn 0.6s ease 0.15s both",
         }}>
           <div>
-            <p style={{ fontSize: 14, color: "#d4af88", fontWeight: 600, marginBottom: 4 }}>{"\u00bf"}Quieres resultados m{"\u00e1"}s r{"\u00e1"}pidos?</p>
-            <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)" }}>Un especialista eval{"\u00fa"}a tu caso y crea un plan a tu medida</p>
+            <p style={{ fontSize: 14, color: "#d4af88", fontWeight: 600, marginBottom: 4 }}>{L("\u00bfQuieres resultados m\u00e1s r\u00e1pidos?", "Want faster results?")}</p>
+            <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)" }}>{L("Un especialista eval\u00faa tu caso y crea un plan a tu medida", "A specialist evaluates your case and creates a plan tailored to you")}</p>
           </div>
           <a
             href={`https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`}
@@ -1217,7 +1232,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
               textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
-            Asesor{"\u00ed"}a personalizada
+            {L("Asesor\u00eda personalizada", "Personalized consultation")}
           </a>
         </div>
 
@@ -1230,7 +1245,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
               fontWeight: 400, letterSpacing: "-0.025em", marginBottom: 20,
               textAlign: "center",
             }}>
-              Empieza hoy — sin gastar nada
+              {L("Empieza hoy — sin gastar nada", "Start today — spend nothing")}
             </h2>
             <div style={{
               display: "grid",
@@ -1249,7 +1264,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                     background: "rgba(126,203,161,0.08)", border: "1px solid rgba(126,203,161,0.2)",
                   }}>
                     <span style={{ fontSize: 9, letterSpacing: "0.12em", color: "#7ecba1", fontWeight: 700, textTransform: "uppercase" }}>
-                      Gratis
+                      {L("Gratis", "Free")}
                     </span>
                   </div>
                   <h3 style={{
@@ -1278,7 +1293,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             animation: "cardIn 0.6s ease 0.2s both",
           }}>
             <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16, fontWeight: 600 }}>
-              Tu progreso
+              {L("Tu progreso", "Your progress")}
             </p>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: 80 }}>
               {scanHistory.slice().reverse().map((scan, i) => {
@@ -1296,7 +1311,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                         : "rgba(245,237,232,0.08)",
                     }} />
                     <span style={{ fontSize: 9, color: "rgba(245,237,232,0.25)" }}>
-                      {new Date(scan.scan_date).toLocaleDateString("es", { day: "numeric", month: "short" })}
+                      {new Date(scan.scan_date).toLocaleDateString(locale === "en" ? "en" : "es", { day: "numeric", month: "short" })}
                     </span>
                   </div>
                 )
@@ -1308,7 +1323,9 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
               const diff = latest - oldest
               return diff !== 0 ? (
                 <p style={{ fontSize: 12, color: diff > 0 ? "#7ecba1" : "#e8a4b0", marginTop: 12, textAlign: "center" }}>
-                  {diff > 0 ? `+${diff} puntos desde tu primer análisis` : `${diff} puntos desde tu primer análisis`}
+                  {diff > 0
+                    ? `+${diff} ${L("puntos desde tu primer análisis", "points since your first analysis")}`
+                    : `${diff} ${L("puntos desde tu primer análisis", "points since your first analysis")}`}
                 </p>
               ) : null
             })()}
@@ -1357,8 +1374,8 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             const amItems = tabItems.filter(r => r.timing === "AM" || !r.timing)
             const pmItems = tabItems.filter(r => r.timing === "PM")
             const routineGroups = [
-              { key: "am", title: "Rutina de ma\u00f1ana (AM)", color: "#d4af88", items: amItems },
-              { key: "pm", title: "Rutina de noche (PM)", color: "#7ecba1", items: pmItems },
+              { key: "am", title: L("Rutina de ma\u00f1ana (AM)", "Morning routine (AM)"), color: "#d4af88", items: amItems },
+              { key: "pm", title: L("Rutina de noche (PM)", "Night routine (PM)"), color: "#7ecba1", items: pmItems },
             ]
             return (
               <>
@@ -1368,10 +1385,10 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                   borderRadius: 14, padding: "16px 18px", marginBottom: 20,
                 }}>
                   <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>
-                    Tu rutina skincare se divide en{" "}
-                    <span style={{ color: "#d4af88", fontWeight: 600 }}>Ma{"\u00f1"}ana (AM)</span> y{" "}
-                    <span style={{ color: "#7ecba1", fontWeight: 600 }}>Noche (PM)</span>.{" "}
-                    El SPF va siempre en la ma{"\u00f1"}ana; los activos fuertes (retinol, {"\u00e1"}cidos) por la noche.
+                    {L("Tu rutina skincare se divide en", "Your skincare routine is divided into")}{" "}
+                    <span style={{ color: "#d4af88", fontWeight: 600 }}>{L("Ma\u00f1ana (AM)", "Morning (AM)")}</span> {L("y", "and")}{" "}
+                    <span style={{ color: "#7ecba1", fontWeight: 600 }}>{L("Noche (PM)", "Night (PM)")}</span>.{" "}
+                    {L("El SPF va siempre en la ma\u00f1ana; los activos fuertes (retinol, \u00e1cidos) por la noche.", "SPF always goes in the morning; strong actives (retinol, acids) at night.")}
                   </p>
                 </div>
 
@@ -1392,7 +1409,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                       </h3>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence))}
+                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L))}
                     </div>
                   </div>
                 ))}
@@ -1406,9 +1423,9 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             const sumaItems = tabItems.filter(r => r.phase === 2)
             const avanzadoItems = tabItems.filter(r => r.phase >= 4)
             const suppGroups = [
-              { key: "empieza", title: "Empieza con estos", subtitle: "Tu base de suplementaci\u00f3n desde el d\u00eda 1.", color: "#7ecba1", items: empiezaItems, additive: false },
-              { key: "suma", title: "Suma en el mes 2", subtitle: "Mant\u00e9n todo lo anterior + suma estos.", color: "#d4af88", items: sumaItems, additive: true },
-              { key: "avanzados", title: "Avanzados", subtitle: "Mant\u00e9n todo lo anterior + suma estos cuando est\u00e9s listo.", color: "#d4af88", items: avanzadoItems, additive: true },
+              { key: "empieza", title: L("Empieza con estos", "Start with these"), subtitle: L("Tu base de suplementaci\u00f3n desde el d\u00eda 1.", "Your supplement base from day 1."), color: "#7ecba1", items: empiezaItems, additive: false },
+              { key: "suma", title: L("Suma en el mes 2", "Add in month 2"), subtitle: L("Mant\u00e9n todo lo anterior + suma estos.", "Keep everything above + add these."), color: "#d4af88", items: sumaItems, additive: true },
+              { key: "avanzados", title: L("Avanzados", "Advanced"), subtitle: L("Mant\u00e9n todo lo anterior + suma estos cuando est\u00e9s listo.", "Keep everything above + add these when you\u2019re ready."), color: "#d4af88", items: avanzadoItems, additive: true },
             ]
             return (
               <>
@@ -1418,7 +1435,13 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                   borderRadius: 14, padding: "16px 18px", marginBottom: 20,
                 }}>
                   <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>
-                    Los suplementos son <span style={{ color: "#7ecba1", fontWeight: 600 }}>acumulativos</span>: cada etapa se suma a la anterior. Nunca dejas de tomar los de la etapa previa.
+                    {L(
+                      "Los suplementos son ",
+                      "Supplements are "
+                    )}<span style={{ color: "#7ecba1", fontWeight: 600 }}>{L("acumulativos", "cumulative")}</span>{L(
+                      ": cada etapa se suma a la anterior. Nunca dejas de tomar los de la etapa previa.",
+                      ": each phase builds on the previous one. You never stop taking the ones from the prior phase."
+                    )}
                   </p>
                 </div>
 
@@ -1445,7 +1468,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                       {group.subtitle}
                     </p>
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence))}
+                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L))}
                     </div>
                   </div>
                 ))}
@@ -1467,14 +1490,14 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                   fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 400,
                   color: "#f5ede8", letterSpacing: "-0.02em",
                 }}>
-                  Tu estilo de vida
+                  {L("Tu estilo de vida", "Your lifestyle")}
                 </h3>
               </div>
               <p style={{ fontSize: 12, color: "rgba(245,237,232,0.28)", marginBottom: 16, paddingLeft: 22 }}>
-                H{"\u00e1"}bitos permanentes que protegen y rejuvenecen tu piel todos los d{"\u00ed"}as. No tienen fase: son para siempre.
+                {L("H\u00e1bitos permanentes que protegen y rejuvenecen tu piel todos los d\u00edas. No tienen fase: son para siempre.", "Permanent habits that protect and rejuvenate your skin every day. They have no phase: they\u2019re forever.")}
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {tabItems.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence))}
+                {tabItems.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L))}
               </div>
             </div>
           )}
@@ -1485,8 +1508,8 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             const noInvasivos = tabItems.filter(r => noInvasiveNames.some(n => r.name.toLowerCase().includes(n)))
             const avanzados = tabItems.filter(r => !noInvasiveNames.some(n => r.name.toLowerCase().includes(n)))
             const treatGroups = [
-              { key: "no-invasivos", title: "No invasivos", subtitle: "Tratamientos en consultorio sin agujas. Resultados con cero tiempo de recuperaci\u00f3n.", color: "#7ecba1", items: noInvasivos },
-              { key: "avanzados", title: "Avanzados", subtitle: "Procedimientos con microagujas o inyectables. Resultados m\u00e1s potentes, requieren profesional certificado.", color: "#7ecba1", items: avanzados },
+              { key: "no-invasivos", title: L("No invasivos", "Non-invasive"), subtitle: L("Tratamientos en consultorio sin agujas. Resultados con cero tiempo de recuperaci\u00f3n.", "In-office treatments without needles. Results with zero downtime."), color: "#7ecba1", items: noInvasivos },
+              { key: "avanzados", title: L("Avanzados", "Advanced"), subtitle: L("Procedimientos con microagujas o inyectables. Resultados m\u00e1s potentes, requieren profesional certificado.", "Procedures with microneedles or injectables. More powerful results, require a certified professional."), color: "#7ecba1", items: avanzados },
             ]
             return treatGroups.map((group, gi) => group.items.length > 0 && (
               <div key={group.key} style={{ animation: `cardIn 0.55s ease ${0.3 + gi * 0.06}s both` }}>
@@ -1508,7 +1531,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                   {group.subtitle}
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence))}
+                  {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L))}
                 </div>
               </div>
             ))
@@ -1527,7 +1550,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
         }}>
           <div style={{ maxWidth: 520 }}>
             <p style={{ fontSize: 10.5, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16 }}>
-              {"\u00bf"}Tienes dudas sobre tu plan?
+              {L("\u00bfTienes dudas sobre tu plan?", "Have questions about your plan?")}
             </p>
             <h3 style={{
               fontFamily: "var(--font-fraunces)",
@@ -1535,11 +1558,13 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
               fontWeight: 400, letterSpacing: "-0.025em",
               marginBottom: 10, lineHeight: 1.2,
             }}>
-              {"\u00bf"}Quieres que analicemos tus resultados juntos?
+              {L("\u00bfQuieres que analicemos tus resultados juntos?", "Want us to analyze your results together?")}
             </h3>
             <p style={{ fontSize: 14, color: "rgba(245,237,232,0.48)", lineHeight: 1.65 }}>
-              Un especialista de InsideOutMed revisa tu informe, te explica cada biomarcador
-              y ajusta tu protocolo de manera conjunta. Sin presi{"\u00f3"}n. Sin compromiso.
+              {L(
+                "Un especialista de InsideOutMed revisa tu informe, te explica cada biomarcador y ajusta tu protocolo de manera conjunta. Sin presi\u00f3n. Sin compromiso.",
+                "An InsideOutMed specialist reviews your report, explains each biomarker, and adjusts your protocol together. No pressure. No commitment."
+              )}
             </p>
           </div>
           <a
@@ -1557,7 +1582,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
             </svg>
-            Hablar con especialista
+            {L("Hablar con especialista", "Talk to a specialist")}
           </a>
         </div>
 
@@ -1577,18 +1602,20 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,237,232,0.11)" }}
             onMouseLeave={e => { e.currentTarget.style.background = "rgba(245,237,232,0.06)" }}
           >
-            Hacer nuevo an{"\u00e1"}lisis
+            {L("Hacer nuevo an\u00e1lisis", "New analysis")}
           </a>
           <br />
           <a href="/" style={{ fontSize: 13, color: "rgba(245,237,232,0.3)", textDecoration: "none", marginTop: 12, display: "inline-block" }}>
-            Volver al inicio
+            {L("Volver al inicio", "Back to home")}
           </a>
         </div>
 
         {/* Disclaimer */}
         <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.16)", lineHeight: 1.6, textAlign: "center", maxWidth: 600, margin: "0 auto" }}>
-          Las recomendaciones de InsideOutMed tienen fines informativos. No reemplazan el diagn{"\u00f3"}stico de un dermat{"\u00f3"}logo.
-          Algunos enlaces a Amazon pueden generar comisiones de afiliado que financian este servicio.
+          {L(
+            "Las recomendaciones de InsideOutMed tienen fines informativos. No reemplazan el diagn\u00f3stico de un dermat\u00f3logo. Algunos enlaces a Amazon pueden generar comisiones de afiliado que financian este servicio.",
+            "InsideOutMed recommendations are for informational purposes only. They do not replace a dermatologist\u2019s diagnosis. Some Amazon links may generate affiliate commissions that fund this service."
+          )}
         </p>
       </main>
 

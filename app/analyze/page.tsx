@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState, useCallback } from "react"
+import { useLanguage } from "../../components/providers/language-provider"
 import { CameraStage, type Scores } from "./camera-stage"
 import { generateCrossRefInsights } from "../../lib/analysis/cross-reference"
 import { generateBrainInsights } from "../../lib/analysis/brain-insights"
@@ -759,7 +760,49 @@ async function runUploadAnalysis(dataUrl: string, fitzpatrick: number, age: numb
 }
 
 // ── Biomarker insights (7 new biomarkers) ────────────────────────
-function getBiomarkerInsight(label: string, value: number): string {
+function getBiomarkerInsight(label: string, value: number, locale: string = "es"): string {
+  if (locale === "en") {
+    switch (label) {
+      case "Luminosidad":
+        if (value >= 70) return "Your skin reflects light well — it looks rested and vibrant. This takes years off your appearance."
+        if (value >= 50) return "Your face looks dull, tired even if you slept well. This ages you visually because your skin doesn't reflect light. A morning vitamin C can change this in 4 weeks."
+        return "Your skin has completely lost its glow — it looks gray, lifeless. This is the first thing people notice. It can add 2-3 visible years. Needs urgent cell renewal."
+      case "Suavidad":
+        if (value >= 75) return "Your skin has a smooth, uniform surface — this indicates good cell renewal and a functional skin barrier."
+        if (value >= 55) return "Your skin shows some irregular texture — areas with roughness or micro-flaking. This may be from lack of exfoliation or unprotected exposure."
+        return "Your skin surface is notably irregular — roughness, coarse texture and possible flaking. Indicates your skin barrier needs urgent repair."
+      case "Uniformidad":
+        if (value >= 75) return "Your tone is even — no visible spots or red zones. This gives a clean, youthful appearance."
+        if (value >= 55) return "Darker or redder zones are visible on your face, likely on cheeks and forehead. The eye perceives this as 'tired skin'. With niacinamide and daily SPF they even out in 6-8 weeks."
+        return "Your face has very visible spots, redness or dark zones. The human brain associates uneven tone with advanced age — this can add 3-4 years at once. Treatable with depigmenting agents + sun protection."
+      case "Glicación":
+        if (value <= 15) return "Your collagen is healthy — flexible and firm. Keep sugar intake low to preserve it."
+        if (value <= 30) return "The sugar you eat is slowly hardening your collagen. The result: skin loses elasticity, becomes dull and yellowish. Reducing refined sugars slows this process."
+        return "We detected clear signs of glycation — your collagen is hardening from excess blood sugar. This causes skin to lose firmness, turn yellowish and wrinkles to set faster. Can add 2-3 years. Anti-glycation diet + peptides help."
+      case "Inflamación":
+        if (value <= 15) return "Your skin is calm — no visible redness or sensitivity. Good starting point."
+        if (value <= 30) return "There's active redness on your face that you probably don't notice in the mirror but the camera detects. It's silent inflammation — may come from stress, diet or irritating products. It accelerates aging in the background."
+        return "We detected visible inflammation on your face — redness on cheeks, nose or forehead. This is the #1 accelerator of aging: it degrades collagen, dilates pores and creates spots. It's adding years right now. Needs urgent attention with calming ingredients."
+      case "Daño solar":
+        if (value <= 15) return "Your sun protection is working — no spots or texture from sun damage. Keep it up."
+        if (value <= 30) return "There are signs of accumulated sun exposure on your skin — irregular texture, emerging spots. The sun explains 80% of visible aging. Daily SPF 50 + antioxidants start to reverse it in weeks."
+        return "Your skin has significant sun damage — spots, irregular texture, loss of firmness. The sun is your face's #1 enemy and it already left its mark. Without active protection, it will keep advancing. Easily adds 3-5 visible years."
+      case "Vascularidad":
+        if (value <= 12) return "No persistent redness — your facial circulation is stable."
+        if (value <= 25) return "We detected redness on cheeks and nose indicating elevated vascular activity. Could be early rosacea, sensitivity or reaction to extreme temperatures. Calming ingredients like centella asiatica help."
+        return "There's marked redness on your face — visible dilated vessels, especially on cheeks and nose. This gives an irritated, sensitive skin appearance that ages your look. Avoid hot water on your face, alcohol and spicy food. Needs specific calming treatment."
+      case "Ojeras":
+        if (value >= 80) return "No signs of fatigue under the eyes — your eye contour looks rested and even in tone."
+        if (value >= 55) return "Darkening is noticeable under the eyes. May be from lack of sleep, genetics or fluid retention. An eye contour with vitamin K and caffeine can help in 4-6 weeks."
+        return "Marked dark circles — the contrast between your eye contour and cheeks is notable. This adds years visually. You need a combined approach: sleep, retinol eye contour and possibly injectable hyaluronic acid."
+      case "Simetría":
+        if (value >= 90) return "Your face has very high symmetry — left and right features are well aligned. This is perceived as harmony and attractiveness."
+        if (value >= 75) return "Normal symmetry — there are small differences between both sides of your face that are natural. Most people have slight asymmetry."
+        return "Notable asymmetry detected between both sides of your face. May be postural, genetic or from habits (sleeping on one side). Not a health issue but affects the perception of harmony."
+      default:
+        return ""
+    }
+  }
   switch (label) {
     case "Luminosidad":
       if (value >= 70) return "Tu piel refleja bien la luz — se ve descansada y con vida. Esto te quita años de encima."
@@ -852,7 +895,51 @@ function ProfileQuiz({ mode, onComplete, scores }: {
   onComplete: (data: Record<string, string>) => void
   scores?: Scores | null
 }) {
-  const steps = mode === "pre-scan" ? PRE_SCAN_STEPS : mode === "contact" ? CONTACT_STEPS : GATE_STEPS
+  const { locale } = useLanguage()
+  const L = (es: string, en: string) => locale === "en" ? en : es
+
+  // ── Translated quiz steps ──
+  const QUIZ_TRANSLATIONS: Record<string, { headline: string; sub: string; options?: Record<string, { label: string; sub?: string }> }> = locale === "en" ? {
+    name: { headline: "What's your name?", sub: "To personalize your analysis and plan" },
+    age: { headline: "How old are you?", sub: "We calibrate everything based on your exact age" },
+    fitzpatrick: { headline: "What's your skin tone?", sub: "We calibrate the analysis based on your skin type for precise results" },
+    email: { headline: "Where should we send your report?", sub: "Your complete analysis + personalized plan sent to your email" },
+    phone: { headline: "Your WhatsApp for recommendations", sub: "We'll notify you when we find ideal products for your profile" },
+    goals: { headline: "What do you want to improve?", sub: "Select all that apply — we prioritize your plan based on this", options: { edad: { label: "Visible age" }, piel: { label: "Skin" }, mandibula: { label: "Jawline" }, ojos: { label: "Eyes" }, cabello: { label: "Hair" }, labios: { label: "Lips" }, longevidad: { label: "Longevity" }, evento: { label: "Event soon" } } },
+    sensitivity: { headline: "How sensitive is your skin?", sub: "To adjust the intensity of active ingredients", options: { baja: { label: "Low", sub: "I tolerate almost everything" }, media: { label: "Medium", sub: "Some products irritate me" }, alta: { label: "High", sub: "My skin reacts easily" } } },
+    budget: { headline: "How much do you spend on skincare per month?", sub: "To recommend products within your range", options: { gratis: { label: "Minimal ($0–30)", sub: "Just the essentials" }, medio: { label: "Intermediate ($30–100)", sub: "Willing to invest" }, premium: { label: "Premium ($100+)", sub: "The best available" } } },
+    sleep: { headline: "How many hours do you sleep?", sub: "Sleep is your skin's #1 repair tool", options: { "<5h": { label: "<5h", sub: "Little rest" }, "5-6h": { label: "5–6h", sub: "Below average" }, "7-8h": { label: "7–8h", sub: "Recommended" }, "9+h": { label: "9+h", sub: "Good rest" } } },
+    stress: { headline: "How would you describe your stress level?", sub: "Cortisol directly impacts your skin health", options: { bajo: { label: "Low", sub: "Relaxed most of the time" }, medio: { label: "Medium", sub: "Occasional stress spikes" }, alto: { label: "High", sub: "Constant or chronic stress" } } },
+    exercise: { headline: "How often do you exercise?", sub: "Circulation impacts oxygenation and glow", options: { nunca: { label: "Never / almost never", sub: "Sedentary" }, "2-3": { label: "2–3 days", sub: "Moderate activity" }, "4+": { label: "4+ days", sub: "Very active" } } },
+    sun: { headline: "How much sun exposure do you get?", sub: "Sun is the #1 factor in premature aging", options: { baja: { label: "Low", sub: "Mostly indoors" }, media: { label: "Medium", sub: "Some daily sun" }, alta: { label: "High", sub: "Frequent exposure" } } },
+    invasive: { headline: "What type of treatments would you consider?", sub: "To filter recommendations based on your tolerance", options: { casa: { label: "Home only", sub: "Creams, serums, habits" }, "no-aguja": { label: "Office, no needles", sub: "Peels, LED, laser" }, todo: { label: "Everything, including needles", sub: "Botox, fillers, PRP" } } },
+    conditions: { headline: "Do you have any skin conditions?", sub: "To avoid recommending anything that could irritate", options: { rosacea: { label: "Rosacea" }, melasma: { label: "Melasma" }, acne: { label: "Active acne" }, dermatitis: { label: "Dermatitis/eczema" }, psoriasis: { label: "Psoriasis" }, ninguna: { label: "None" } } },
+    diet: { headline: "What's your diet like?", sub: "What you eat shows on your skin", options: { omnivora: { label: "Omnivore", sub: "Varied diet" }, vegetariana: { label: "Vegetarian / vegan", sub: "No meat or animal products" }, keto: { label: "Keto / other", sub: "Specific or restrictive diet" } } },
+    concern: { headline: "What concerns you most about your face?", sub: "Choose your #1 priority", options: { manchas: { label: "Spots" }, arrugas: { label: "Wrinkles" }, poros: { label: "Pores" }, acne: { label: "Acne" }, hidratacion: { label: "Smoothness" }, luminosidad: { label: "Luminosity" } } },
+    routine: { headline: "What do you use on your face right now?", sub: "No judgment — every starting point is valid", options: { ninguna: { label: "Nothing yet", sub: "Starting from scratch" }, basica: { label: "Cleanser + moisturizer", sub: "Solid base" }, completa: { label: "Full routine", sub: "Serum, SPF and more" } } },
+  } : {}
+
+  const FITZ_LABELS_EN: Record<string, string> = { "Muy clara": "Very light", "Clara": "Light", "Media": "Medium", "Morena": "Tan", "Oscura": "Dark", "Muy oscura": "Very dark" }
+
+  const rawSteps = mode === "pre-scan" ? PRE_SCAN_STEPS : mode === "contact" ? CONTACT_STEPS : GATE_STEPS
+  const steps = rawSteps.map(s => {
+    const tr = QUIZ_TRANSLATIONS[s.id]
+    if (!tr) return s
+    return {
+      ...s,
+      headline: tr.headline,
+      sub: tr.sub,
+      options: s.options.map(opt => {
+        if (s.type === "fitz6") {
+          return { ...opt, label: FITZ_LABELS_EN[opt.label] || opt.label }
+        }
+        const optTr = tr.options?.[opt.value]
+        if (!optTr) return opt
+        return { ...opt, label: optTr.label, sub: optTr.sub ?? opt.sub }
+      }),
+    }
+  })
+
   const [step, setStep] = useState(0)
   const [data, setData] = useState<Record<string, string>>({})
   const [inputVal, setInputVal] = useState("")
@@ -907,16 +994,16 @@ function ProfileQuiz({ mode, onComplete, scores }: {
   }
 
   const headerText = mode === "pre-scan"
-    ? "Antes de escanear"
+    ? L("Antes de escanear", "Before scanning")
     : mode === "contact"
-    ? "Tu análisis está listo"
-    : "Desbloquea tu informe completo"
+    ? L("Tu análisis está listo", "Your analysis is ready")
+    : L("Desbloquea tu informe completo", "Unlock your full report")
 
   const headerSub = mode === "pre-scan"
-    ? `${steps.length} preguntas para calibrar tu análisis`
+    ? `${steps.length} ${L("preguntas para calibrar tu análisis", "questions to calibrate your analysis")}`
     : mode === "contact"
-    ? (scores ? `Score: ${scores.overall}/100 — necesitamos tus datos para enviártelo` : "Necesitamos tus datos para enviarte el informe")
-    : `${steps.length} preguntas más para personalizar tu plan`
+    ? (scores ? `Score: ${scores.overall}/100 — ${L("necesitamos tus datos para enviártelo", "we need your details to send it")}` : L("Necesitamos tus datos para enviarte el informe", "We need your details to send you the report"))
+    : `${steps.length} ${L("preguntas más para personalizar tu plan", "more questions to personalize your plan")}`
 
   return (
     <div style={{ maxWidth: 480, width: "100%", margin: "0 auto" }}>
@@ -1078,7 +1165,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
                 boxShadow: "0 8px 24px rgba(232,164,176,0.3)",
               }}
             >
-              Continuar →
+              {L("Continuar →", "Continue →")}
             </button>
           </div>
         )}
@@ -1179,7 +1266,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
             <div style={{ position: "relative", marginBottom: 12 }}>
               <input
                 type="email"
-                placeholder="tu@email.com"
+                placeholder={L("tu@email.com", "you@email.com")}
                 value={inputVal}
                 onChange={e => setInputVal(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && emailValid) advance({ [current.id]: inputVal }) }}
@@ -1198,7 +1285,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
               />
               {inputVal && !emailValid && (
                 <p style={{ fontSize: 11, color: "#e8a4b0", marginTop: 6, textAlign: "left" }}>
-                  Ingresa un email válido
+                  {L("Ingresa un email válido", "Enter a valid email")}
                 </p>
               )}
             </div>
@@ -1213,10 +1300,10 @@ function ProfileQuiz({ mode, onComplete, scores }: {
                 transition: "all 0.3s", marginBottom: 12,
               }}
             >
-              Enviar mi informe →
+              {L("Enviar mi informe →", "Send my report →")}
             </button>
             <p style={{ fontSize: 10, color: "rgba(245,237,232,0.22)", textAlign: "center" }}>
-              Necesitamos tu email para enviarte el informe completo
+              {L("Necesitamos tu email para enviarte el informe completo", "We need your email to send you the full report")}
             </p>
           </div>
           )
@@ -1231,7 +1318,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
             <div style={{ position: "relative", marginBottom: 16 }}>
               <input
                 type="text"
-                placeholder={current.id === "name" ? "Tu nombre" : "Escribe aquí..."}
+                placeholder={current.id === "name" ? L("Tu nombre", "Your name") : L("Escribe aquí...", "Type here...")}
                 value={inputVal}
                 onChange={e => setInputVal(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && isValid) advance({ [current.id]: val }) }}
@@ -1260,7 +1347,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
                 transition: "all 0.3s",
               }}
             >
-              Continuar →
+              {L("Continuar →", "Continue →")}
             </button>
           </div>
           )
@@ -1315,7 +1402,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
                 transition: "all 0.3s",
               }}
             >
-              Continuar →
+              {L("Continuar →", "Continue →")}
             </button>
           </div>
           )
@@ -1331,7 +1418,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
               <input
                 type="tel"
                 inputMode="numeric"
-                placeholder="+52 55 1234 5678"
+                placeholder={L("+52 55 1234 5678", "+1 555 123 4567")}
                 value={inputVal}
                 onChange={e => {
                   const filtered = e.target.value.replace(/[^\d\s+\-()]/g, "")
@@ -1352,7 +1439,7 @@ function ProfileQuiz({ mode, onComplete, scores }: {
               />
               {inputVal && !isValid && (
                 <p style={{ fontSize: 11, color: "#e8a4b0", marginTop: 6, textAlign: "left" }}>
-                  Ingresa un número válido (mínimo 8 dígitos)
+                  {L("Ingresa un número válido (mínimo 8 dígitos)", "Enter a valid number (minimum 8 digits)")}
                 </p>
               )}
             </div>
@@ -1371,10 +1458,10 @@ function ProfileQuiz({ mode, onComplete, scores }: {
               }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Activar WhatsApp
+              {L("Activar WhatsApp", "Activate WhatsApp")}
             </button>
             <p style={{ fontSize: 10, color: "rgba(245,237,232,0.22)", textAlign: "center" }}>
-              Necesitamos tu número para enviarte recomendaciones
+              {L("Necesitamos tu número para enviarte recomendaciones", "We need your number to send you recommendations")}
             </p>
           </div>
           )
@@ -1386,6 +1473,9 @@ function ProfileQuiz({ mode, onComplete, scores }: {
 
 // ── Main page component ───────────────────────────────────────────
 export default function AnalyzePage() {
+  const { locale } = useLanguage()
+  const L = (es: string, en: string) => locale === "en" ? en : es
+
   const [stage, setStage] = useState<Stage>("choose")
   const [captureMode, setCaptureMode] = useState<"camera" | "upload">("camera")
   const [capturedUrl, setCapturedUrl] = useState<string | null>(null)
@@ -1470,7 +1560,7 @@ export default function AnalyzePage() {
         const finish = () => {
           if (analysisResult === undefined) { setTimeout(finish, 200); return }
           if (analysisResult === null) {
-            setQualityError("No detectamos un rostro con claridad. Necesitamos buena luz frontal y que el rostro esté centrado y visible.")
+            setQualityError(locale === "en" ? "We couldn't detect a face clearly. We need good front lighting and your face centered and visible." : "No detectamos un rostro con claridad. Necesitamos buena luz frontal y que el rostro esté centrado y visible.")
             setStage("error")
           } else {
             setScores(analysisResult)
@@ -1490,7 +1580,7 @@ export default function AnalyzePage() {
         return prev
       })
     }, 80)
-  }, [preQuizData])
+  }, [preQuizData, locale])
 
   const handleCameraCapture = useCallback((dataUrl: string, preScores: Scores) => {
     setCapturedUrl(dataUrl)
@@ -1663,23 +1753,23 @@ export default function AnalyzePage() {
   // For "lower is better" metrics, we show a HEALTH score (100 - raw)
   // so all bars read left-to-right = better, more intuitive for the user
   const biomarkers = scores ? [
-    { label: "Luminosidad",      rawValue: scores.luminosity,    higherBetter: true,  friendlyLabel: "Brillo de tu piel" },
-    { label: "Suavidad",          rawValue: scores.hydration,     higherBetter: true,  friendlyLabel: "Suavidad de tu piel" },
-    { label: "Uniformidad",      rawValue: scores.uniformity,    higherBetter: true,  friendlyLabel: "Tono parejo" },
-    { label: "Glicación",        rawValue: scores.glycation,     higherBetter: false, friendlyLabel: "Daño por azúcar" },
-    { label: "Inflamación",      rawValue: scores.inflammation,  higherBetter: false, friendlyLabel: "Rojez e inflamación" },
-    { label: "Daño solar",       rawValue: scores.sunDamage,     higherBetter: false, friendlyLabel: "Daño por sol" },
-    { label: "Vascularidad",     rawValue: scores.vascularity,   higherBetter: false, friendlyLabel: "Rojez vascular" },
-    { label: "Ojeras",            rawValue: scores.darkCircles,   higherBetter: true,  friendlyLabel: "Contorno de ojos" },
-    { label: "Simetría",          rawValue: scores.symmetry ?? 85, higherBetter: true,  friendlyLabel: "Simetría facial" },
+    { label: "Luminosidad",      rawValue: scores.luminosity,    higherBetter: true,  friendlyLabel: L("Brillo de tu piel", "Skin glow") },
+    { label: "Suavidad",          rawValue: scores.hydration,     higherBetter: true,  friendlyLabel: L("Suavidad de tu piel", "Skin smoothness") },
+    { label: "Uniformidad",      rawValue: scores.uniformity,    higherBetter: true,  friendlyLabel: L("Tono parejo", "Even tone") },
+    { label: "Glicación",        rawValue: scores.glycation,     higherBetter: false, friendlyLabel: L("Daño por azúcar", "Sugar damage") },
+    { label: "Inflamación",      rawValue: scores.inflammation,  higherBetter: false, friendlyLabel: L("Rojez e inflamación", "Redness and inflammation") },
+    { label: "Daño solar",       rawValue: scores.sunDamage,     higherBetter: false, friendlyLabel: L("Daño por sol", "Sun damage") },
+    { label: "Vascularidad",     rawValue: scores.vascularity,   higherBetter: false, friendlyLabel: L("Rojez vascular", "Vascular redness") },
+    { label: "Ojeras",            rawValue: scores.darkCircles,   higherBetter: true,  friendlyLabel: L("Contorno de ojos", "Eye contour") },
+    { label: "Simetría",          rawValue: scores.symmetry ?? 85, higherBetter: true,  friendlyLabel: L("Simetría facial", "Facial symmetry") },
   ].map(b => {
     // Display value: always "higher = better" for intuitive reading
     const displayValue = b.higherBetter ? b.rawValue : (100 - b.rawValue)
     const severity = 100 - displayValue // higher severity = worse
     const color = displayValue >= 75 ? "#7ecba1" : displayValue >= 55 ? "#d4af88" : "#e8a4b0"
-    const note = displayValue >= 75 ? "Excelente" : displayValue >= 55 ? "Aceptable" : displayValue >= 35 ? "Mejorable" : "Atención"
+    const note = displayValue >= 75 ? L("Excelente", "Excellent") : displayValue >= 55 ? L("Aceptable", "Fair") : displayValue >= 35 ? L("Mejorable", "Needs work") : L("Atención", "Attention")
     const alert = displayValue < 55
-    return { ...b, value: displayValue, severity, color, note, alert, insight: getBiomarkerInsight(b.label, b.rawValue) }
+    return { ...b, value: displayValue, severity, color, note, alert, insight: getBiomarkerInsight(b.label, b.rawValue, locale) }
   }) : []
 
   // Top 3 critical findings (sorted by severity)
@@ -1697,7 +1787,7 @@ export default function AnalyzePage() {
           <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 500, color: "#f5ede8" }}>InsideOutMed</span>
         </a>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 10, color: "rgba(245,237,232,0.28)", letterSpacing: "0.14em", textTransform: "uppercase" }}>Análisis Facial</span>
+          <span style={{ fontSize: 10, color: "rgba(245,237,232,0.28)", letterSpacing: "0.14em", textTransform: "uppercase" }}>{L("Análisis Facial", "Facial Analysis")}</span>
         </div>
       </nav>
 
@@ -1706,13 +1796,13 @@ export default function AnalyzePage() {
         {/* ── CHOOSE ── */}
         {stage === "choose" && (
           <div style={{ maxWidth: 520, width: "100%", textAlign: "center" }}>
-            <p style={{ fontSize: 10, letterSpacing: "0.16em", color: "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 14 }}>Paso 1</p>
+            <p style={{ fontSize: 10, letterSpacing: "0.16em", color: "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 14 }}>{L("Paso 1", "Step 1")}</p>
             <h1 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(26px, 5vw, 42px)", fontWeight: 400, lineHeight: 1.1, marginBottom: 12, letterSpacing: "-0.03em" }}>
-              ¿Cómo quieres analizarte?
+              {L("¿Cómo quieres analizarte?", "How would you like to analyze yourself?")}
             </h1>
             <p style={{ fontSize: 14, color: "rgba(245,237,232,0.42)", marginBottom: 36, lineHeight: 1.65 }}>
-              Detectamos 478 puntos faciales y analizamos cada zona de tu piel.<br/>
-              Necesitas <strong style={{ color: "rgba(245,237,232,0.7)", fontWeight: 500 }}>buena luz natural</strong> y el rostro visible.
+              {L("Detectamos 478 puntos faciales y analizamos cada zona de tu piel.", "We detect 478 facial points and analyze each zone of your skin.")}<br/>
+              {L("Necesitas", "You need")} <strong style={{ color: "rgba(245,237,232,0.7)", fontWeight: 500 }}>{L("buena luz natural", "good natural light")}</strong> {L("y el rostro visible.", "and your face visible.")}
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 28 }}>
               <button onClick={() => { setCaptureMode("camera"); setStage("pre-quiz") }}
@@ -1722,8 +1812,8 @@ export default function AnalyzePage() {
                 <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(232,164,176,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <svg width="24" height="24" viewBox="0 0 28 28" fill="none"><rect x="2" y="7" width="24" height="18" rx="3" stroke="#e8a4b0" strokeWidth="1.5"/><circle cx="14" cy="16" r="5" stroke="#e8a4b0" strokeWidth="1.5"/><path d="M10 7V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" stroke="#e8a4b0" strokeWidth="1.5"/></svg>
                 </div>
-                <div><p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Escaneo en vivo</p><p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", lineHeight: 1.5 }}>Cámara frontal</p></div>
-                <span style={{ fontSize: 9, color: "#e8a4b0", letterSpacing: "0.12em", fontWeight: 700, border: "1px solid rgba(232,164,176,0.3)", padding: "2px 10px", borderRadius: 99 }}>RECOMENDADO</span>
+                <div><p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{L("Escaneo en vivo", "Live scan")}</p><p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", lineHeight: 1.5 }}>{L("Cámara frontal", "Front camera")}</p></div>
+                <span style={{ fontSize: 9, color: "#e8a4b0", letterSpacing: "0.12em", fontWeight: 700, border: "1px solid rgba(232,164,176,0.3)", padding: "2px 10px", borderRadius: 99 }}>{L("RECOMENDADO", "RECOMMENDED")}</span>
               </button>
               <button onClick={() => { setCaptureMode("upload"); setStage("pre-quiz") }}
                 style={{ background: "rgba(245,237,232,0.03)", border: "1.5px solid rgba(245,237,232,0.1)", borderRadius: 18, padding: "28px 18px", cursor: "pointer", color: "#f5ede8", textAlign: "center", transition: "all 0.2s", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}
@@ -1732,20 +1822,20 @@ export default function AnalyzePage() {
                 <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(245,237,232,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <svg width="24" height="24" viewBox="0 0 28 28" fill="none"><rect x="3" y="3" width="22" height="22" rx="4" stroke="rgba(245,237,232,0.55)" strokeWidth="1.5"/><circle cx="10" cy="10" r="2.5" stroke="rgba(245,237,232,0.55)" strokeWidth="1.5"/><path d="M3 18l6-6 4 4 4-5 8 7" stroke="rgba(245,237,232,0.55)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </div>
-                <div><p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Subir selfie</p><p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", lineHeight: 1.5 }}>Desde galería</p></div>
+                <div><p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{L("Subir selfie", "Upload selfie")}</p><p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", lineHeight: 1.5 }}>{L("Desde galería", "From gallery")}</p></div>
                 <span style={{ fontSize: 9, color: "rgba(245,237,232,0.3)", letterSpacing: "0.12em", fontWeight: 600 }}>JPG / PNG</span>
               </button>
             </div>
             <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}/>
             <div style={{ background: "rgba(245,237,232,0.025)", border: "1px solid rgba(245,237,232,0.07)", borderRadius: 12, padding: "14px 18px", marginBottom: 20, textAlign: "left", display: "flex", flexDirection: "column", gap: 6 }}>
-              {["Luz natural o lámpara frontal. Sin contraluz.","Rostro descubierto, sin gafas ni maquillaje.","Cámara a la altura de los ojos."].map((tip,i)=>(
+              {[L("Luz natural o lámpara frontal. Sin contraluz.","Natural light or front lamp. No backlight."),L("Rostro descubierto, sin gafas ni maquillaje.","Face uncovered, no glasses or makeup."),L("Cámara a la altura de los ojos.","Camera at eye level.")].map((tip,i)=>(
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontSize: 9, color: "#7ecba1", fontWeight: 700 }}>0{i+1}</span>
                   <span style={{ fontSize: 12, color: "rgba(245,237,232,0.45)" }}>{tip}</span>
                 </div>
               ))}
             </div>
-            <p style={{ fontSize: 10, color: "rgba(245,237,232,0.18)", letterSpacing: "0.07em" }}>478 PUNTOS FACIALES · PROCESAMIENTO LOCAL · 100% PRIVADO</p>
+            <p style={{ fontSize: 10, color: "rgba(245,237,232,0.18)", letterSpacing: "0.07em" }}>{L("478 PUNTOS FACIALES · PROCESAMIENTO LOCAL · 100% PRIVADO", "478 FACIAL POINTS · LOCAL PROCESSING · 100% PRIVATE")}</p>
           </div>
         )}
 
@@ -1757,20 +1847,20 @@ export default function AnalyzePage() {
         {/* ── UPLOAD GUIDE ── */}
         {stage === "upload-guide" && (
           <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
-            <p style={{ fontSize: 10, letterSpacing: "0.16em", color: "#d4af88", textTransform: "uppercase", fontWeight: 700, marginBottom: 14 }}>Antes de subir tu foto</p>
+            <p style={{ fontSize: 10, letterSpacing: "0.16em", color: "#d4af88", textTransform: "uppercase", fontWeight: 700, marginBottom: 14 }}>{L("Antes de subir tu foto", "Before uploading your photo")}</p>
             <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(22px, 4vw, 32px)", fontWeight: 400, marginBottom: 10, letterSpacing: "-0.03em", lineHeight: 1.15 }}>
-              La foto correcta marca<br/><em style={{ color: "#e8a4b0", fontStyle: "italic" }}>la diferencia en los resultados</em>
+              {L("La foto correcta marca", "The right photo makes")}<br/><em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{L("la diferencia en los resultados", "the difference in results")}</em>
             </h2>
-            <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", marginBottom: 28, lineHeight: 1.65 }}>Usamos 478 puntos para mapear tu cara y analizar cada zona.</p>
+            <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", marginBottom: 28, lineHeight: 1.65 }}>{L("Usamos 478 puntos para mapear tu cara y analizar cada zona.", "We use 478 points to map your face and analyze each zone.")}</p>
             <div style={{ textAlign: "left", marginBottom: 14 }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "#7ecba1", fontWeight: 700, marginBottom: 10 }}>Asi funciona</p>
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "#7ecba1", fontWeight: 700, marginBottom: 10 }}>{L("Asi funciona", "How it works")}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                 {[
-                  { icon: "luz", text: "Luz natural frontal — ventana o lámpara apuntando a tu cara, sin contraluz" },
-                  { icon: "rostro", text: "Rostro centrado y completo — frente, mejillas, nariz y mentón visibles" },
-                  { icon: "sin", text: "Sin maquillaje, filtros, gafas ni cabello tapando la cara" },
-                  { icon: "camara", text: "Cámara al nivel de los ojos, a 30–50 cm de distancia" },
-                  { icon: "nitida", text: "Imagen nítida y bien expuesta" },
+                  { icon: "luz", text: L("Luz natural frontal — ventana o lámpara apuntando a tu cara, sin contraluz", "Front natural light — window or lamp facing your face, no backlight") },
+                  { icon: "rostro", text: L("Rostro centrado y completo — frente, mejillas, nariz y mentón visibles", "Centered and complete face — forehead, cheeks, nose and chin visible") },
+                  { icon: "sin", text: L("Sin maquillaje, filtros, gafas ni cabello tapando la cara", "No makeup, filters, glasses or hair covering the face") },
+                  { icon: "camara", text: L("Cámara al nivel de los ojos, a 30–50 cm de distancia", "Camera at eye level, 30–50 cm away") },
+                  { icon: "nitida", text: L("Imagen nítida y bien expuesta", "Sharp and well-exposed image") },
                 ].map((item,i)=>(
                   <div key={i} style={{ display: "flex", gap: 12, padding: "11px 14px", background: "rgba(126,203,161,0.04)", border: "1px solid rgba(126,203,161,0.1)", borderRadius: 11 }}>
                     <span style={{ flexShrink: 0, color: "rgba(232,164,176,0.6)" }}>{QUIZ_ICONS[item.icon] || item.icon}</span>
@@ -1780,10 +1870,10 @@ export default function AnalyzePage() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setStage("pre-quiz")} style={{ flex: 1, padding: "13px", background: "rgba(245,237,232,0.05)", border: "1px solid rgba(245,237,232,0.1)", borderRadius: 12, color: "rgba(245,237,232,0.5)", fontSize: 13, cursor: "pointer" }}>Volver</button>
+              <button onClick={() => setStage("pre-quiz")} style={{ flex: 1, padding: "13px", background: "rgba(245,237,232,0.05)", border: "1px solid rgba(245,237,232,0.1)", borderRadius: 12, color: "rgba(245,237,232,0.5)", fontSize: 13, cursor: "pointer" }}>{L("Volver", "Back")}</button>
               <button onClick={() => fileRef.current?.click()} style={{ flex: 2, padding: "13px", background: "linear-gradient(135deg,#d4af88,#b8936a)", border: "none", borderRadius: 12, color: "#0e0c12", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                Elegir foto
+                {L("Elegir foto", "Choose photo")}
               </button>
             </div>
           </div>
@@ -1804,12 +1894,12 @@ export default function AnalyzePage() {
         {stage === "scanning" && capturedUrl && (
           <div style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
             <p style={{ fontSize: 10, letterSpacing: "0.16em", color: "#e8a4b0", textTransform: "uppercase", fontWeight: 700, marginBottom: 20 }}>
-              Analizando 9 zonas faciales
+              {L("Analizando 9 zonas faciales", "Analyzing 9 facial zones")}
             </p>
 
             {/* Face image with cinematic scan overlay */}
             <div style={{ position: "relative", width: "100%", paddingBottom: "125%", borderRadius: 22, overflow: "hidden", marginBottom: 20, border: "1px solid rgba(232,164,176,0.15)" }}>
-              <img src={capturedUrl} alt="análisis" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src={capturedUrl} alt={L("análisis", "analysis")} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
 
               {/* Dark cinematic overlay */}
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(14,12,18,0.4) 0%,rgba(14,12,18,0.15) 30%,rgba(14,12,18,0.15) 60%,rgba(14,12,18,0.5) 100%)", pointerEvents: "none" }} />
@@ -1863,9 +1953,9 @@ export default function AnalyzePage() {
                 <div style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(126,203,161,0.7)", letterSpacing: "0.05em", lineHeight: 1.8 }}>
                   {scanProgress > 5 && <div style={{ animation: "fadeIn 0.3s ease" }}>SCAN {Math.min(scanProgress, 100)}%</div>}
                   {scanProgress > 20 && <div style={{ animation: "fadeIn 0.3s ease" }}>LANDMARKS 478</div>}
-                  {scanProgress > 40 && <div style={{ animation: "fadeIn 0.3s ease" }}>ZONAS {Math.min(completedZones.length + 1, 9)}/9</div>}
-                  {scanProgress > 60 && <div style={{ animation: "fadeIn 0.3s ease" }}>MUESTRAS {Math.round(scanProgress * 0.8)}</div>}
-                  {scanProgress > 80 && <div style={{ animation: "fadeIn 0.3s ease" }}>BIOMARCADORES OK</div>}
+                  {scanProgress > 40 && <div style={{ animation: "fadeIn 0.3s ease" }}>{L("ZONAS", "ZONES")} {Math.min(completedZones.length + 1, 9)}/9</div>}
+                  {scanProgress > 60 && <div style={{ animation: "fadeIn 0.3s ease" }}>{L("MUESTRAS", "SAMPLES")} {Math.round(scanProgress * 0.8)}</div>}
+                  {scanProgress > 80 && <div style={{ animation: "fadeIn 0.3s ease" }}>{L("BIOMARCADORES OK", "BIOMARKERS OK")}</div>}
                 </div>
               </div>
 
@@ -1877,7 +1967,11 @@ export default function AnalyzePage() {
                   color: "rgba(232,164,176,0.8)", letterSpacing: "0.12em", textTransform: "uppercase",
                   textShadow: "0 0 12px rgba(232,164,176,0.4)",
                 }}>
-                  {SCAN_ZONES_ANIM[activeZoneIdx]?.label ?? ""}
+                  {(() => {
+                    const scanLabel = SCAN_ZONES_ANIM[activeZoneIdx]?.label ?? ""
+                    const SCAN_LABELS_EN: Record<string, string> = { "Frente": "Forehead", "Ojo izq.": "Left eye", "Ojo der.": "Right eye", "Nariz": "Nose", "Mejilla izq.": "Left cheek", "Mejilla der.": "Right cheek", "Labios": "Lips", "Mandíbula": "Jawline", "Cuello": "Neck" }
+                    return locale === "en" ? (SCAN_LABELS_EN[scanLabel] || scanLabel) : scanLabel
+                  })()}
                 </div>
               )}
 
@@ -1911,12 +2005,12 @@ export default function AnalyzePage() {
 
             {/* Status text */}
             <p style={{ fontSize: 11, color: "rgba(245,237,232,0.4)", letterSpacing: "0.06em", textAlign: "center" }}>
-              {scanProgress < 10 ? "Detectando estructura facial…" :
-               scanProgress < 25 ? "Mapeando 478 puntos de referencia…" :
-               scanProgress < 45 ? "Analizando textura y pigmentación…" :
-               scanProgress < 65 ? "Evaluando biomarcadores cutáneos…" :
-               scanProgress < 80 ? "Midiendo luminosidad e hidratación…" :
-               scanProgress < 95 ? "Consolidando resultados…" : "Análisis completado"}
+              {scanProgress < 10 ? L("Detectando estructura facial…", "Detecting facial structure...") :
+               scanProgress < 25 ? L("Mapeando 478 puntos de referencia…", "Mapping 478 reference points...") :
+               scanProgress < 45 ? L("Analizando textura y pigmentación…", "Analyzing texture and pigmentation...") :
+               scanProgress < 65 ? L("Evaluando biomarcadores cutáneos…", "Evaluating skin biomarkers...") :
+               scanProgress < 80 ? L("Midiendo luminosidad e hidratación…", "Measuring luminosity and hydration...") :
+               scanProgress < 95 ? L("Consolidando resultados…", "Consolidating results...") : L("Análisis completado", "Analysis complete")}
             </p>
           </div>
         )}
@@ -1929,17 +2023,17 @@ export default function AnalyzePage() {
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(232,164,176,0.1)", border: "1px solid rgba(232,164,176,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#e8a4b0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
-            <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: 24, fontWeight: 400, marginBottom: 12, letterSpacing: "-0.02em" }}>No pudimos leer tu piel</h2>
+            <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: 24, fontWeight: 400, marginBottom: 12, letterSpacing: "-0.02em" }}>{L("No pudimos leer tu piel", "We couldn't read your skin")}</h2>
             <p style={{ fontSize: 14, color: "rgba(245,237,232,0.5)", lineHeight: 1.7, marginBottom: 28, maxWidth: 360, margin: "0 auto 28px" }}>{qualityError}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 7, maxWidth: 320, margin: "0 auto 28px" }}>
-              {["Enciende una luz frontal (lámpara, ventana)","Centra bien tu rostro — debe verse completo","Sin gafas ni cabello cubriendo la cara"].map((tip,i)=>(
+              {[L("Enciende una luz frontal (lámpara, ventana)","Turn on a front light (lamp, window)"),L("Centra bien tu rostro — debe verse completo","Center your face well — it must be fully visible"),L("Sin gafas ni cabello cubriendo la cara","No glasses or hair covering the face")].map((tip,i)=>(
                 <div key={i} style={{ display: "flex", gap: 10, padding: "10px 14px", background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.07)", borderRadius: 10, textAlign: "left" }}>
                   <span style={{ fontSize: 10, color: "#7ecba1", fontWeight: 700, flexShrink: 0, paddingTop: 2 }}>0{i+1}</span>
                   <span style={{ fontSize: 13, color: "rgba(245,237,232,0.55)", lineHeight: 1.5 }}>{tip}</span>
                 </div>
               ))}
             </div>
-            <button onClick={reset} style={{ padding: "13px 36px", background: "linear-gradient(135deg,#e8a4b0,#c97e8e)", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Intentar de nuevo</button>
+            <button onClick={reset} style={{ padding: "13px 36px", background: "linear-gradient(135deg,#e8a4b0,#c97e8e)", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>{L("Intentar de nuevo", "Try again")}</button>
           </div>
         )}
 
@@ -1959,8 +2053,18 @@ export default function AnalyzePage() {
             const proportion = b.severity / totalSeverity
             const yearContribution = Math.abs(ageDiff) * proportion
             const roundedYears = Math.round(yearContribution * 2) / 2
-            const yearsStr = roundedYears <= 0.5 ? "~0.5 años" : roundedYears === 1 ? "~1 año" : `~${roundedYears} años`
-            const descMap: Record<string, string> = {
+            const yearsStr = locale === "en"
+              ? (roundedYears <= 0.5 ? "~0.5 yrs" : roundedYears === 1 ? "~1 yr" : `~${roundedYears} yrs`)
+              : (roundedYears <= 0.5 ? "~0.5 años" : roundedYears === 1 ? "~1 año" : `~${roundedYears} años`)
+            const descMap: Record<string, string> = locale === "en" ? {
+              "Daño solar": "Accumulated sun damage — uneven texture and spots",
+              "Inflamación": "Active redness on cheeks — chronic irritation",
+              "Glicación": "Collagen weakened by sugar — loss of firmness",
+              "Vascularidad": "Visible dilated vessels on cheeks and nose",
+              "Luminosidad": "Dull skin — no glow or natural reflection",
+              "Suavidad": "Irregular texture — rough surface and micro-flaking",
+              "Uniformidad": "Uneven tone — spots and visible redness",
+            } : {
               "Daño solar": "Fotodaño acumulado — textura irregular y manchas",
               "Inflamación": "Rojez activa en mejillas — irritación crónica",
               "Glicación": "Colágeno debilitado por azúcar — pérdida de firmeza",
@@ -1976,58 +2080,58 @@ export default function AnalyzePage() {
           const s = scores.zoneScores as Record<string, number>
           const derivedSubMetrics: Record<string, {label: string, score: number}[]> = {
             frente: [
-              { label: "Líneas horizontales", score: Math.round(clamp(s.forehead * 0.85, 15, 95)) },
-              { label: "Glabela / entrecejo", score: Math.round(clamp(s.forehead * 0.80 + 5, 15, 95)) },
-              { label: "Simetría de cejas", score: Math.round(clamp(s.forehead * 0.6 + 35, 40, 99)) },
-              { label: "Posición de cejas", score: Math.round(clamp(s.forehead * 0.5 + 40, 40, 100)) },
+              { label: L("Líneas horizontales", "Horizontal lines"), score: Math.round(clamp(s.forehead * 0.85, 15, 95)) },
+              { label: L("Glabela / entrecejo", "Glabella / between brows"), score: Math.round(clamp(s.forehead * 0.80 + 5, 15, 95)) },
+              { label: L("Simetría de cejas", "Brow symmetry"), score: Math.round(clamp(s.forehead * 0.6 + 35, 40, 99)) },
+              { label: L("Posición de cejas", "Brow position"), score: Math.round(clamp(s.forehead * 0.5 + 40, 40, 100)) },
             ],
             periocular: [
-              { label: "Apertura ocular", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.9 + 5, 20, 95)) },
-              { label: "Simetría L/R", score: Math.round(clamp(100 - Math.abs(s.periocularL - s.periocularR) * 3, 50, 99)) },
-              { label: "Ojeras / pigmento", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.75, 15, 95)) },
-              { label: "Ojeras / oscurecimiento", score: Math.round(clamp(scores.darkCircles ?? 70, 15, 95)) },
-              { label: "Bolsas / hinchazón", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.80 - 5, 15, 90)) },
-              { label: "Patas de gallo", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.85, 15, 90)) },
-              { label: "Densidad de pestañas", score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.5 + 40, 40, 99)) },
+              { label: L("Apertura ocular", "Eye opening"), score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.9 + 5, 20, 95)) },
+              { label: L("Simetría L/R", "L/R symmetry"), score: Math.round(clamp(100 - Math.abs(s.periocularL - s.periocularR) * 3, 50, 99)) },
+              { label: L("Ojeras / pigmento", "Dark circles / pigment"), score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.75, 15, 95)) },
+              { label: L("Ojeras / oscurecimiento", "Dark circles / darkening"), score: Math.round(clamp(scores.darkCircles ?? 70, 15, 95)) },
+              { label: L("Bolsas / hinchazón", "Bags / puffiness"), score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.80 - 5, 15, 90)) },
+              { label: L("Patas de gallo", "Crow's feet"), score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.85, 15, 90)) },
+              { label: L("Densidad de pestañas", "Lash density"), score: Math.round(clamp((s.periocularL + s.periocularR) / 2 * 0.5 + 40, 40, 99)) },
             ],
             nariz: [
-              { label: "Proporción", score: Math.round(clamp(s.nose * 0.9 + 5, 30, 98)) },
-              { label: "Simetría de narinas", score: Math.round(clamp(s.nose * 0.7 + 25, 40, 99)) },
+              { label: L("Proporción", "Proportion"), score: Math.round(clamp(s.nose * 0.9 + 5, 30, 98)) },
+              { label: L("Simetría de narinas", "Nostril symmetry"), score: Math.round(clamp(s.nose * 0.7 + 25, 40, 99)) },
             ],
             labios: [
-              { label: "Volumen", score: Math.round(clamp(s.lips * 0.85 + 5, 20, 95)) },
-              { label: "Ratio superior/inferior", score: Math.round(clamp(s.lips * 0.6 + 30, 40, 99)) },
-              { label: "Arco de Cupido", score: Math.round(clamp(s.lips * 0.7 + 20, 30, 98)) },
-              { label: "Suavidad", score: Math.round(clamp(s.lips * 0.9, 20, 98)) },
-              { label: "Líneas peribucales", score: Math.round(clamp(s.lips * 0.75 - 5, 15, 90)) },
-              { label: "Color / saturación", score: Math.round(clamp(s.lips * 0.65 + 15, 20, 95)) },
+              { label: L("Volumen", "Volume"), score: Math.round(clamp(s.lips * 0.85 + 5, 20, 95)) },
+              { label: L("Ratio superior/inferior", "Upper/lower ratio"), score: Math.round(clamp(s.lips * 0.6 + 30, 40, 99)) },
+              { label: L("Arco de Cupido", "Cupid's bow"), score: Math.round(clamp(s.lips * 0.7 + 20, 30, 98)) },
+              { label: L("Suavidad", "Smoothness"), score: Math.round(clamp(s.lips * 0.9, 20, 98)) },
+              { label: L("Líneas peribucales", "Perioral lines"), score: Math.round(clamp(s.lips * 0.75 - 5, 15, 90)) },
+              { label: L("Color / saturación", "Color / saturation"), score: Math.round(clamp(s.lips * 0.65 + 15, 20, 95)) },
             ],
             mejillas: [
-              { label: "Proyección de pómulos", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.85, 20, 90)) },
-              { label: "Volumen", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.80 + 5, 20, 90)) },
-              { label: "Textura", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.75, 15, 90)) },
-              { label: "Surco nasogeniano", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.85 + 5, 20, 95)) },
-              { label: "Drenaje / rojez", score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.7 + 20, 30, 98)) },
+              { label: L("Proyección de pómulos", "Cheekbone projection"), score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.85, 20, 90)) },
+              { label: L("Volumen", "Volume"), score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.80 + 5, 20, 90)) },
+              { label: L("Textura", "Texture"), score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.75, 15, 90)) },
+              { label: L("Surco nasogeniano", "Nasolabial fold"), score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.85 + 5, 20, 95)) },
+              { label: L("Drenaje / rojez", "Drainage / redness"), score: Math.round(clamp((s.cheekL + s.cheekR) / 2 * 0.7 + 20, 30, 98)) },
             ],
             mandibula: [
-              { label: "Definición mandibular", score: Math.round(clamp(s.jaw * 0.9, 20, 95)) },
-              { label: "Ángulo gonial", score: Math.round(clamp(s.jaw * 0.85 + 5, 20, 95)) },
-              { label: "Flacidez (jowl)", score: Math.round(clamp(s.jaw * 0.80, 20, 90)) },
-              { label: "Simetría L/R", score: Math.round(clamp(s.jaw * 0.6 + 35, 40, 99)) },
+              { label: L("Definición mandibular", "Jaw definition"), score: Math.round(clamp(s.jaw * 0.9, 20, 95)) },
+              { label: L("Ángulo gonial", "Gonial angle"), score: Math.round(clamp(s.jaw * 0.85 + 5, 20, 95)) },
+              { label: L("Flacidez (jowl)", "Sagging (jowl)"), score: Math.round(clamp(s.jaw * 0.80, 20, 90)) },
+              { label: L("Simetría L/R", "L/R symmetry"), score: Math.round(clamp(s.jaw * 0.6 + 35, 40, 99)) },
             ],
             cuello: [
-              { label: "Definición submentoniana", score: Math.round(clamp(s.neck * 0.85, 20, 90)) },
-              { label: "Líneas horizontales", score: Math.round(clamp(s.neck * 0.80 - 5, 15, 90)) },
-              { label: "Postura", score: 70 },
+              { label: L("Definición submentoniana", "Submental definition"), score: Math.round(clamp(s.neck * 0.85, 20, 90)) },
+              { label: L("Líneas horizontales", "Horizontal lines"), score: Math.round(clamp(s.neck * 0.80 - 5, 15, 90)) },
+              { label: L("Postura", "Posture"), score: 70 },
             ],
             piel: [
-              { label: "Suavidad", score: Math.round(clamp(scores.overall * 0.85, 15, 95)) },
-              { label: "Poros / textura", score: Math.round(clamp(scores.uniformity * 0.80, 15, 90)) },
-              { label: "Glicación", score: Math.round(clamp(100 - scores.glycation, 10, 95)) },
-              { label: "Manchas / uniformidad", score: Math.round(scores.uniformity) },
-              { label: "Luminosidad", score: Math.round(scores.luminosity) },
-              { label: "Daño solar", score: Math.round(clamp(100 - scores.sunDamage, 10, 95)) },
-              { label: "Simetría facial", score: Math.round(scores.symmetry ?? 85) },
+              { label: L("Suavidad", "Smoothness"), score: Math.round(clamp(scores.overall * 0.85, 15, 95)) },
+              { label: L("Poros / textura", "Pores / texture"), score: Math.round(clamp(scores.uniformity * 0.80, 15, 90)) },
+              { label: L("Glicación", "Glycation"), score: Math.round(clamp(100 - scores.glycation, 10, 95)) },
+              { label: L("Manchas / uniformidad", "Spots / uniformity"), score: Math.round(scores.uniformity) },
+              { label: L("Luminosidad", "Luminosity"), score: Math.round(scores.luminosity) },
+              { label: L("Daño solar", "Sun damage"), score: Math.round(clamp(100 - scores.sunDamage, 10, 95)) },
+              { label: L("Simetría facial", "Facial symmetry"), score: Math.round(scores.symmetry ?? 85) },
             ],
           }
 
@@ -2136,7 +2240,10 @@ export default function AnalyzePage() {
                         textShadow: "0 1px 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.6)",
                         opacity: isRevealed ? 1 : 0, transition: "opacity 0.3s ease 0.15s",
                       }}>
-                        {z.label}
+                        {(() => {
+                        const RESULT_LABELS_EN: Record<string, string> = { "Frente": "Forehead", "Ojo izq.": "Left eye", "Ojo der.": "Right eye", "Nariz": "Nose", "Mejilla izq.": "Left cheek", "Mejilla der.": "Right cheek", "Labios": "Lips", "Mandíbula": "Jawline", "Cuello": "Neck" }
+                        return locale === "en" ? (RESULT_LABELS_EN[z.label] || z.label) : z.label
+                      })()}
                       </span>
                     </div>
                   )
@@ -2166,7 +2273,7 @@ export default function AnalyzePage() {
                     animation: "fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
                   }}>
                     <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 8px #7ecba1" }} />
-                    <span style={{ fontSize: 10, color: "#7ecba1", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>9 zonas analizadas</span>
+                    <span style={{ fontSize: 10, color: "#7ecba1", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>{L("9 zonas analizadas", "9 zones analyzed")}</span>
                   </div>
                 )}
               </div>
@@ -2181,10 +2288,10 @@ export default function AnalyzePage() {
             }}>
               {/* User's real age appears first */}
               <p style={{ fontSize: 14, color: "rgba(245,237,232,0.4)", marginBottom: 6, letterSpacing: "0.02em" }}>
-                Tienes <strong style={{ color: "rgba(245,237,232,0.7)" }}>{userAge}</strong> años
+                {L("Tienes", "You are")} <strong style={{ color: "rgba(245,237,232,0.7)" }}>{userAge}</strong> {L("años", "years old")}
               </p>
               <p style={{ fontSize: 10, letterSpacing: "0.18em", color: "rgba(245,237,232,0.2)", textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>
-                Tu rostro aparenta
+                {L("Tu rostro aparenta", "Your face looks")}
               </p>
               <p style={{
                 fontFamily: "var(--font-fraunces)", fontSize: "clamp(72px, 16vw, 120px)",
@@ -2205,14 +2312,14 @@ export default function AnalyzePage() {
                     border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
                     boxShadow: isOlder ? "0 0 20px rgba(232,164,176,0.1)" : "0 0 20px rgba(126,203,161,0.1)",
                   }}>
-                    {isOlder ? `+${ageDiff} años por encima` : isSame ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
+                    {isOlder ? `+${ageDiff} ${L("años por encima", "years above")}` : isSame ? L("Coincide con tu edad", "Matches your age") : `${Math.abs(ageDiff)} ${L("años por debajo", "years below")}`}
                   </span>
                   <h2 style={{
                     fontFamily: "var(--font-fraunces)", fontSize: "clamp(18px, 3.5vw, 26px)",
                     fontWeight: 400, fontStyle: "italic", marginTop: 20, letterSpacing: "-0.02em", lineHeight: 1.25,
                     color: "rgba(245,237,232,0.85)",
                   }}>
-                    {userName ? `${userName}, ` : ""}{isOlder ? "se puede revertir." : isSame ? "buen punto de partida." : "vas por buen camino."}
+                    {userName ? `${userName}, ` : ""}{isOlder ? L("se puede revertir.", "it can be reversed.") : isSame ? L("buen punto de partida.", "good starting point.") : L("vas por buen camino.", "you're on track.")}
                   </h2>
                 </div>
               )}
@@ -2227,7 +2334,7 @@ export default function AnalyzePage() {
             }}>
               <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 16, padding: "24px 20px" }}>
                 <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>
-                  {isOlder ? "Lo que está sumando años" : "Áreas de oportunidad"}
+                  {isOlder ? L("Lo que está sumando años", "What's adding years") : L("Áreas de oportunidad", "Areas of opportunity")}
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {humanFindings.map((f, idx) => (
@@ -2271,57 +2378,57 @@ export default function AnalyzePage() {
               {/* Subtle divider */}
               <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(245,237,232,0.08), transparent)", marginBottom: 28 }} />
               <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>
-                Estado de tu piel
+                {L("Estado de tu piel", "Your skin status")}
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                 {[
                   {
-                    label: "Ojeras",
+                    label: L("Ojeras", "Dark circles"),
                     score: scores.darkCircles,
-                    levels: ["Marcadas", "Moderadas", "Leves", "Mínimas", "No visibles"],
+                    levels: locale === "en" ? ["Severe", "Moderate", "Mild", "Minimal", "Not visible"] : ["Marcadas", "Moderadas", "Leves", "Mínimas", "No visibles"],
                     getLevel: (s: number) => s >= 85 ? 4 : s >= 70 ? 3 : s >= 55 ? 2 : s >= 40 ? 1 : 0,
-                    getAction: (s: number) => s >= 70 ? "Mantén tu rutina de descanso" : s >= 40 ? "Un contorno de ojos con cafeína + vitamina K ayuda en 4 semanas" : "Prioriza sueño + contorno con retinol. Casos severos: ácido hialurónico",
-                    ageContext: (s: number) => s >= 70 ? `Normal para ${userAge} años` : s >= 50 ? `Algo elevado para ${userAge} años` : `Por encima del promedio para ${userAge} años`,
+                    getAction: (s: number) => s >= 70 ? L("Mantén tu rutina de descanso", "Keep up your rest routine") : s >= 40 ? L("Un contorno de ojos con cafeína + vitamina K ayuda en 4 semanas", "An eye contour with caffeine + vitamin K helps in 4 weeks") : L("Prioriza sueño + contorno con retinol. Casos severos: ácido hialurónico", "Prioritize sleep + retinol eye contour. Severe cases: hyaluronic acid"),
+                    ageContext: (s: number) => s >= 70 ? L(`Normal para ${userAge} años`, `Normal for age ${userAge}`) : s >= 50 ? L(`Algo elevado para ${userAge} años`, `Somewhat elevated for age ${userAge}`) : L(`Por encima del promedio para ${userAge} años`, `Above average for age ${userAge}`),
                   },
                   {
-                    label: "Textura",
+                    label: L("Textura", "Texture"),
                     score: scores.texture,
-                    levels: ["Muy rugosa", "Irregular", "Algo irregular", "Suave", "Muy lisa"],
+                    levels: locale === "en" ? ["Very rough", "Irregular", "Slightly irregular", "Smooth", "Very smooth"] : ["Muy rugosa", "Irregular", "Algo irregular", "Suave", "Muy lisa"],
                     getLevel: (s: number) => s >= 85 ? 4 : s >= 70 ? 3 : s >= 55 ? 2 : s >= 40 ? 1 : 0,
-                    getAction: (s: number) => s >= 70 ? "Tu piel tiene buena renovación celular" : s >= 40 ? "Una exfoliación suave 2x/semana mejora esto en semanas" : "Exfoliación química (AHA/BHA) + hidratación con ceramidas",
-                    ageContext: (s: number) => s >= 70 ? `Normal para ${userAge} años` : s >= 50 ? `Algo elevado para ${userAge} años` : `Por encima del promedio para ${userAge} años`,
+                    getAction: (s: number) => s >= 70 ? L("Tu piel tiene buena renovación celular", "Your skin has good cell renewal") : s >= 40 ? L("Una exfoliación suave 2x/semana mejora esto en semanas", "Gentle exfoliation 2x/week improves this in weeks") : L("Exfoliación química (AHA/BHA) + hidratación con ceramidas", "Chemical exfoliation (AHA/BHA) + moisturizer with ceramides"),
+                    ageContext: (s: number) => s >= 70 ? L(`Normal para ${userAge} años`, `Normal for age ${userAge}`) : s >= 50 ? L(`Algo elevado para ${userAge} años`, `Somewhat elevated for age ${userAge}`) : L(`Por encima del promedio para ${userAge} años`, `Above average for age ${userAge}`),
                   },
                   {
-                    label: "Arrugas",
+                    label: L("Arrugas", "Wrinkles"),
                     score: scores.wrinkleDepth,
-                    levels: ["Profundas", "Visibles", "Líneas finas", "Mínimas", "Sin arrugas"],
+                    levels: locale === "en" ? ["Deep", "Visible", "Fine lines", "Minimal", "No wrinkles"] : ["Profundas", "Visibles", "Líneas finas", "Mínimas", "Sin arrugas"],
                     getLevel: (s: number) => s >= 85 ? 4 : s >= 70 ? 3 : s >= 55 ? 2 : s >= 40 ? 1 : 0,
-                    getAction: (s: number) => s >= 70 ? "Sigue con protección solar + retinol preventivo" : s >= 40 ? "Retinol nocturno + péptidos aceleran la reparación" : "Retinol + tratamientos profesionales (LED, botox preventivo)",
-                    ageContext: (s: number) => s >= 70 ? `Normal para ${userAge} años` : s >= 50 ? `Algo elevado para ${userAge} años` : `Por encima del promedio para ${userAge} años`,
+                    getAction: (s: number) => s >= 70 ? L("Sigue con protección solar + retinol preventivo", "Continue with sunscreen + preventive retinol") : s >= 40 ? L("Retinol nocturno + péptidos aceleran la reparación", "Nightly retinol + peptides accelerate repair") : L("Retinol + tratamientos profesionales (LED, botox preventivo)", "Retinol + professional treatments (LED, preventive botox)"),
+                    ageContext: (s: number) => s >= 70 ? L(`Normal para ${userAge} años`, `Normal for age ${userAge}`) : s >= 50 ? L(`Algo elevado para ${userAge} años`, `Somewhat elevated for age ${userAge}`) : L(`Por encima del promedio para ${userAge} años`, `Above average for age ${userAge}`),
                   },
                   {
-                    label: "Rojez",
+                    label: L("Rojez", "Redness"),
                     score: Math.round(100 - scores.inflammation),
-                    levels: ["Intensa", "Moderada", "Leve", "Mínima", "Sin rojez"],
+                    levels: locale === "en" ? ["Intense", "Moderate", "Mild", "Minimal", "No redness"] : ["Intensa", "Moderada", "Leve", "Mínima", "Sin rojez"],
                     getLevel: (s: number) => s >= 85 ? 4 : s >= 70 ? 3 : s >= 55 ? 2 : s >= 40 ? 1 : 0,
-                    getAction: (s: number) => s >= 70 ? "Tu piel está calmada, buen trabajo" : s >= 40 ? "Niacinamida + centella asiática reducen inflamación" : "Evita agua caliente, alcohol, picante. Niacinamida 10% + azelaic acid",
-                    ageContext: (s: number) => s >= 70 ? "Dentro del rango saludable" : s >= 50 ? "Algo elevado — monitorear" : "Fuera del rango — requiere atención",
+                    getAction: (s: number) => s >= 70 ? L("Tu piel está calmada, buen trabajo", "Your skin is calm, good job") : s >= 40 ? L("Niacinamida + centella asiática reducen inflamación", "Niacinamide + centella asiatica reduce inflammation") : L("Evita agua caliente, alcohol, picante. Niacinamida 10% + azelaic acid", "Avoid hot water, alcohol, spicy food. Niacinamide 10% + azelaic acid"),
+                    ageContext: (s: number) => s >= 70 ? L("Dentro del rango saludable", "Within healthy range") : s >= 50 ? L("Algo elevado — monitorear", "Somewhat elevated — monitor") : L("Fuera del rango — requiere atención", "Out of range — needs attention"),
                   },
                   {
-                    label: "Manchas",
+                    label: L("Manchas", "Spots"),
                     score: scores.uniformity,
-                    levels: ["Hiperpigmentación", "Manchas visibles", "Pocas manchas", "Casi uniforme", "Tono parejo"],
+                    levels: locale === "en" ? ["Hyperpigmentation", "Visible spots", "Few spots", "Nearly uniform", "Even tone"] : ["Hiperpigmentación", "Manchas visibles", "Pocas manchas", "Casi uniforme", "Tono parejo"],
                     getLevel: (s: number) => s >= 85 ? 4 : s >= 70 ? 3 : s >= 55 ? 2 : s >= 40 ? 1 : 0,
-                    getAction: (s: number) => s >= 70 ? "SPF diario para mantener tu tono" : s >= 40 ? "Vitamina C mañana + SPF 50 frenan nuevas manchas" : "Despigmentante (ácido tranexámico) + SPF estricto + vitamina C",
-                    ageContext: (s: number) => s >= 70 ? `Normal para ${userAge} años` : s >= 50 ? `Algo elevado para ${userAge} años` : `Por encima del promedio para ${userAge} años`,
+                    getAction: (s: number) => s >= 70 ? L("SPF diario para mantener tu tono", "Daily SPF to maintain your tone") : s >= 40 ? L("Vitamina C mañana + SPF 50 frenan nuevas manchas", "Morning vitamin C + SPF 50 prevent new spots") : L("Despigmentante (ácido tranexámico) + SPF estricto + vitamina C", "Depigmenting agent (tranexamic acid) + strict SPF + vitamin C"),
+                    ageContext: (s: number) => s >= 70 ? L(`Normal para ${userAge} años`, `Normal for age ${userAge}`) : s >= 50 ? L(`Algo elevado para ${userAge} años`, `Somewhat elevated for age ${userAge}`) : L(`Por encima del promedio para ${userAge} años`, `Above average for age ${userAge}`),
                   },
                   {
-                    label: "Simetría facial",
+                    label: L("Simetría facial", "Facial symmetry"),
                     score: scores.symmetry ?? 85,
-                    levels: ["Asimetría notable", "Leve asimetría", "Normal", "Alta", "Muy alta"],
+                    levels: locale === "en" ? ["Notable asymmetry", "Slight asymmetry", "Normal", "High", "Very high"] : ["Asimetría notable", "Leve asimetría", "Normal", "Alta", "Muy alta"],
                     getLevel: (s: number) => s >= 92 ? 4 : s >= 82 ? 3 : s >= 72 ? 2 : s >= 60 ? 1 : 0,
-                    getAction: (s: number) => s >= 80 ? "Tu rostro tiene buena armonía" : s >= 60 ? "Asimetría leve — completamente normal, puede ser postural" : "Evaluar con especialista si te preocupa",
-                    ageContext: (s: number) => s >= 80 ? "Dentro del rango normal" : "Variación natural — no es un problema de salud",
+                    getAction: (s: number) => s >= 80 ? L("Tu rostro tiene buena armonía", "Your face has good harmony") : s >= 60 ? L("Asimetría leve — completamente normal, puede ser postural", "Slight asymmetry — completely normal, may be postural") : L("Evaluar con especialista si te preocupa", "Evaluate with a specialist if concerned"),
+                    ageContext: (s: number) => s >= 80 ? L("Dentro del rango normal", "Within normal range") : L("Variación natural — no es un problema de salud", "Natural variation — not a health issue"),
                   },
                 ].map((item, i) => {
                   const level = item.getLevel(item.score)
@@ -2384,10 +2491,10 @@ export default function AnalyzePage() {
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
                   <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", fontWeight: 700 }}>
-                    Análisis con IA
+                    {L("Análisis con IA", "AI Analysis")}
                   </p>
                   <span style={{ fontSize: 8, color: "#7ecba1", background: "rgba(126,203,161,0.08)", border: "1px solid rgba(126,203,161,0.18)", padding: "3px 10px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    ANÁLISIS AVANZADO
+                    {L("ANÁLISIS AVANZADO", "ADVANCED ANALYSIS")}
                   </span>
                 </div>
 
@@ -2401,7 +2508,7 @@ export default function AnalyzePage() {
                     }} />
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, position: "relative" }}>
                       <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(232,164,176,0.15)", borderTopColor: "#e8a4b0", animation: "spin 0.8s linear infinite" }} />
-                      <span style={{ fontSize: 12, color: "rgba(245,237,232,0.4)" }}>Analizando condiciones con IA...</span>
+                      <span style={{ fontSize: 12, color: "rgba(245,237,232,0.4)" }}>{L("Analizando condiciones con IA...", "Analyzing conditions with AI...")}</span>
                     </div>
                   </div>
                 )}
@@ -2416,13 +2523,13 @@ export default function AnalyzePage() {
                         animation: "fadeUp 0.5s ease",
                       }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Acné</span>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>{L("Acné", "Acne")}</span>
                           <span style={{ fontSize: 11, color: visionResults.acne.severity === "severe" ? "#e8a4b0" : visionResults.acne.severity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
-                            {visionResults.acne.count} {visionResults.acne.count === 1 ? "lesión" : "lesiones"}
+                            {visionResults.acne.count} {visionResults.acne.count === 1 ? L("lesión", "lesion") : L("lesiones", "lesions")}
                           </span>
                         </div>
                         <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
-                          Severidad: {visionResults.acne.severity === "mild" ? "leve" : visionResults.acne.severity === "moderate" ? "moderada" : visionResults.acne.severity === "severe" ? "severa" : visionResults.acne.severity}
+                          {L("Severidad", "Severity")}: {visionResults.acne.severity === "mild" ? L("leve", "mild") : visionResults.acne.severity === "moderate" ? L("moderada", "moderate") : visionResults.acne.severity === "severe" ? L("severa", "severe") : visionResults.acne.severity}
                           {visionResults.acne.locations?.length > 0 && ` · ${visionResults.acne.locations.join(", ")}`}
                         </p>
                       </div>
@@ -2435,13 +2542,13 @@ export default function AnalyzePage() {
                         animation: "fadeUp 0.5s ease 0.1s both",
                       }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Manchas</span>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>{L("Manchas", "Spots")}</span>
                           <span style={{ fontSize: 11, color: visionResults.spots.severity === "severe" ? "#e8a4b0" : visionResults.spots.severity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
-                            {visionResults.spots.count} {visionResults.spots.count === 1 ? "mancha" : "manchas"}
+                            {visionResults.spots.count} {visionResults.spots.count === 1 ? L("mancha", "spot") : L("manchas", "spots")}
                           </span>
                         </div>
                         <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
-                          Severidad: {visionResults.spots.severity === "mild" ? "leve" : visionResults.spots.severity === "moderate" ? "moderada" : visionResults.spots.severity === "severe" ? "severa" : visionResults.spots.severity}
+                          {L("Severidad", "Severity")}: {visionResults.spots.severity === "mild" ? L("leve", "mild") : visionResults.spots.severity === "moderate" ? L("moderada", "moderate") : visionResults.spots.severity === "severe" ? L("severa", "severe") : visionResults.spots.severity}
                           {visionResults.spots.locations?.length > 0 && ` · ${visionResults.spots.locations.join(", ")}`}
                         </p>
                       </div>
@@ -2454,13 +2561,13 @@ export default function AnalyzePage() {
                         animation: "fadeUp 0.5s ease 0.2s both",
                       }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Rojez</span>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>{L("Rojez", "Redness")}</span>
                           <span style={{ fontSize: 11, color: visionResults.redness.intensity === "severe" ? "#e8a4b0" : visionResults.redness.intensity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
-                            {visionResults.redness.intensity === "mild" ? "Leve" : visionResults.redness.intensity === "moderate" ? "Moderada" : visionResults.redness.intensity === "severe" ? "Severa" : visionResults.redness.intensity}
+                            {visionResults.redness.intensity === "mild" ? L("Leve", "Mild") : visionResults.redness.intensity === "moderate" ? L("Moderada", "Moderate") : visionResults.redness.intensity === "severe" ? L("Severa", "Severe") : visionResults.redness.intensity}
                           </span>
                         </div>
                         <p style={{ fontSize: 12, color: "rgba(245,237,232,0.45)", margin: 0 }}>
-                          {visionResults.redness.zones?.length > 0 ? `Zonas: ${visionResults.redness.zones.join(", ")}` : ""}
+                          {visionResults.redness.zones?.length > 0 ? `${L("Zonas", "Zones")}: ${visionResults.redness.zones.join(", ")}` : ""}
                         </p>
                       </div>
                     )}
@@ -2469,7 +2576,7 @@ export default function AnalyzePage() {
                         background: "rgba(126,203,161,0.06)", border: "1px solid rgba(126,203,161,0.15)",
                         borderRadius: 16, padding: "20px", textAlign: "center",
                       }}>
-                        <span style={{ fontSize: 13, color: "#7ecba1", fontWeight: 600 }}>No se detectaron condiciones activas</span>
+                        <span style={{ fontSize: 13, color: "#7ecba1", fontWeight: 600 }}>{L("No se detectaron condiciones activas", "No active conditions detected")}</span>
                       </div>
                     )}
                     {visionResults.summary && (
@@ -2492,7 +2599,7 @@ export default function AnalyzePage() {
               <div style={{ marginBottom: 32 }}>
                 <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(245,237,232,0.08), transparent)", marginBottom: 28 }} />
                 <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>
-                  Lo que dice la ciencia
+                  {L("Lo que dice la ciencia", "What science says")}
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {brainInsights.map((insight, idx) => {
@@ -2533,17 +2640,17 @@ export default function AnalyzePage() {
             <div style={{ marginBottom: 32 }}>
               <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(245,237,232,0.08), transparent)", marginBottom: 28 }} />
               <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 6, fontWeight: 700 }}>
-                Detalle completo
+                {L("Detalle completo", "Full detail")}
               </p>
               <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(20px, 3.5vw, 24px)", fontWeight: 400, marginBottom: 18, letterSpacing: "-0.02em", color: "rgba(245,237,232,0.9)" }}>
-                Análisis por zona
+                {L("Análisis por zona", "Zone analysis")}
               </h2>
               {Object.entries(ACCORDION_META).map(([key, meta]) => {
                 const subs = derivedSubMetrics[key]
                 const accScore = subs ? Math.round(subs.reduce((a, sm) => a + sm.score, 0) / subs.length) : 50
                 const isOpen = activeZone === key
                 const statusColor = accScore >= 80 ? "#7ecba1" : accScore >= 50 ? "#d4af88" : "#e8a4b0"
-                const zoneSeverity = accScore >= 80 ? "Excelente" : accScore >= 65 ? "Bien" : accScore >= 50 ? "Mejorable" : "Atenci\u00f3n"
+                const zoneSeverity = accScore >= 80 ? L("Excelente", "Excellent") : accScore >= 65 ? L("Bien", "Good") : accScore >= 50 ? L("Mejorable", "Needs work") : L("Atenci\u00f3n", "Attention")
                 const zoneSeverityColor = accScore >= 80 ? "#7ecba1" : accScore >= 65 ? "#d4af88" : accScore >= 50 ? "#d4af88" : "#e8a4b0"
                 return (
                   <div key={key} style={{
@@ -2573,8 +2680,11 @@ export default function AnalyzePage() {
                             border: "1.5px solid rgba(28,22,19,0.9)",
                           }} />
                         </div>
-                        <span style={{ fontSize: 14, fontWeight: 600 }}>{meta.label}</span>
-                        {key === "cuello" && <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)", fontStyle: "italic" }}>estimado</span>}
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>{(() => {
+                          const ACCORDION_EN: Record<string, string> = { "Frente": "Forehead", "Periocular": "Eye area", "Nariz": "Nose", "Labios": "Lips", "Mejillas": "Cheeks", "Mandíbula": "Jawline", "Cuello": "Neck", "Piel global": "Overall skin" }
+                          return locale === "en" ? (ACCORDION_EN[meta.label] || meta.label) : meta.label
+                        })()}</span>
+                        {key === "cuello" && <span style={{ fontSize: 10, color: "rgba(245,237,232,0.3)", fontStyle: "italic" }}>{L("estimado", "estimated")}</span>}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 14, fontWeight: 400, color: zoneSeverityColor }}>{zoneSeverity}</span>
@@ -2585,7 +2695,7 @@ export default function AnalyzePage() {
                       <div style={{ padding: "4px 20px 20px", animation: "fadeUp 0.3s ease" }}>
                         {subs.map((sub, i) => {
                           const barColor = sub.score >= 80 ? "#7ecba1" : sub.score >= 60 ? "#d4af88" : sub.score >= 40 ? "#d4af88" : "#e8a4b0"
-                          const subSeverity = sub.score >= 80 ? "Bien" : sub.score >= 60 ? "Aceptable" : sub.score >= 40 ? "Mejorable" : "Bajo"
+                          const subSeverity = sub.score >= 80 ? L("Bien", "Good") : sub.score >= 60 ? L("Aceptable", "Fair") : sub.score >= 40 ? L("Mejorable", "Needs work") : L("Bajo", "Low")
                           return (
                             <div key={i} style={{ marginBottom: 14 }}>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
@@ -2618,7 +2728,7 @@ export default function AnalyzePage() {
                   transition: "all 0.2s",
                 }}
               >
-                <span>Ver biomarcadores detallados</span>
+                <span>{L("Ver biomarcadores detallados", "View detailed biomarkers")}</span>
                 <span style={{ fontSize: 14, transition: "transform 0.2s", transform: showBiomarkers ? "rotate(180deg)" : "rotate(0)" }}>▾</span>
               </button>
               {showBiomarkers && (
@@ -2627,14 +2737,14 @@ export default function AnalyzePage() {
                   border: "1px solid rgba(245,237,232,0.08)", borderTop: "none",
                   borderRadius: "0 0 14px 14px", padding: "20px",
                 }}>
-                  <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.22)", marginBottom: 20, lineHeight: 1.5 }}>Todas las barras miden salud: más llena = mejor estado</p>
+                  <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.22)", marginBottom: 20, lineHeight: 1.5 }}>{L("Todas las barras miden salud: más llena = mejor estado", "All bars measure health: fuller = better condition")}</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                     {biomarkers.map(b => (
                       <div key={b.label}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <span style={{ fontSize: 13, color: "rgba(245,237,232,0.75)", fontWeight: 600 }}>{b.friendlyLabel}</span>
-                            {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>MEJORABLE</span>}
+                            {b.alert && <span style={{ fontSize: 8, color: "#d4af88", background: "rgba(212,175,136,0.1)", border: "1px solid rgba(212,175,136,0.22)", padding: "1px 7px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em" }}>{L("MEJORABLE", "NEEDS WORK")}</span>}
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <span style={{ fontSize: 9, color: "rgba(245,237,232,0.28)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{b.note}</span>
@@ -2673,7 +2783,7 @@ export default function AnalyzePage() {
                   transition: "transform 0.2s ease, box-shadow 0.2s ease",
                 }}
               >
-                <span>¿Cómo quieres revertirlo?</span>
+                <span>{L("¿Cómo quieres revertirlo?", "How do you want to reverse it?")}</span>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
                   <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -2686,7 +2796,7 @@ export default function AnalyzePage() {
                   <circle cx="12" cy="16.5" r="0.8" fill="rgba(245,237,232,1)"/>
                 </svg>
                 <p style={{ fontSize: 11, color: "rgba(245,237,232,0.25)", textAlign: "center", lineHeight: 1.6 }}>
-                  Estimación visual educativa basada en biomarcadores faciales. No constituye diagnóstico médico ni reemplaza la evaluación de un profesional de la salud.
+                  {L("Estimación visual educativa basada en biomarcadores faciales. No constituye diagnóstico médico ni reemplaza la evaluación de un profesional de la salud.", "Educational visual estimate based on facial biomarkers. This does not constitute a medical diagnosis and does not replace evaluation by a healthcare professional.")}
                 </p>
               </div>
             </div>
@@ -2700,10 +2810,10 @@ export default function AnalyzePage() {
           return (
             <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
               <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 400, marginBottom: 12, letterSpacing: "-0.02em" }}>
-                ¿Cómo quieres revertirlo?
+                {L("¿Cómo quieres revertirlo?", "How do you want to reverse it?")}
               </h2>
               <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", marginBottom: 36, lineHeight: 1.6 }}>
-                Tu rostro aparenta {skinAge} años. Elige cómo quieres trabajar en ello.
+                {L(`Tu rostro aparenta ${skinAge} años. Elige cómo quieres trabajar en ello.`, `Your face looks ${skinAge} years old. Choose how you want to work on it.`)}
               </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -2715,18 +2825,18 @@ export default function AnalyzePage() {
                   transition: "all 0.2s",
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400 }}>Plan gratuito</span>
-                    <span style={{ fontSize: 10, letterSpacing: "0.1em", color: "#7ecba1", background: "rgba(126,203,161,0.1)", border: "1px solid rgba(126,203,161,0.2)", padding: "3px 10px", borderRadius: 99, fontWeight: 700, textTransform: "uppercase" }}>Gratis</span>
+                    <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400 }}>{L("Plan gratuito", "Free plan")}</span>
+                    <span style={{ fontSize: 10, letterSpacing: "0.1em", color: "#7ecba1", background: "rgba(126,203,161,0.1)", border: "1px solid rgba(126,203,161,0.2)", padding: "3px 10px", borderRadius: 99, fontWeight: 700, textTransform: "uppercase" }}>{L("Gratis", "Free")}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {["Rutina AM/PM con productos recomendados", "Suplementos + hábitos personalizados", "Links directos para comprar"].map(item => (
+                    {[L("Rutina AM/PM con productos recomendados", "AM/PM routine with recommended products"), L("Suplementos + hábitos personalizados", "Supplements + personalized habits"), L("Links directos para comprar", "Direct links to purchase")].map(item => (
                       <div key={item} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#7ecba1", flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: "rgba(245,237,232,0.5)" }}>{item}</span>
                       </div>
                     ))}
                   </div>
-                  <p style={{ fontSize: 11, color: "rgba(245,237,232,0.25)", marginTop: 12 }}>Responde unas preguntas sobre tu estilo de vida →</p>
+                  <p style={{ fontSize: 11, color: "rgba(245,237,232,0.25)", marginTop: 12 }}>{L("Responde unas preguntas sobre tu estilo de vida →", "Answer a few questions about your lifestyle →")}</p>
                 </button>
 
                 {/* Personalized consultation card */}
@@ -2738,18 +2848,18 @@ export default function AnalyzePage() {
                   transition: "all 0.2s",
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400 }}>Asesoría personalizada</span>
+                    <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400 }}>{L("Asesoría personalizada", "Personalized consultation")}</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af88" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {["Evaluación profunda 1 a 1 con especialista", "Plan 100% a tu medida", "Seguimiento mensual de progreso"].map(item => (
+                    {[L("Evaluación profunda 1 a 1 con especialista", "In-depth 1-on-1 evaluation with specialist"), L("Plan 100% a tu medida", "100% tailored plan"), L("Seguimiento mensual de progreso", "Monthly progress tracking")].map(item => (
                       <div key={item} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#d4af88", flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: "rgba(245,237,232,0.5)" }}>{item}</span>
                       </div>
                     ))}
                   </div>
-                  <p style={{ fontSize: 11, color: "#d4af88", marginTop: 12, fontWeight: 600 }}>Habla directo con un experto →</p>
+                  <p style={{ fontSize: 11, color: "#d4af88", marginTop: 12, fontWeight: 600 }}>{L("Habla directo con un experto →", "Talk directly with an expert →")}</p>
                 </button>
               </div>
             </div>
@@ -2759,29 +2869,29 @@ export default function AnalyzePage() {
         {/* ── CONSULTATION — WhatsApp CTA ── */}
         {stage === "consultation" && scores && (() => {
           const skinAge = Math.round(scores.ageApparent || parseInt(preQuizData.age || "30") + 3)
-          const waMsg = encodeURIComponent(`Hola, acabo de analizar mi rostro en InsideOutMed. Mi score fue ${scores.overall}/100 y aparento ${skinAge} años. Me gustaría una asesoría personalizada.`)
+          const waMsg = encodeURIComponent(locale === "en" ? `Hi, I just analyzed my face on InsideOutMed. My score was ${scores.overall}/100 and I look ${skinAge} years old. I'd like a personalized consultation.` : `Hola, acabo de analizar mi rostro en InsideOutMed. Mi score fue ${scores.overall}/100 y aparento ${skinAge} años. Me gustaría una asesoría personalizada.`)
           return (
             <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 20 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4af88" strokeWidth="1.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                <span style={{ fontSize: 10, letterSpacing: "0.14em", color: "#d4af88", textTransform: "uppercase", fontWeight: 700 }}>Asesoría personalizada</span>
+                <span style={{ fontSize: 10, letterSpacing: "0.14em", color: "#d4af88", textTransform: "uppercase", fontWeight: 700 }}>{L("Asesoría personalizada", "Personalized consultation")}</span>
               </div>
 
               <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 400, marginBottom: 10, letterSpacing: "-0.02em" }}>
-                Un especialista va a evaluar tu caso
+                {L("Un especialista va a evaluar tu caso", "A specialist will evaluate your case")}
               </h2>
               <p style={{ fontSize: 13, color: "rgba(245,237,232,0.4)", marginBottom: 32, lineHeight: 1.6 }}>
-                Tu análisis muestra un score de {scores.overall}/100 y {skinAge} años de edad aparente. Un experto revisará cada detalle contigo.
+                {L(`Tu análisis muestra un score de ${scores.overall}/100 y ${skinAge} años de edad aparente. Un experto revisará cada detalle contigo.`, `Your analysis shows a score of ${scores.overall}/100 and an apparent age of ${skinAge} years. An expert will review every detail with you.`)}
               </p>
 
               {/* What's included */}
               <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 18, padding: "24px", marginBottom: 24, textAlign: "left" }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16, fontWeight: 700 }}>¿Qué incluye?</p>
+                <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16, fontWeight: 700 }}>{L("¿Qué incluye?", "What's included?")}</p>
                 {[
-                  { icon: "◎", text: "Videollamada 1:1 con dermatólogo/esteticista" },
-                  { icon: "◈", text: "Revisión detallada de tu informe facial" },
-                  { icon: "◇", text: "Plan 100% personalizado para tu caso" },
-                  { icon: "◐", text: "Seguimiento mensual de tu progreso" },
+                  { icon: "◎", text: L("Videollamada 1:1 con dermatólogo/esteticista", "1:1 video call with dermatologist/aesthetician") },
+                  { icon: "◈", text: L("Revisión detallada de tu informe facial", "Detailed review of your facial report") },
+                  { icon: "◇", text: L("Plan 100% personalizado para tu caso", "100% personalized plan for your case") },
+                  { icon: "◐", text: L("Seguimiento mensual de tu progreso", "Monthly progress tracking") },
                 ].map((item, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < 3 ? "1px solid rgba(245,237,232,0.05)" : "none" }}>
                     <span style={{ fontSize: 14, color: "#d4af88" }}>{item.icon}</span>
@@ -2804,14 +2914,14 @@ export default function AnalyzePage() {
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                Agendar mi consulta
+                {L("Agendar mi consulta", "Book my consultation")}
               </a>
 
               <button onClick={() => setStage("plan-choice")} style={{
                 background: "none", border: "none", color: "rgba(245,237,232,0.3)",
                 fontSize: 12, cursor: "pointer", padding: "8px 16px",
               }}>
-                ← Volver a opciones
+                {L("← Volver a opciones", "← Back to options")}
               </button>
             </div>
           )

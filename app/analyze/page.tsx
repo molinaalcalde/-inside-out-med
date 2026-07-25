@@ -2084,16 +2084,17 @@ export default function AnalyzePage() {
           const brainInsights = generateBrainInsights(scores, userProfile, brainPapers)
 
           return (
-          <div style={{ maxWidth: 560, width: "100%" }}>
+          <div style={{ maxWidth: 560, width: "100%", scrollBehavior: "smooth" }}>
 
             {/* ── 1. PHOTO — protagonist, full-width with zone reveals ── */}
             {capturedUrl && (
               <div style={{
-                position: "relative", width: "100%", aspectRatio: "3/4", borderRadius: 24,
+                position: "relative", width: "100%", aspectRatio: "3/4", borderRadius: 20,
                 overflow: "hidden", marginBottom: 32,
                 opacity: revealPhase >= 0 ? 1 : 0,
                 transform: revealPhase >= 0 ? "scale(1)" : "scale(0.96)",
                 transition: "opacity 0.8s ease, transform 0.8s ease",
+                boxShadow: "0 0 60px rgba(232,164,176,0.08), 0 0 120px rgba(14,12,18,0.5)",
               }}>
                 <img src={capturedUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
 
@@ -2111,7 +2112,8 @@ export default function AnalyzePage() {
                     <div key={z.key} style={{
                       position: "absolute", left: `${z.dotX}%`, top: `${z.dotY}%`,
                       transform: "translate(-50%, -50%)", zIndex: 5,
-                      opacity: isRevealed ? 1 : 0, transition: "opacity 0.4s ease",
+                      opacity: isRevealed ? 1 : 0,
+                      transition: "opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
                     }}>
                       <div style={{
                         width: 28, height: 28, borderRadius: "50%",
@@ -2156,14 +2158,15 @@ export default function AnalyzePage() {
                   <div style={{
                     position: "absolute", bottom: 16, left: "50%",
                     transform: "translateX(-50%)",
-                    background: "rgba(14,12,18,0.65)", backdropFilter: "blur(12px)",
-                    borderRadius: 99, padding: "6px 16px",
-                    border: "1px solid rgba(126,203,161,0.25)",
-                    display: "flex", alignItems: "center", gap: 6,
-                    animation: "fadeSlideUp 0.5s ease",
+                    background: "rgba(14,12,18,0.7)", backdropFilter: "blur(16px)",
+                    WebkitBackdropFilter: "blur(16px)",
+                    borderRadius: 99, padding: "8px 18px",
+                    border: "1px solid rgba(126,203,161,0.2)",
+                    display: "flex", alignItems: "center", gap: 8,
+                    animation: "fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
                   }}>
-                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 6px #7ecba1" }} />
-                    <span style={{ fontSize: 9, color: "#7ecba1", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>9 zonas analizadas</span>
+                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#7ecba1", boxShadow: "0 0 8px #7ecba1" }} />
+                    <span style={{ fontSize: 10, color: "#7ecba1", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>9 zonas analizadas</span>
                   </div>
                 )}
               </div>
@@ -2172,76 +2175,83 @@ export default function AnalyzePage() {
             {/* ── 2. AGE REVEAL — counter animation (not in DOM until phase 2) ── */}
             {revealPhase < 2 ? <div style={{ height: 160 }} /> : null}
             <div style={{
-              textAlign: "center", marginBottom: 28,
+              textAlign: "center", marginBottom: 32,
               display: revealPhase >= 2 ? "block" : "none",
-              animation: revealPhase >= 2 ? "fadeUp 0.6s ease" : "none",
+              animation: revealPhase >= 2 ? "fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1)" : "none",
             }}>
-              <p style={{ fontSize: 10, letterSpacing: "0.18em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 6, fontWeight: 600 }}>
+              {/* User's real age appears first */}
+              <p style={{ fontSize: 14, color: "rgba(245,237,232,0.4)", marginBottom: 6, letterSpacing: "0.02em" }}>
+                Tienes <strong style={{ color: "rgba(245,237,232,0.7)" }}>{userAge}</strong> años
+              </p>
+              <p style={{ fontSize: 10, letterSpacing: "0.18em", color: "rgba(245,237,232,0.2)", textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>
                 Tu rostro aparenta
               </p>
               <p style={{
-                fontFamily: "var(--font-fraunces)", fontSize: "clamp(64px, 14vw, 96px)",
-                fontWeight: 300, lineHeight: 1, marginBottom: 10,
+                fontFamily: "var(--font-fraunces)", fontSize: "clamp(72px, 16vw, 120px)",
+                fontWeight: 300, lineHeight: 0.9, marginBottom: 14,
                 color: isOlder ? "#e8a4b0" : isSame ? "#f5ede8" : "#7ecba1",
-                textShadow: isOlder ? "0 0 40px rgba(232,164,176,0.25)" : "0 0 40px rgba(126,203,161,0.25)",
+                textShadow: isOlder ? "0 0 60px rgba(232,164,176,0.2), 0 0 120px rgba(232,164,176,0.08)" : "0 0 60px rgba(126,203,161,0.2), 0 0 120px rgba(126,203,161,0.08)",
               }}>
                 {counterAge > 0 ? counterAge : ""}
               </p>
-              {/* ── 3. Age context — shows after counter finishes ── */}
-              <p style={{ fontSize: 14, color: "rgba(245,237,232,0.45)", marginBottom: 12, letterSpacing: "0.02em" }}>
-                Tienes <strong style={{ color: "rgba(245,237,232,0.75)" }}>{userAge}</strong> años
-              </p>
+              {/* ── 3. Age diff badge — shows after counter finishes ── */}
               {counterAge >= skinAge && (
-                <div style={{ animation: "fadeUp 0.5s ease" }}>
+                <div style={{ animation: "fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)" }}>
                   <span style={{
-                    display: "inline-block", padding: "5px 18px", borderRadius: 99,
-                    fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+                    display: "inline-block", padding: "7px 22px", borderRadius: 99,
+                    fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
                     color: isOlder ? "#e8a4b0" : "#7ecba1",
                     background: isOlder ? "rgba(232,164,176,0.1)" : "rgba(126,203,161,0.1)",
                     border: `1px solid ${isOlder ? "rgba(232,164,176,0.2)" : "rgba(126,203,161,0.2)"}`,
+                    boxShadow: isOlder ? "0 0 20px rgba(232,164,176,0.1)" : "0 0 20px rgba(126,203,161,0.1)",
                   }}>
                     {isOlder ? `+${ageDiff} años por encima` : isSame ? "Coincide con tu edad" : `${Math.abs(ageDiff)} años por debajo`}
                   </span>
+                  <h2 style={{
+                    fontFamily: "var(--font-fraunces)", fontSize: "clamp(18px, 3.5vw, 26px)",
+                    fontWeight: 400, fontStyle: "italic", marginTop: 20, letterSpacing: "-0.02em", lineHeight: 1.25,
+                    color: "rgba(245,237,232,0.85)",
+                  }}>
+                    {userName ? `${userName}, ` : ""}{isOlder ? "se puede revertir." : isSame ? "buen punto de partida." : "vas por buen camino."}
+                  </h2>
                 </div>
               )}
-              <h2 style={{
-                fontFamily: "var(--font-fraunces)", fontSize: "clamp(18px, 3.5vw, 26px)",
-                fontWeight: 400, marginTop: 18, letterSpacing: "-0.02em", lineHeight: 1.2,
-                color: "rgba(245,237,232,0.85)",
-              }}>
-                {userName ? `${userName}, ` : ""}{isOlder ? "se puede revertir." : isSame ? "buen punto de partida." : "vas por buen camino."}
-              </h2>
             </div>
 
             {/* ── 4. TOP 3 FINDINGS — human language with proportional year impact ── */}
             <div style={{
-              marginBottom: 24,
+              marginBottom: 32,
               opacity: revealPhase >= 3 ? 1 : 0,
               transform: revealPhase >= 3 ? "translateY(0)" : "translateY(12px)",
-              transition: "all 0.4s ease",
+              transition: "all 0.5s ease",
             }}>
-              <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 20, padding: "24px 20px" }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>
+              <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)", borderRadius: 16, padding: "24px 20px" }}>
+                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 20, fontWeight: 700 }}>
                   {isOlder ? "Lo que está sumando años" : "Áreas de oportunidad"}
                 </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {humanFindings.map((f, idx) => (
                     <div key={idx} style={{
                       opacity: revealedFindings > idx ? 1 : 0,
-                      transform: revealedFindings > idx ? "translateX(0)" : "translateX(-10px)",
-                      transition: "all 0.35s ease",
-                      display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12,
-                      paddingBottom: idx < humanFindings.length - 1 ? 14 : 0,
+                      transform: revealedFindings > idx ? "translateX(0)" : "translateX(-12px)",
+                      transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                      transitionDelay: `${idx * 0.08}s`,
+                      display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14,
+                      paddingBottom: idx < humanFindings.length - 1 ? 16 : 0,
                       borderBottom: idx < humanFindings.length - 1 ? "1px solid rgba(245,237,232,0.05)" : "none",
                     }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: f.color, marginTop: 6, flexShrink: 0, boxShadow: `0 0 8px ${f.color}` }} />
-                        <span style={{ fontSize: 14, color: "rgba(245,237,232,0.7)", lineHeight: 1.45 }}>{f.desc}</span>
+                        <div style={{
+                          width: 7, height: 7, borderRadius: "50%", background: f.color, marginTop: 6, flexShrink: 0,
+                          boxShadow: `0 0 10px ${f.color}`,
+                          animation: revealedFindings > idx ? "findingDotPulse 2s ease-in-out 0.5s 1" : "none",
+                        }} />
+                        <span style={{ fontSize: 14, color: "rgba(245,237,232,0.7)", lineHeight: 1.5 }}>{f.desc}</span>
                       </div>
                       <span style={{
-                        fontSize: 10, fontWeight: 700, color: "#e8a4b0", whiteSpace: "nowrap", flexShrink: 0,
-                        background: "rgba(232,164,176,0.08)", border: "1px solid rgba(232,164,176,0.15)",
-                        borderRadius: 99, padding: "3px 10px", marginTop: 2,
+                        fontSize: 11, fontWeight: 700, color: "#e8a4b0", whiteSpace: "nowrap", flexShrink: 0,
+                        background: "rgba(232,164,176,0.1)", border: "1px solid rgba(232,164,176,0.18)",
+                        borderRadius: 99, padding: "4px 14px", marginTop: 2,
                       }}>
                         +{f.years}
                       </span>
@@ -2253,12 +2263,14 @@ export default function AnalyzePage() {
 
             {/* ── 5. ESTADO DE TU PIEL — condiciones detectadas por el motor ── */}
             <div style={{
-              marginBottom: 24,
+              marginBottom: 32,
               opacity: revealPhase >= 3 ? 1 : 0,
               transform: revealPhase >= 3 ? "translateY(0)" : "translateY(12px)",
-              transition: "all 0.5s ease 0.2s",
+              transition: "all 0.5s ease 0.3s",
             }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16, fontWeight: 700 }}>
+              {/* Subtle divider */}
+              <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(245,237,232,0.08), transparent)", marginBottom: 28 }} />
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>
                 Estado de tu piel
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -2315,32 +2327,45 @@ export default function AnalyzePage() {
                   const level = item.getLevel(item.score)
                   const colors = ["#e8a4b0", "#d4af88", "#d4af88", "#7ecba1", "#7ecba1"]
                   const color = colors[level]
+                  const skinIcons = [
+                    <svg key="oj" width="14" height="14" viewBox="0 0 14 14" fill="none"><ellipse cx="7" cy="8" rx="5" ry="3.5" stroke={color} strokeWidth="1" opacity="0.7"/><circle cx="7" cy="7" r="1.5" fill={color} fillOpacity="0.3"/></svg>,
+                    <svg key="tx" width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="2" stroke={color} strokeWidth="1" opacity="0.7"/><path d="M4 5h6M4 7h4M4 9h5" stroke={color} strokeWidth="0.7" opacity="0.5"/></svg>,
+                    <svg key="ar" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 4c2 .5 3-.3 5 .2s2 .3 3-.2" stroke={color} strokeWidth="0.9" strokeLinecap="round" opacity="0.7"/><path d="M3 7c2 .5 3-.3 5 .2s2 .3 3-.2" stroke={color} strokeWidth="0.9" strokeLinecap="round" opacity="0.7"/><path d="M3 10c2 .5 3-.3 5 .2s2 .3 3-.2" stroke={color} strokeWidth="0.9" strokeLinecap="round" opacity="0.7"/></svg>,
+                    <svg key="rj" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke={color} strokeWidth="1" opacity="0.7"/><circle cx="5.5" cy="6.5" r="1.5" fill={color} fillOpacity="0.2"/><circle cx="8.5" cy="7.5" r="1.5" fill={color} fillOpacity="0.2"/></svg>,
+                    <svg key="mn" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke={color} strokeWidth="1" opacity="0.7"/><circle cx="5" cy="6" r="1.2" fill={color} fillOpacity="0.3"/><circle cx="9" cy="8" r="1" fill={color} fillOpacity="0.25"/></svg>,
+                    <svg key="sm" width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke={color} strokeWidth="0.8" opacity="0.5"/><circle cx="5" cy="5" r="2" stroke={color} strokeWidth="0.8" opacity="0.7"/><circle cx="9" cy="5" r="2" stroke={color} strokeWidth="0.8" opacity="0.7"/></svg>,
+                  ]
                   return (
-                    <div key={i} style={{
+                    <div key={i} className="skin-status-row" style={{
                       padding: "18px 0",
                       borderBottom: i < 5 ? "1px solid rgba(245,237,232,0.06)" : "none",
+                      transition: "background 0.3s ease",
+                      borderRadius: 8,
                     }}>
                       {/* Header row */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                        <span style={{ fontSize: 14, color: "#f5ede8", fontWeight: 600 }}>{item.label}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          {skinIcons[i]}
+                          <span style={{ fontSize: 14, color: "#f5ede8", fontWeight: 600 }}>{item.label}</span>
+                        </div>
                         <span style={{ fontSize: 13, color, fontWeight: 700 }}>{item.levels[level]}</span>
                       </div>
-                      {/* 5-dot severity scale */}
-                      <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                      {/* 5-bar severity scale — thicker with rounded ends */}
+                      <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
                         {[0,1,2,3,4].map(dot => (
                           <div key={dot} style={{
-                            flex: 1, height: 4, borderRadius: 2,
+                            flex: 1, height: 6, borderRadius: 3,
                             background: dot <= level ? color : "rgba(245,237,232,0.08)",
-                            transition: "background 0.3s",
+                            transition: "background 0.3s ease, width 0.5s ease",
                           }} />
                         ))}
                       </div>
                       {/* Age context */}
-                      <p style={{ fontSize: 11, color: "rgba(245,237,232,0.3)", marginBottom: 4, fontStyle: "italic" }}>
+                      <p style={{ fontSize: 11, color: "rgba(245,237,232,0.3)", marginBottom: 6, fontStyle: "italic" }}>
                         {item.ageContext(item.score)}
                       </p>
-                      {/* Actionable tip */}
-                      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.5)", lineHeight: 1.5 }}>
+                      {/* Actionable tip — more prominent */}
+                      <p style={{ fontSize: 13, color: "rgba(245,237,232,0.55)", lineHeight: 1.55, fontWeight: 500 }}>
                         {item.getAction(item.score)}
                       </p>
                     </div>
@@ -2352,38 +2377,45 @@ export default function AnalyzePage() {
             {/* ── 6. VISION AI — Condiciones detectadas con IA ── */}
             {(visionResults || visionLoading) && (
               <div style={{
-                marginBottom: 24,
+                marginBottom: 32,
                 opacity: revealPhase >= 4 ? 1 : 0,
                 transform: revealPhase >= 4 ? "translateY(0)" : "translateY(12px)",
                 transition: "all 0.5s ease",
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
                   <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", fontWeight: 700 }}>
                     Análisis con IA
                   </p>
-                  <span style={{ fontSize: 8, color: "#7ecba1", background: "rgba(126,203,161,0.1)", border: "1px solid rgba(126,203,161,0.2)", padding: "2px 8px", borderRadius: 99, fontWeight: 600, letterSpacing: "0.06em" }}>
-                    CLAUDE VISION
+                  <span style={{ fontSize: 8, color: "#7ecba1", background: "rgba(126,203,161,0.08)", border: "1px solid rgba(126,203,161,0.18)", padding: "3px 10px", borderRadius: 99, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                    ANÁLISIS AVANZADO
                   </span>
                 </div>
 
                 {visionLoading && !visionResults && (
-                  <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.06)", borderRadius: 16, padding: "20px", textAlign: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                      <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(232,164,176,0.2)", borderTopColor: "#e8a4b0", animation: "spin 0.8s linear infinite" }} />
+                  <div style={{ background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.06)", borderRadius: 16, padding: "24px 20px", textAlign: "center", overflow: "hidden", position: "relative" }}>
+                    {/* Shimmer effect */}
+                    <div style={{
+                      position: "absolute", inset: 0,
+                      background: "linear-gradient(90deg, transparent 0%, rgba(245,237,232,0.04) 40%, rgba(245,237,232,0.08) 50%, rgba(245,237,232,0.04) 60%, transparent 100%)",
+                      animation: "shimmer 1.8s ease-in-out infinite",
+                    }} />
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, position: "relative" }}>
+                      <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(232,164,176,0.15)", borderTopColor: "#e8a4b0", animation: "spin 0.8s linear infinite" }} />
                       <span style={{ fontSize: 12, color: "rgba(245,237,232,0.4)" }}>Analizando condiciones con IA...</span>
                     </div>
                   </div>
                 )}
 
                 {visionResults && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     {visionResults.acne && visionResults.acne.severity !== "none" && (
                       <div style={{
                         background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
-                        borderRadius: 14, padding: "16px 18px",
+                        borderRadius: 16, padding: "20px",
                         borderLeft: `3px solid ${visionResults.acne.severity === "severe" ? "#e8a4b0" : visionResults.acne.severity === "moderate" ? "#d4af88" : "#7ecba1"}`,
+                        animation: "fadeUp 0.5s ease",
                       }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                           <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Acné</span>
                           <span style={{ fontSize: 11, color: visionResults.acne.severity === "severe" ? "#e8a4b0" : visionResults.acne.severity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
                             {visionResults.acne.count} {visionResults.acne.count === 1 ? "lesión" : "lesiones"}
@@ -2398,10 +2430,11 @@ export default function AnalyzePage() {
                     {visionResults.spots && visionResults.spots.severity !== "none" && (
                       <div style={{
                         background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
-                        borderRadius: 14, padding: "16px 18px",
+                        borderRadius: 16, padding: "20px",
                         borderLeft: `3px solid ${visionResults.spots.severity === "severe" ? "#e8a4b0" : visionResults.spots.severity === "moderate" ? "#d4af88" : "#7ecba1"}`,
+                        animation: "fadeUp 0.5s ease 0.1s both",
                       }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                           <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Manchas</span>
                           <span style={{ fontSize: 11, color: visionResults.spots.severity === "severe" ? "#e8a4b0" : visionResults.spots.severity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
                             {visionResults.spots.count} {visionResults.spots.count === 1 ? "mancha" : "manchas"}
@@ -2416,10 +2449,11 @@ export default function AnalyzePage() {
                     {visionResults.redness && visionResults.redness.intensity !== "none" && (
                       <div style={{
                         background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
-                        borderRadius: 14, padding: "16px 18px",
+                        borderRadius: 16, padding: "20px",
                         borderLeft: `3px solid ${visionResults.redness.intensity === "severe" ? "#e8a4b0" : visionResults.redness.intensity === "moderate" ? "#d4af88" : "#7ecba1"}`,
+                        animation: "fadeUp 0.5s ease 0.2s both",
                       }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                           <span style={{ fontSize: 14, fontWeight: 600, color: "#f5ede8" }}>Rojez</span>
                           <span style={{ fontSize: 11, color: visionResults.redness.intensity === "severe" ? "#e8a4b0" : visionResults.redness.intensity === "moderate" ? "#d4af88" : "#7ecba1", fontWeight: 600 }}>
                             {visionResults.redness.intensity === "mild" ? "Leve" : visionResults.redness.intensity === "moderate" ? "Moderada" : visionResults.redness.intensity === "severe" ? "Severa" : visionResults.redness.intensity}
@@ -2433,15 +2467,20 @@ export default function AnalyzePage() {
                     {visionResults.acne?.severity === "none" && visionResults.spots?.severity === "none" && visionResults.redness?.intensity === "none" && (
                       <div style={{
                         background: "rgba(126,203,161,0.06)", border: "1px solid rgba(126,203,161,0.15)",
-                        borderRadius: 14, padding: "16px 18px", textAlign: "center",
+                        borderRadius: 16, padding: "20px", textAlign: "center",
                       }}>
                         <span style={{ fontSize: 13, color: "#7ecba1", fontWeight: 600 }}>No se detectaron condiciones activas</span>
                       </div>
                     )}
                     {visionResults.summary && (
-                      <p style={{ fontSize: 12, color: "rgba(245,237,232,0.35)", fontStyle: "italic", lineHeight: 1.55, marginTop: 4, paddingLeft: 4 }}>
-                        {visionResults.summary}
-                      </p>
+                      <div style={{
+                        background: "rgba(245,237,232,0.02)", border: "1px solid rgba(245,237,232,0.06)",
+                        borderRadius: 16, padding: "16px 20px", marginTop: 4,
+                      }}>
+                        <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", fontStyle: "italic", lineHeight: 1.6, margin: 0 }}>
+                          {visionResults.summary}
+                        </p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -2450,11 +2489,12 @@ export default function AnalyzePage() {
 
             {/* ── 6. BRAIN INSIGHTS — lo que dice la ciencia ── */}
             {brainInsights.length > 0 && (
-              <div style={{ marginBottom: 24 }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 14, fontWeight: 700 }}>
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(245,237,232,0.08), transparent)", marginBottom: 28 }} />
+                <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 18, fontWeight: 700 }}>
                   Lo que dice la ciencia
                 </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {brainInsights.map((insight, idx) => {
                     const borderColor = insight.severity === "critical" ? "#e8a4b0" : insight.severity === "warning" ? "#d4af88" : "#7ecba1"
                     const cardBg = insight.severity === "critical" ? "rgba(232,164,176,0.06)" : insight.severity === "warning" ? "rgba(212,175,136,0.04)" : "rgba(126,203,161,0.04)"
@@ -2464,22 +2504,22 @@ export default function AnalyzePage() {
                         background: cardBg,
                         border: "1px solid rgba(245,237,232,0.06)",
                         borderLeft: `3px solid ${borderSide}`,
-                        borderRadius: "4px 14px 14px 4px",
-                        padding: "16px 18px",
+                        borderRadius: "4px 16px 16px 4px",
+                        padding: "20px",
+                        animation: `fadeUp 0.5s ease ${idx * 0.1}s both`,
                       }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                          <div style={{
-                            width: 6, height: 6, borderRadius: "50%",
-                            background: borderColor,
-                            boxShadow: `0 0 6px ${borderColor}66`,
-                            flexShrink: 0,
-                          }} />
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                          {/* Book/research icon */}
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                            <path d="M2 2.5h4v9H2.5a.5.5 0 01-.5-.5V2.5zM6 2.5h4.5a.5.5 0 01.5.5v8.5a.5.5 0 01-.5.5H6V2.5z" stroke={borderColor} strokeWidth="0.9" opacity="0.7"/>
+                            <path d="M4 5h1M4 7h1M8 5h2M8 7h2" stroke={borderColor} strokeWidth="0.6" strokeLinecap="round" opacity="0.5"/>
+                          </svg>
                           <span style={{ fontSize: 13, fontWeight: 700, color: borderColor }}>{insight.title}</span>
                         </div>
                         <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.65, margin: "0 0 10px" }}>
                           {insight.text}
                         </p>
-                        <p style={{ fontSize: 10, color: "rgba(245,237,232,0.28)", lineHeight: 1.4, margin: 0, fontStyle: "italic" }}>
+                        <p style={{ fontSize: 10, color: "rgba(245,237,232,0.35)", lineHeight: 1.5, margin: 0, fontStyle: "italic" }}>
                           {insight.evidence}
                         </p>
                       </div>
@@ -2490,9 +2530,13 @@ export default function AnalyzePage() {
             )}
 
             {/* ── 7. ZONE ACCORDION — sub-metrics per zone ── */}
-            <div style={{ marginBottom: 24 }}>
-              <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: 22, fontWeight: 400, marginBottom: 16 }}>
-                Analisis por zona
+            <div style={{ marginBottom: 32 }}>
+              <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(245,237,232,0.08), transparent)", marginBottom: 28 }} />
+              <p style={{ fontSize: 9, letterSpacing: "0.16em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 6, fontWeight: 700 }}>
+                Detalle completo
+              </p>
+              <h2 style={{ fontFamily: "var(--font-fraunces)", fontSize: "clamp(20px, 3.5vw, 24px)", fontWeight: 400, marginBottom: 18, letterSpacing: "-0.02em", color: "rgba(245,237,232,0.9)" }}>
+                Análisis por zona
               </h2>
               {Object.entries(ACCORDION_META).map(([key, meta]) => {
                 const subs = derivedSubMetrics[key]
@@ -2502,11 +2546,14 @@ export default function AnalyzePage() {
                 return (
                   <div key={key} style={{
                     background: "rgba(245,237,232,0.03)", border: `1px solid ${isOpen ? "rgba(232,164,176,0.2)" : "rgba(245,237,232,0.06)"}`,
-                    borderRadius: 16, marginBottom: 10, overflow: "hidden", transition: "all 0.3s",
+                    borderRadius: 16, marginBottom: 10, overflow: "hidden",
+                    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                    boxShadow: isOpen ? "0 4px 20px rgba(0,0,0,0.15)" : "none",
                   }}>
                     <button onClick={() => setActiveZone(isOpen ? null : key)} style={{
                       width: "100%", padding: "16px 20px", background: "none", border: "none", cursor: "pointer", color: "#f5ede8",
                       display: "flex", alignItems: "center", justifyContent: "space-between",
+                      transition: "background 0.2s ease",
                     }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div style={{
@@ -2514,6 +2561,7 @@ export default function AnalyzePage() {
                           background: `${statusColor}15`, border: `1.5px solid ${statusColor}40`,
                           display: "flex", alignItems: "center", justifyContent: "center",
                           fontSize: 11, fontWeight: 700, color: statusColor,
+                          transition: "all 0.3s ease",
                         }}>
                           {meta.icon}
                         </div>
@@ -2522,21 +2570,21 @@ export default function AnalyzePage() {
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <span style={{ fontFamily: "var(--font-fraunces)", fontSize: 20, fontWeight: 400, color: statusColor }}>{accScore}</span>
-                        <span style={{ fontSize: 12, color: "rgba(245,237,232,0.3)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>&#x25BE;</span>
+                        <span style={{ fontSize: 12, color: "rgba(245,237,232,0.3)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)", display: "inline-block" }}>&#x25BE;</span>
                       </div>
                     </button>
                     {isOpen && subs && (
-                      <div style={{ padding: "0 20px 20px" }}>
+                      <div style={{ padding: "4px 20px 20px", animation: "fadeUp 0.3s ease" }}>
                         {subs.map((sub, i) => {
                           const barColor = sub.score >= 75 ? "#7ecba1" : sub.score >= 55 ? "#d4af88" : "#e8a4b0"
                           return (
                             <div key={i} style={{ marginBottom: 14 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                                 <span style={{ fontSize: 13, color: "rgba(245,237,232,0.65)" }}>{sub.label}</span>
                                 <span style={{ fontSize: 13, fontWeight: 600, color: barColor }}>{sub.score}</span>
                               </div>
-                              <div style={{ height: 4, borderRadius: 2, background: "rgba(245,237,232,0.06)" }}>
-                                <div style={{ height: "100%", borderRadius: 2, background: barColor, width: `${sub.score}%`, transition: "width 0.5s ease" }} />
+                              <div style={{ height: 5, borderRadius: 3, background: "rgba(245,237,232,0.06)" }}>
+                                <div style={{ height: "100%", borderRadius: 3, background: barColor, width: `${sub.score}%`, transition: "width 0.6s cubic-bezier(0.16, 1, 0.3, 1)", transitionDelay: `${i * 0.05}s` }} />
                               </div>
                             </div>
                           )
@@ -2549,7 +2597,7 @@ export default function AnalyzePage() {
             </div>
 
             {/* ── 8. BIOMARKERS (collapsible) ── */}
-            <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 32 }}>
               <button
                 onClick={() => setShowBiomarkers(prev => !prev)}
                 style={{
@@ -2600,28 +2648,35 @@ export default function AnalyzePage() {
               opacity: revealPhase >= 4 ? 1 : 0,
               transform: revealPhase >= 4 ? "translateY(0)" : "translateY(14px)",
               transition: "all 0.5s ease",
+              marginTop: 8,
             }}>
               <button
                 onClick={() => setStage("plan-choice")}
+                className="cta-shimmer"
                 style={{
-                  width: "100%", padding: "17px 28px", marginBottom: 12,
+                  width: "100%", padding: "20px 28px", marginBottom: 12,
                   background: "linear-gradient(135deg,#e8a4b0,#c97e8e)",
-                  border: "none", borderRadius: 14, color: "#fff",
-                  fontSize: 15, fontWeight: 700, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  boxShadow: "0 6px 24px rgba(232,164,176,0.3)",
+                  border: "none", borderRadius: 16, color: "#fff",
+                  fontSize: 16, fontWeight: 700, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                  boxShadow: "0 8px 32px rgba(232,164,176,0.3), 0 0 60px rgba(232,164,176,0.1)",
+                  position: "relative", overflow: "hidden",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
                 }}
               >
-                ¿Cómo quieres revertirlo? →
+                <span>¿Cómo quieres revertirlo?</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
 
-              <div style={{ borderTop: "1px solid rgba(245,237,232,0.1)", marginTop: 24, paddingTop: 16, display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "center", paddingBottom: 40 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
-                  <circle cx="12" cy="12" r="10" stroke="rgba(245,237,232,0.4)" strokeWidth="1.5"/>
-                  <line x1="12" y1="8" x2="12" y2="13" stroke="rgba(245,237,232,0.4)" strokeWidth="1.5" strokeLinecap="round"/>
-                  <circle cx="12" cy="16.5" r="0.8" fill="rgba(245,237,232,0.4)"/>
+              <div style={{ borderTop: "1px solid rgba(245,237,232,0.06)", marginTop: 28, paddingTop: 20, display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "center", paddingBottom: 48 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1, opacity: 0.3 }}>
+                  <circle cx="12" cy="12" r="10" stroke="rgba(245,237,232,1)" strokeWidth="1.5"/>
+                  <line x1="12" y1="8" x2="12" y2="13" stroke="rgba(245,237,232,1)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="12" cy="16.5" r="0.8" fill="rgba(245,237,232,1)"/>
                 </svg>
-                <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)", textAlign: "center", lineHeight: 1.6 }}>
+                <p style={{ fontSize: 11, color: "rgba(245,237,232,0.25)", textAlign: "center", lineHeight: 1.6 }}>
                   Estimación visual educativa basada en biomarcadores faciales. No constituye diagnóstico médico ni reemplaza la evaluación de un profesional de la salud.
                 </p>
               </div>
@@ -2774,7 +2829,22 @@ export default function AnalyzePage() {
         @keyframes revealPulse { 0%,100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 1; } }
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        @keyframes findingDotPulse { 0% { transform: scale(1); } 40% { transform: scale(1.8); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes ctaShimmer { 0% { left: -40%; } 100% { left: 120%; } }
         .age-scroll::-webkit-scrollbar { display: none; }
+        html { scroll-behavior: smooth; }
+        .cta-shimmer { position: relative; overflow: hidden; }
+        .cta-shimmer::after {
+          content: '';
+          position: absolute; top: 0; left: -40%; width: 30%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+          animation: ctaShimmer 2.5s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .cta-shimmer:hover { transform: translateY(-1px); box-shadow: 0 10px 40px rgba(232,164,176,0.35), 0 0 80px rgba(232,164,176,0.12) !important; }
+        .cta-shimmer:active { transform: translateY(0); }
+        .skin-status-row:hover { background: rgba(245,237,232,0.02); }
       `}</style>
     </div>
   )

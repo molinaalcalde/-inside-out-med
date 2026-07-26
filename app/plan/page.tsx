@@ -54,6 +54,7 @@ interface UserProfile {
 
 interface ScoredRec extends Rec {
   score: number
+  impactScore: number
   priority: Priority
   personalizedWhy: string
 }
@@ -599,9 +600,41 @@ function buildPlan(catalog: Rec[], profile: UserProfile, scores: Scores): Scored
       priority = "Importante"
     }
 
+    // Calculate impact based on how much this product addresses the user's weakest biomarkers
+    let impactScore = score // start with existing score
+
+    // Map treatments to biomarkers they address
+    const treatmentBiomarkerMap: Record<string, string[]> = {
+      "Protector solar SPF 50": ["sunDamage"],
+      "Vitamina C 15-20%": ["luminosity", "uniformity"],
+      "Retinol 0.3% → 1%": ["wrinkleDepth", "texture", "glycation"],
+      "Niacinamida 10%": ["inflammation", "uniformity", "vascularity"],
+      "Limpiador suave + hidratante con ceramidas": ["hydration", "texture"],
+      "Contorno de ojos cafeína + péptidos": ["darkCircles"],
+      "AHA/BHA exfoliación química": ["texture", "uniformity"],
+      "Sérum de péptidos para firmeza": ["wrinkleDepth", "texture"],
+      "Colágeno hidrolizado tipo I y III": ["wrinkleDepth", "texture"],
+      "Omega-3 EPA/DHA": ["inflammation"],
+      "Astaxantina 4-12 mg": ["inflammation", "sunDamage"],
+      "Vitamina D3 + K2": ["inflammation"],
+    }
+
+    const addressedBiomarkers = treatmentBiomarkerMap[rec.name] || []
+    for (const bioKey of addressedBiomarkers) {
+      const bioValue = (scores as any)[bioKey]
+      if (typeof bioValue === "number") {
+        // For "lower is better" metrics (glycation, inflammation, sunDamage, vascularity),
+        // high raw value = worse = higher impact potential
+        const isInverse = ["glycation", "inflammation", "sunDamage", "vascularity"].includes(bioKey)
+        const severity = isInverse ? bioValue : (100 - bioValue)
+        impactScore += Math.round(severity * 0.5) // boost score based on how bad this biomarker is
+      }
+    }
+
     scored.push({
       ...rec,
       score,
+      impactScore,
       priority,
       personalizedWhy: getPersonalizedWhy(rec, scores),
     })
@@ -879,6 +912,9 @@ function renderRecCard(
   expandedEvidence: Set<string>,
   toggleEvidence: (id: string) => void,
   L: (es: string, en: string) => string,
+  topImpactNames: Set<string>,
+  highImpactNames: Set<string>,
+  topImpactProductName: string,
 ) {
   const colors = PRIORITY_COLORS[rec.priority]
   const cardId = `${rec.category}-${rec.name}-${ri}`
@@ -941,6 +977,31 @@ function renderRecCard(
         )}
       </div>
 
+      {/* Impact badges */}
+      {topImpactNames.has(rec.name) && (
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 4,
+          padding: "3px 10px", borderRadius: 99, marginBottom: 8,
+          background: "rgba(126,203,161,0.12)", border: "1px solid rgba(126,203,161,0.25)",
+          fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
+          color: "#7ecba1",
+        }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+          {L("Mayor impacto para ti", "Highest impact for you")}
+        </span>
+      )}
+      {highImpactNames.has(rec.name) && !topImpactNames.has(rec.name) && (
+        <span style={{
+          display: "inline-block",
+          padding: "3px 10px", borderRadius: 99, marginBottom: 8,
+          background: "rgba(212,175,136,0.08)", border: "1px solid rgba(212,175,136,0.2)",
+          fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
+          color: "#d4af88",
+        }}>
+          {L("Recomendado", "Recommended")}
+        </span>
+      )}
+
       {/* Title */}
       <h4 style={{
         fontFamily: "var(--font-fraunces)", fontSize: 16, fontWeight: 400,
@@ -948,6 +1009,16 @@ function renderRecCard(
       }}>
         {rec.name}
       </h4>
+
+      {/* #1 impact explanation */}
+      {topImpactProductName === rec.name && (
+        <p style={{ fontSize: 11, color: "rgba(126,203,161,0.7)", marginBottom: 8, lineHeight: 1.4 }}>
+          {L(
+            `Basado en tu análisis, este producto aborda tu mayor debilidad directamente.`,
+            `Based on your analysis, this product directly addresses your biggest weakness.`
+          )}
+        </p>
+      )}
 
       {/* What */}
       <p style={{ fontSize: 12, color: "rgba(245,237,232,0.42)", lineHeight: 1.6, marginBottom: 10 }}>
@@ -1106,6 +1177,12 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
       return next
     })
   }
+
+  // Impact tiers
+  const sortedByImpact = [...plan].sort((a, b) => b.impactScore - a.impactScore)
+  const topImpactNames = new Set(sortedByImpact.slice(0, 2).map(r => r.name))
+  const highImpactNames = new Set(sortedByImpact.slice(2, 5).map(r => r.name))
+  const topImpactProductName = sortedByImpact[0]?.name ?? ""
 
   return (
     <div style={{
@@ -1371,8 +1448,8 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
 
           {/* ── SKINCARE: Group by AM / PM ── */}
           {activeTab === "skincare" && (() => {
-            const amItems = tabItems.filter(r => r.timing === "AM" || !r.timing)
-            const pmItems = tabItems.filter(r => r.timing === "PM")
+            const amItems = tabItems.filter(r => r.timing === "AM" || !r.timing).sort((a, b) => b.impactScore - a.impactScore)
+            const pmItems = tabItems.filter(r => r.timing === "PM").sort((a, b) => b.impactScore - a.impactScore)
             const routineGroups = [
               { key: "am", title: L("Rutina de ma\u00f1ana (AM)", "Morning routine (AM)"), color: "#d4af88", items: amItems },
               { key: "pm", title: L("Rutina de noche (PM)", "Night routine (PM)"), color: "#7ecba1", items: pmItems },
@@ -1409,7 +1486,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                       </h3>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L))}
+                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L, topImpactNames, highImpactNames, topImpactProductName))}
                     </div>
                   </div>
                 ))}
@@ -1419,9 +1496,9 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
 
           {/* ── SUPPLEMENTS: Additive groups ── */}
           {activeTab === "supplements" && (() => {
-            const empiezaItems = tabItems.filter(r => r.phase === 1)
-            const sumaItems = tabItems.filter(r => r.phase === 2)
-            const avanzadoItems = tabItems.filter(r => r.phase >= 4)
+            const empiezaItems = tabItems.filter(r => r.phase === 1).sort((a, b) => b.impactScore - a.impactScore)
+            const sumaItems = tabItems.filter(r => r.phase === 2).sort((a, b) => b.impactScore - a.impactScore)
+            const avanzadoItems = tabItems.filter(r => r.phase >= 4).sort((a, b) => b.impactScore - a.impactScore)
             const suppGroups = [
               { key: "empieza", title: L("Empieza con estos", "Start with these"), subtitle: L("Tu base de suplementaci\u00f3n desde el d\u00eda 1.", "Your supplement base from day 1."), color: "#7ecba1", items: empiezaItems, additive: false },
               { key: "suma", title: L("Suma en el mes 2", "Add in month 2"), subtitle: L("Mant\u00e9n todo lo anterior + suma estos.", "Keep everything above + add these."), color: "#d4af88", items: sumaItems, additive: true },
@@ -1468,7 +1545,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                       {group.subtitle}
                     </p>
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L))}
+                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L, topImpactNames, highImpactNames, topImpactProductName))}
                     </div>
                   </div>
                 ))}
@@ -1477,36 +1554,39 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
           })()}
 
           {/* ── HABITS: Flat list, no phases ── */}
-          {activeTab === "habits" && (
-            <div style={{ animation: "cardIn 0.55s ease 0.3s both" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, padding: "8px 0" }}>
-                <div style={{
-                  width: 10, height: 10, borderRadius: "50%",
-                  background: "#7ecba1",
-                  boxShadow: "0 0 8px rgba(126,203,161,0.4)",
-                  flexShrink: 0,
-                }} />
-                <h3 style={{
-                  fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 400,
-                  color: "#f5ede8", letterSpacing: "-0.02em",
-                }}>
-                  {L("Tu estilo de vida", "Your lifestyle")}
-                </h3>
+          {activeTab === "habits" && (() => {
+            const habitItems = [...tabItems].sort((a, b) => b.impactScore - a.impactScore)
+            return (
+              <div style={{ animation: "cardIn 0.55s ease 0.3s both" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, padding: "8px 0" }}>
+                  <div style={{
+                    width: 10, height: 10, borderRadius: "50%",
+                    background: "#7ecba1",
+                    boxShadow: "0 0 8px rgba(126,203,161,0.4)",
+                    flexShrink: 0,
+                  }} />
+                  <h3 style={{
+                    fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 400,
+                    color: "#f5ede8", letterSpacing: "-0.02em",
+                  }}>
+                    {L("Tu estilo de vida", "Your lifestyle")}
+                  </h3>
+                </div>
+                <p style={{ fontSize: 12, color: "rgba(245,237,232,0.28)", marginBottom: 16, paddingLeft: 22 }}>
+                  {L("H\u00e1bitos permanentes que protegen y rejuvenecen tu piel todos los d\u00edas. No tienen fase: son para siempre.", "Permanent habits that protect and rejuvenate your skin every day. They have no phase: they\u2019re forever.")}
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {habitItems.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L, topImpactNames, highImpactNames, topImpactProductName))}
+                </div>
               </div>
-              <p style={{ fontSize: 12, color: "rgba(245,237,232,0.28)", marginBottom: 16, paddingLeft: 22 }}>
-                {L("H\u00e1bitos permanentes que protegen y rejuvenecen tu piel todos los d\u00edas. No tienen fase: son para siempre.", "Permanent habits that protect and rejuvenate your skin every day. They have no phase: they\u2019re forever.")}
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {tabItems.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L))}
-              </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* ── TREATMENTS: Non-invasive vs Advanced ── */}
           {activeTab === "treatments" && (() => {
             const noInvasiveNames = ["led", "hydrafacial", "peel"]
-            const noInvasivos = tabItems.filter(r => noInvasiveNames.some(n => r.name.toLowerCase().includes(n)))
-            const avanzados = tabItems.filter(r => !noInvasiveNames.some(n => r.name.toLowerCase().includes(n)))
+            const noInvasivos = tabItems.filter(r => noInvasiveNames.some(n => r.name.toLowerCase().includes(n))).sort((a, b) => b.impactScore - a.impactScore)
+            const avanzados = tabItems.filter(r => !noInvasiveNames.some(n => r.name.toLowerCase().includes(n))).sort((a, b) => b.impactScore - a.impactScore)
             const treatGroups = [
               { key: "no-invasivos", title: L("No invasivos", "Non-invasive"), subtitle: L("Tratamientos en consultorio sin agujas. Resultados con cero tiempo de recuperaci\u00f3n.", "In-office treatments without needles. Results with zero downtime."), color: "#7ecba1", items: noInvasivos },
               { key: "avanzados", title: L("Avanzados", "Advanced"), subtitle: L("Procedimientos con microagujas o inyectables. Resultados m\u00e1s potentes, requieren profesional certificado.", "Procedures with microneedles or injectables. More powerful results, require a certified professional."), color: "#7ecba1", items: avanzados },
@@ -1531,7 +1611,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                   {group.subtitle}
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L))}
+                  {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L, topImpactNames, highImpactNames, topImpactProductName))}
                 </div>
               </div>
             ))

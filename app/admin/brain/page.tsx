@@ -23,6 +23,27 @@ interface Insight {
   confidence: string
 }
 
+interface Product {
+  id: string
+  name: string
+  category: "skincare" | "supplements" | "habits" | "treatments"
+  tier: "free" | "mid" | "premium"
+  minAge: number
+  phase: number
+  timing?: "AM" | "PM"
+  what: string
+  cost: string
+  freq: string
+  results: string
+  risk: string
+  evidence: string
+  amazonQuery?: string
+  targetBiomarkers?: string[]
+  always30?: boolean
+  fitzCaution?: boolean
+  isNew?: boolean
+}
+
 interface AnalyticsData {
   totalLeads: number
   totalScans: number
@@ -119,6 +140,301 @@ const SEED_PAPERS: Omit<Paper, "id">[] = [
   { title: "Intrinsic skin aging: the role of the growth hormone/insulin-like growth factor-1 axis", authors: "Makrantonaki E, Zouboulis CC", year: 2007, journal: "Dermatoendocrinology", doi: "", key_findings: "La disminucion de hormona de crecimiento e IGF-1 con la edad contribuye directamente a la perdida de colageno, adelgazamiento de la piel y reduccion de la capacidad de reparacion. El sueno profundo optimiza la secrecion de GH.", applicable_zones: ["piel", "mandibula", "cuello"], applicable_treatments: ["Mejora de calidad de sueno", "Ejercicio regular"], tags: ["hormona crecimiento", "IGF-1", "aging", "colageno", "sueno"], full_citation: "Makrantonaki E, Zouboulis CC. The skin as a mirror of the aging process in the human organism. Exp Gerontol. 2007;42(9):879-886" },
 ]
 
+// ── SEED PRODUCTS (30 from CATALOG in plan/page.tsx) ─────────────────
+const SEED_PRODUCTS: Omit<Product, "id">[] = [
+  // ── SKINCARE (10) ──
+  {
+    name: "Protector solar SPF 50",
+    category: "skincare", tier: "free", minAge: 18, phase: 1, timing: "AM",
+    what: "FPS 50+ de amplio espectro, cada mañana, reaplicar cada 3-4h con exposición. Sin protección solar, ningún otro activo puede rendir al 100%.",
+    cost: "$8-20/mes", freq: "Diario AM",
+    results: "Prevención desde día 1; menos manchas en 3-6 meses",
+    risk: "Elegir libre de fragancia si piel sensible",
+    evidence: "Hughes et al., Ann Intern Med 2013: el uso diario de FPS redujo el fotoenvejecimiento un 24%.",
+    amazonQuery: "protector solar SPF 50 facial",
+  },
+  {
+    name: "Limpiador suave + hidratante con ceramidas",
+    category: "skincare", tier: "free", minAge: 18, phase: 1,
+    what: "Limpieza AM/PM sin sulfatos agresivos + hidratante con ceramidas y ácido hialurónico. Restaura y protege tu barrera cutánea.",
+    cost: "$15-30/mes", freq: "2x día",
+    results: "Barrera más fuerte en 2-4 semanas",
+    risk: "Bajo",
+    evidence: "Lynde, J Drugs Dermatol 2014: ceramidas restauran la barrera cutánea.",
+    amazonQuery: "CeraVe limpiador hidratante ceramidas",
+  },
+  {
+    name: "Vitamina C 15-20%",
+    category: "skincare", tier: "mid", minAge: 22, phase: 2, timing: "AM",
+    what: "Antioxidante de mañana (ácido L-ascórbico 15-20%) bajo el protector solar. Potencia la fotoprotección y estimula colágeno.",
+    cost: "$20-45/mes", freq: "Diario AM",
+    results: "Más luminosidad en 4-8 semanas",
+    risk: "Puede irritar; empezar 3x/semana",
+    evidence: "Pinnell, Dermatol Surg 2001: vitamina C tópica aumenta síntesis de colágeno y protege del fotodaño.",
+    amazonQuery: "serum vitamina C 20% rostro",
+  },
+  {
+    name: "Retinol 0.3% → 1%",
+    category: "skincare", tier: "mid", minAge: 25, phase: 2, timing: "PM",
+    what: "Retinoide nocturno, subir concentración gradualmente. El activo anti-edad mejor documentado de la dermatología moderna.",
+    cost: "$20-50/mes", freq: "PM, 2-5x/semana",
+    results: "Textura y líneas finas en 8-12 semanas",
+    risk: "Irritación/descamación inicial; evitar en embarazo",
+    evidence: "Mukherjee, Clin Interv Aging 2006: retinoides reducen arrugas y aumentan colágeno de forma comprobada.",
+    amazonQuery: "retinol serum 0.5% facial",
+  },
+  {
+    name: "Niacinamida 10%",
+    category: "skincare", tier: "free", minAge: 20, phase: 2,
+    what: "Reduce rojez, poros y mejora uniformidad de tono. Muy bien tolerada y compatible con casi cualquier activo.",
+    cost: "$10-25/mes", freq: "Diario",
+    results: "Tono más parejo en 4-8 semanas",
+    risk: "Mínimo",
+    evidence: "Bissett, Dermatol Surg 2005: niacinamida mejora textura, poros y manchas.",
+    amazonQuery: "niacinamida 10% serum facial",
+  },
+  {
+    name: "Contorno de ojos cafeína + péptidos",
+    category: "skincare", tier: "mid", minAge: 25, phase: 1,
+    what: "Cafeína para hinchazón y ojeras vasculares + péptidos para firmeza periocular. Resultados visibles en la zona más delicada.",
+    cost: "$18-40/mes", freq: "2x día",
+    results: "Menos hinchazón en 2-4 semanas",
+    risk: "Bajo",
+    evidence: "Herman, Skin Pharmacol 2013: cafeína vasoconstrictora reduce edema periorbital.",
+    amazonQuery: "contorno ojos cafeina peptidos",
+  },
+  {
+    name: "AHA/BHA exfoliación química",
+    category: "skincare", tier: "mid", minAge: 22, phase: 3, timing: "PM",
+    what: "Glicólico o salicílico 1-2x/semana para renovar textura y desobstruir poros. Acelera la renovación celular sin abrasión mecánica.",
+    cost: "$15-35/mes", freq: "1-2x/semana",
+    results: "Suavidad en 3-6 semanas",
+    risk: "No combinar con retinol la misma noche; usar SPF",
+    evidence: "Kornhauser, Clin Cosmet Investig Dermatol 2010: AHAs mejoran textura y firmeza.",
+    amazonQuery: "AHA BHA exfoliante quimico facial",
+  },
+  {
+    name: "Sérum de péptidos para firmeza",
+    category: "skincare", tier: "mid", minAge: 30, phase: 4,
+    what: "Péptidos señalizadores (Matrixyl) para estimular colágeno y firmeza del óvalo facial. Ideal para prevenir flacidez.",
+    cost: "$25-55/mes", freq: "Diario",
+    results: "Firmeza sutil en 8-12 semanas",
+    risk: "Bajo",
+    evidence: "Robinson, Int J Cosmet Sci 2005: Matrixyl estimula colágeno tipo I.",
+    amazonQuery: "serum peptidos matrixyl firmeza",
+  },
+  {
+    name: "Sérum PDRN tópico",
+    category: "skincare", tier: "mid", minAge: 25, phase: 3, timing: "PM", isNew: true,
+    what: "Sérum con polinucleótidos que estimula fibroblastos y reparación de ADN cutáneo. La versión tópica de la terapia regenerativa más trending, sin agujas.",
+    cost: "$30-70/mes", freq: "PM (o AM/PM)",
+    results: "Líneas finas e hidratación en 8 semanas",
+    risk: "Bajo; evitar si hay alergia a derivados de pescado",
+    evidence: "J Cosmet Dermatol 2025: PDRN tópico ~47% menos líneas finas, ~39% más elasticidad a 8 semanas.",
+    amazonQuery: "PDRN serum polinucleotidos facial",
+  },
+  {
+    name: "Bakuchiol",
+    category: "skincare", tier: "mid", minAge: 22, phase: 2, timing: "PM", isNew: true,
+    what: "Retinoide vegetal mejor tolerado: efecto tipo retinol (líneas, textura) con menos irritación. Ideal para piel sensible o rosácea.",
+    cost: "$20-45/mes", freq: "PM, diario",
+    results: "Textura y líneas en 8-12 semanas",
+    risk: "Bajo; muy bien tolerado",
+    evidence: "Dhaliwal, Br J Dermatol 2019: bakuchiol comparable al retinol en arrugas y pigmentación, con menos irritación.",
+    amazonQuery: "bakuchiol serum facial",
+  },
+  // ── SUPPLEMENTS (7) ──
+  {
+    name: "Colágeno hidrolizado tipo I y III",
+    category: "supplements", tier: "free", minAge: 25, phase: 1,
+    what: "10 g/día de péptidos de colágeno. Mejora elasticidad e hidratación cutánea desde dentro, con evidencia en estudios doble ciego.",
+    cost: "$15-35/mes", freq: "Diario",
+    results: "Elasticidad medible en 8-12 semanas",
+    risk: "Bajo",
+    evidence: "Proksch, Skin Pharmacol Physiol 2014: péptidos de colágeno mejoran elasticidad cutánea (estudio doble ciego).",
+    amazonQuery: "colageno hidrolizado polvo tipo I III",
+  },
+  {
+    name: "Omega-3 EPA/DHA",
+    category: "supplements", tier: "free", minAge: 18, phase: 1,
+    what: "1-2 g/día. Antiinflamatorio sistémico, mejora barrera lipídica e hidratación de la piel desde dentro.",
+    cost: "$12-25/mes", freq: "Diario",
+    results: "Menos inflamación en 6-10 semanas",
+    risk: "Cuidado si tomas anticoagulantes",
+    evidence: "Pilkington, Exp Dermatol 2011: omega-3 protege de fotodaño e inflamación cutánea.",
+    amazonQuery: "omega 3 EPA DHA capsulas",
+  },
+  {
+    name: "Vitamina D3 + K2",
+    category: "supplements", tier: "free", minAge: 18, phase: 1,
+    what: "2000-4000 UI de D3 con K2. Soporta inmunidad, cicatrización y salud general de la piel.",
+    cost: "$8-18/mes", freq: "Diario",
+    results: "Beneficio sistémico continuo",
+    risk: "Idealmente con nivel sérico medido",
+    evidence: "Umar, Skin Pharmacol 2018: déficit de vitamina D asociado a peor cicatrización y barrera cutánea.",
+    amazonQuery: "vitamina D3 K2 capsulas",
+  },
+  {
+    name: "Astaxantina 4-12 mg",
+    category: "supplements", tier: "mid", minAge: 25, phase: 2,
+    what: "Antioxidante potente de origen marino. Mejora elasticidad y reduce líneas finas con uso sostenido.",
+    cost: "$15-30/mes", freq: "Diario",
+    results: "Elasticidad en 8 semanas",
+    risk: "Bajo",
+    evidence: "Tominaga, Acta Biochim Pol 2012: astaxantina oral+tópica mejora arrugas y elasticidad.",
+    amazonQuery: "astaxantina 12mg capsulas",
+  },
+  {
+    name: "Zinc bisglicinato + Vitamina C oral",
+    category: "supplements", tier: "free", minAge: 18, phase: 2,
+    what: "Cofactores esenciales de la síntesis de colágeno y control de inflamación. Especialmente útil contra brotes de acné.",
+    cost: "$10-20/mes", freq: "Diario",
+    results: "Variable, mejora gradual",
+    risk: "Zinc lejos de hierro; no exceder 30 mg/día",
+    evidence: "Vitamina C es cofactor esencial de la prolil-hidroxilasa en la síntesis de colágeno.",
+    amazonQuery: "zinc bisglicinato vitamina C",
+  },
+  {
+    name: "NMN / NR (precursores de NAD+)",
+    category: "supplements", tier: "premium", minAge: 35, phase: 4,
+    what: "250-500 mg/día. Apoyo a la longevidad celular y reparación de ADN. Evidencia emergente pero prometedora.",
+    cost: "$40-90/mes", freq: "Diario",
+    results: "Largo plazo; marcador sistémico",
+    risk: "Evidencia en humanos aún limitada; consultar médico",
+    evidence: "Yoshino, Science 2021: NMN mejora sensibilidad a insulina; efectos en piel aún en estudio.",
+    amazonQuery: "NMN 500mg capsulas NAD+",
+  },
+  {
+    name: "Magnesio glicinato",
+    category: "supplements", tier: "free", minAge: 18, phase: 1,
+    what: "200-400 mg por la noche. Mejora sueño profundo y reduce cortisol, el enemigo silencioso del colágeno.",
+    cost: "$8-16/mes", freq: "PM, diario",
+    results: "Mejor sueño en 1-2 semanas",
+    risk: "Puede ablandar heces en dosis altas",
+    evidence: "Sueño profundo regula cortisol; cortisol alto degrada colágeno (Sapolsky, revisión neuroendocrina).",
+    amazonQuery: "magnesio glicinato capsulas",
+  },
+  // ── HABITS (6) ──
+  {
+    name: "Dormir 7-9 horas",
+    category: "habits", tier: "free", minAge: 18, phase: 1,
+    what: "En sueño profundo el cuerpo libera hormona de crecimiento y repara la piel. Dormir poco sube el cortisol, que degrada colágeno y causa ojeras.",
+    cost: "$0", freq: "Cada noche",
+    results: "Menos ojeras e hinchazón en 1-2 semanas",
+    risk: "Ninguno",
+    evidence: "Revisiones 2024-2026: el sueño regula cortisol y reparación de barrera; su déficit acelera el envejecimiento.",
+  },
+  {
+    name: "Evitar sol pico + sombrero y lentes",
+    category: "habits", tier: "free", minAge: 18, phase: 1,
+    what: "El sol explica ~80% del envejecimiento visible. Evita las 10-16h, usa sombrero y lentes además del SPF.",
+    cost: "$0", freq: "Diario",
+    results: "Prevención: menos manchas y arrugas a mediano plazo",
+    risk: "Ninguno",
+    evidence: "El fotoenvejecimiento (exposoma UV) es el principal factor extrínseco del envejecimiento cutáneo.",
+  },
+  {
+    name: "Dieta anti-glicación",
+    category: "habits", tier: "free", minAge: 18, phase: 1,
+    what: "El azúcar genera glicación, que endurece el colágeno y apaga la piel. Prioriza proteína, vegetales, antioxidantes y omega-3.",
+    cost: "$0", freq: "Diario",
+    results: "Piel más luminosa en 4-8 semanas",
+    risk: "Ninguno",
+    evidence: "PMC 2024-2025: dieta rica en antioxidantes y baja en azúcares reduce glicación y estrés oxidativo cutáneo.",
+  },
+  {
+    name: "Ejercicio 3-5x/semana",
+    category: "habits", tier: "free", minAge: 18, phase: 1,
+    what: "Mejora circulación, oxigenación y función mitocondrial de la piel. Más glow y mejor capacidad de reparación.",
+    cost: "$0", freq: "3-5x/semana",
+    results: "Mejor color y tono en semanas",
+    risk: "Ninguno",
+    evidence: "JMIR Dermatology 2024: ejercicio mejora perfusión, temperatura e hidratación cutánea.",
+  },
+  {
+    name: "No fumar y moderar alcohol",
+    category: "habits", tier: "free", minAge: 18, phase: 1,
+    what: "Fumar y el exceso de alcohol aceleran arrugas, deshidratan y opacan la piel. Dejarlo es de lo que más rejuvenece visiblemente.",
+    cost: "$0", freq: "Siempre",
+    results: "Mejora progresiva de tono e hidratación",
+    risk: "Ninguno",
+    evidence: "Tabaco y alcohol son factores del exposoma asociados a envejecimiento cutáneo acelerado.",
+  },
+  {
+    name: "Manejo del estrés (respiración/meditación)",
+    category: "habits", tier: "free", minAge: 18, phase: 2,
+    what: "El estrés crónico inflama la piel vía cortisol. 10 minutos al día de respiración o meditación bajan la carga inflamatoria.",
+    cost: "$0", freq: "Diario, 10 min",
+    results: "Menos brotes y rojez con el tiempo",
+    risk: "Ninguno",
+    evidence: "El estrés psicosocial forma parte del exposoma y amplifica vías inflamatorias del envejecimiento.",
+  },
+  // ── TREATMENTS (7) ──
+  {
+    name: "Hydrafacial",
+    category: "treatments", tier: "mid", minAge: 22, phase: 3,
+    what: "Limpieza profunda, exfoliación e hidratación en consultorio. Resultados inmediatos sin tiempo de recuperación.",
+    cost: "$80-150/sesión", freq: "Mensual",
+    results: "Luminosidad inmediata, efecto acumulativo",
+    risk: "Mínimo",
+    evidence: "Protocolo de hidradermoabrasión: mejora hidratación y textura inmediata en estudios clínicos.",
+  },
+  {
+    name: "Peel químico (mandélico/glicólico)",
+    category: "treatments", tier: "mid", minAge: 25, phase: 3, fitzCaution: true,
+    what: "Exfoliación profesional en consultorio. Mandélico es más seguro en fototipos altos. Mejora textura, manchas y tono.",
+    cost: "$60-120/sesión", freq: "Cada 3-4 semanas (serie de 4-6)",
+    results: "Tono más parejo en 2-3 sesiones",
+    risk: "Riesgo de hiperpigmentación en Fitz IV-VI: usar ácidos suaves + SPF estricto",
+    evidence: "Sharad, J Cutan Aesthet Surg 2013: peels de glicólico mejoran textura y pigmento.",
+  },
+  {
+    name: "Microneedling con radiofrecuencia",
+    category: "treatments", tier: "premium", minAge: 28, phase: 4,
+    what: "Estimula colágeno en profundidad con microagujas y calor controlado. Mejora poros, cicatrices y firmeza.",
+    cost: "$200-400/sesión", freq: "Serie de 3, cada 4-6 semanas",
+    results: "Firmeza y textura en 2-3 meses",
+    risk: "Rojez 1-2 días; cuidado con pigmento en fototipos altos",
+    evidence: "Hou, Dermatol Surg 2017: microneedling+RF mejora firmeza y cicatrices con alta satisfacción.",
+  },
+  {
+    name: "LED rojo terapéutico",
+    category: "treatments", tier: "mid", minAge: 20, phase: 2,
+    what: "Fotobiomodulación: estimula colágeno y calma inflamación. Se puede usar en casa o consultorio.",
+    cost: "$30-60/sesión", freq: "3-5x/semana",
+    results: "Sutil en 8-12 semanas con constancia",
+    risk: "Muy bajo",
+    evidence: "Wunsch, Photomed Laser Surg 2014: luz roja mejora densidad de colágeno y arrugas.",
+  },
+  {
+    name: "Botox preventivo",
+    category: "treatments", tier: "premium", minAge: 28, phase: 4, always30: true,
+    what: "Relaja músculos que crean líneas dinámicas. Después de los 30 es preventivo: frena que las líneas se vuelvan arrugas permanentes.",
+    cost: "$200-400/sesión", freq: "Cada 3-4 meses",
+    results: "Líneas suavizadas en 5-10 días",
+    risk: "Ptosis temporal si mal aplicado; elegir médico certificado",
+    evidence: "Carruthers, Dermatol Surg: toxina botulínica reduce líneas dinámicas de forma reproducible.",
+  },
+  {
+    name: "Skinboosters / mesoterapia",
+    category: "treatments", tier: "premium", minAge: 30, phase: 4,
+    what: "Microinyecciones de ácido hialurónico no reticulado para hidratación profunda y glow desde la dermis.",
+    cost: "$150-300/sesión", freq: "Serie de 3, cada mes",
+    results: "Glow y firmeza en 3-4 semanas",
+    risk: "Hematomas leves",
+    evidence: "Sparavigna 2019: skinboosters mejoran hidratación dérmica y elasticidad.",
+  },
+  {
+    name: "PRP facial",
+    category: "treatments", tier: "premium", minAge: 30, phase: 4,
+    what: "Plasma rico en plaquetas inyectado para mejorar calidad de piel, microcirculación y textura.",
+    cost: "$200-350/sesión", freq: "Serie de 3 sesiones",
+    results: "Textura y tono en 4-8 semanas",
+    risk: "Hematomas leves",
+    evidence: "Mehryan, J Cosmet Dermatol 2014: PRP mejora textura periorbital y color de ojeras.",
+  },
+]
+
 const ZONE_OPTIONS = ["piel", "frente", "periocular", "nariz", "labios", "mejillas", "mandibula", "cuello"]
 
 const BIO_LABELS: Record<string, string> = {
@@ -147,11 +463,18 @@ export default function BrainPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
-  const [activeTab, setActiveTab] = useState<"papers" | "insights" | "patterns">("papers")
+  const [activeTab, setActiveTab] = useState<"papers" | "insights" | "patterns" | "products">("papers")
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [aiInsights, setAiInsights] = useState<Insight[]>([])
   const [loadingInsights, setLoadingInsights] = useState(false)
+
+  // Products state
+  const [products, setProducts] = useState<Product[]>([])
+  const [productSearch, setProductSearch] = useState("")
+  const [productForm, setProductForm] = useState<Partial<Product>>({})
+  const [editingProduct, setEditingProduct] = useState<string | null>(null)
+  const [showProductForm, setShowProductForm] = useState(false)
 
   // Form state
   const [form, setForm] = useState({
@@ -164,6 +487,7 @@ export default function BrainPage() {
 
   useEffect(() => {
     loadPapers()
+    loadProducts()
   }, [])
 
   // Load analytics when switching to insights or patterns tab
@@ -302,6 +626,88 @@ export default function BrainPage() {
     })
   }
 
+  // ── Product CRUD ──────────────────────────────────────────────────
+  function loadProducts() {
+    const stored = localStorage.getItem("iom_admin_products")
+    if (stored) {
+      setProducts(JSON.parse(stored))
+    } else {
+      const seeded = SEED_PRODUCTS.map((p, i) => ({ ...p, id: `prod-${i}` }))
+      setProducts(seeded)
+      localStorage.setItem("iom_admin_products", JSON.stringify(seeded))
+    }
+  }
+
+  function saveProduct() {
+    const product: Product = {
+      id: editingProduct || `prod-${Date.now()}`,
+      name: productForm.name || "",
+      category: productForm.category || "skincare",
+      tier: productForm.tier || "free",
+      minAge: productForm.minAge || 18,
+      phase: productForm.phase || 1,
+      timing: productForm.timing,
+      what: productForm.what || "",
+      cost: productForm.cost || "",
+      freq: productForm.freq || "",
+      results: productForm.results || "",
+      risk: productForm.risk || "",
+      evidence: productForm.evidence || "",
+      amazonQuery: productForm.amazonQuery,
+      always30: productForm.always30,
+      fitzCaution: productForm.fitzCaution,
+      isNew: productForm.isNew,
+    }
+
+    const updated = editingProduct
+      ? products.map(p => p.id === editingProduct ? product : p)
+      : [...products, product]
+
+    setProducts(updated)
+    localStorage.setItem("iom_admin_products", JSON.stringify(updated))
+    setShowProductForm(false)
+    setEditingProduct(null)
+    setProductForm({})
+  }
+
+  function deleteProduct(id: string) {
+    const updated = products.filter(p => p.id !== id)
+    setProducts(updated)
+    localStorage.setItem("iom_admin_products", JSON.stringify(updated))
+  }
+
+  function editProduct(product: Product) {
+    setEditingProduct(product.id)
+    setProductForm({ ...product })
+    setShowProductForm(true)
+  }
+
+  function resetProductForm() {
+    setShowProductForm(false)
+    setEditingProduct(null)
+    setProductForm({})
+  }
+
+  const filteredProducts = products.filter(p => {
+    if (!productSearch) return true
+    const q = productSearch.toLowerCase()
+    return p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) ||
+      p.what.toLowerCase().includes(q) || p.tier.toLowerCase().includes(q)
+  })
+
+  const CATEGORY_COLORS: Record<string, string> = {
+    skincare: "#e8a4b0",
+    supplements: "#d4af37",
+    habits: "#22c55e",
+    treatments: "#c97e8e",
+  }
+
+  const TIER_COLORS: Record<string, { bg: string; color: string }> = {
+    free: { bg: "#dcfce7", color: "#16a34a" },
+    mid: { bg: "#fef9c3", color: "#ca8a04" },
+    premium: { bg: "#fdf2f4", color: "#c97e8e" },
+  }
+
   const filtered = papers.filter(p => {
     if (!search) return true
     const q = search.toLowerCase()
@@ -333,18 +739,29 @@ export default function BrainPage() {
             + Agregar paper
           </button>
         )}
+        {activeTab === "products" && (
+          <button
+            onClick={() => { resetProductForm(); setShowProductForm(true) }}
+            style={{
+              padding: "10px 20px", background: "linear-gradient(135deg, #e8a4b0, #c97e8e)",
+              border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            + Agregar producto
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-        {(["papers", "insights", "patterns"] as const).map(tab => (
+        {(["papers", "insights", "patterns", "products"] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: "8px 18px", borderRadius: 99, fontSize: 13, fontWeight: 600, cursor: "pointer",
             background: activeTab === tab ? "rgba(232,164,176,0.12)" : "rgba(245,237,232,0.04)",
             border: `1px solid ${activeTab === tab ? "rgba(232,164,176,0.3)" : "rgba(245,237,232,0.08)"}`,
             color: activeTab === tab ? "#e8a4b0" : "rgba(245,237,232,0.4)",
           }}>
-            {tab === "papers" ? "Papers" : tab === "insights" ? "AI Insights" : "Patrones"}
+            {tab === "papers" ? "Papers" : tab === "insights" ? "AI Insights" : tab === "patterns" ? "Patrones" : "Productos"}
           </button>
         ))}
       </div>
@@ -818,6 +1235,244 @@ export default function BrainPage() {
             </>
           )}
         </div>
+      )}
+
+      {/* ===== PRODUCTS TAB ===== */}
+      {activeTab === "products" && (
+        <>
+          {/* Search */}
+          <input
+            type="text" placeholder="Buscar productos..." value={productSearch}
+            onChange={e => setProductSearch(e.target.value)}
+            style={{ ...inputStyle, maxWidth: 400, marginBottom: 20 }}
+          />
+
+          {/* Product form */}
+          {showProductForm && (
+            <div style={{
+              background: "#fff", borderRadius: 16, padding: 24, marginBottom: 20,
+              boxShadow: "0 2px 12px rgba(0,0,0,0.04)", border: "1px solid #f0ede9",
+            }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "#1a1520" }}>
+                {editingProduct ? "Editar producto" : "Nuevo producto"}
+              </h3>
+
+              <input placeholder="Nombre del producto" value={productForm.name || ""} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} style={inputStyle} />
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 4 }}>Categoria</div>
+                  <select value={productForm.category || "skincare"} onChange={e => setProductForm(f => ({ ...f, category: e.target.value as Product["category"] }))} style={inputStyle}>
+                    <option value="skincare">Skincare</option>
+                    <option value="supplements">Supplements</option>
+                    <option value="habits">Habits</option>
+                    <option value="treatments">Treatments</option>
+                  </select>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 4 }}>Tier</div>
+                  <select value={productForm.tier || "free"} onChange={e => setProductForm(f => ({ ...f, tier: e.target.value as Product["tier"] }))} style={inputStyle}>
+                    <option value="free">Free</option>
+                    <option value="mid">Mid</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 4 }}>Timing</div>
+                  <select value={productForm.timing || ""} onChange={e => setProductForm(f => ({ ...f, timing: (e.target.value || undefined) as Product["timing"] }))} style={inputStyle}>
+                    <option value="">Sin timing</option>
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                  </select>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 4 }}>Fase</div>
+                  <select value={productForm.phase || 1} onChange={e => setProductForm(f => ({ ...f, phase: parseInt(e.target.value) }))} style={inputStyle}>
+                    <option value={1}>Fase 1</option>
+                    <option value={2}>Fase 2</option>
+                    <option value={3}>Fase 3</option>
+                    <option value={4}>Fase 4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <input placeholder="Edad mínima" type="number" value={productForm.minAge || 18} onChange={e => setProductForm(f => ({ ...f, minAge: parseInt(e.target.value) || 18 }))} style={inputStyle} />
+                <input placeholder="Costo" value={productForm.cost || ""} onChange={e => setProductForm(f => ({ ...f, cost: e.target.value }))} style={inputStyle} />
+              </div>
+
+              <textarea
+                placeholder="Descripción (what)"
+                value={productForm.what || ""}
+                onChange={e => setProductForm(f => ({ ...f, what: e.target.value }))}
+                style={{ ...inputStyle, minHeight: 70, resize: "vertical" }}
+              />
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <input placeholder="Frecuencia" value={productForm.freq || ""} onChange={e => setProductForm(f => ({ ...f, freq: e.target.value }))} style={inputStyle} />
+                <input placeholder="Resultados esperados" value={productForm.results || ""} onChange={e => setProductForm(f => ({ ...f, results: e.target.value }))} style={inputStyle} />
+              </div>
+
+              <input placeholder="Riesgos" value={productForm.risk || ""} onChange={e => setProductForm(f => ({ ...f, risk: e.target.value }))} style={inputStyle} />
+
+              <textarea
+                placeholder="Evidencia científica"
+                value={productForm.evidence || ""}
+                onChange={e => setProductForm(f => ({ ...f, evidence: e.target.value }))}
+                style={{ ...inputStyle, minHeight: 50, resize: "vertical" }}
+              />
+
+              <input placeholder="Amazon Query (para link de afiliado)" value={productForm.amazonQuery || ""} onChange={e => setProductForm(f => ({ ...f, amazonQuery: e.target.value }))} style={inputStyle} />
+
+              {productForm.amazonQuery && (
+                <div style={{ marginBottom: 12 }}>
+                  <p style={{ fontSize: 10, color: "#888", marginBottom: 4 }}>Link generado:</p>
+                  <a href={`https://www.amazon.com/s?k=${encodeURIComponent(productForm.amazonQuery)}&tag=insideoutmed-20`}
+                     target="_blank" rel="noopener noreferrer"
+                     style={{ fontSize: 11, color: "#7ecba1", wordBreak: "break-all" }}>
+                    {`https://www.amazon.com/s?k=${encodeURIComponent(productForm.amazonQuery)}&tag=insideoutmed-20`}
+                  </a>
+                </div>
+              )}
+
+              {/* Target biomarkers — determines which users get this product recommended */}
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "#444", marginBottom: 8 }}>¿Qué problemas aborda este producto?</p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {[
+                    { key: "darkCircles", label: "Ojeras" },
+                    { key: "texture", label: "Textura" },
+                    { key: "wrinkleDepth", label: "Arrugas" },
+                    { key: "inflammation", label: "Rojez/Inflamación" },
+                    { key: "uniformity", label: "Manchas" },
+                    { key: "luminosity", label: "Luminosidad" },
+                    { key: "sunDamage", label: "Daño solar" },
+                    { key: "glycation", label: "Glicación" },
+                    { key: "vascularity", label: "Vascularidad" },
+                    { key: "hydration", label: "Suavidad" },
+                    { key: "symmetry", label: "Simetría" },
+                  ].map(bio => {
+                    const selected = (productForm.targetBiomarkers || []).includes(bio.key)
+                    return (
+                      <button key={bio.key} type="button" onClick={() => {
+                        const current = productForm.targetBiomarkers || []
+                        const updated = selected ? current.filter(b => b !== bio.key) : [...current, bio.key]
+                        setProductForm(f => ({ ...f, targetBiomarkers: updated }))
+                      }} style={{
+                        padding: "4px 10px", borderRadius: 99, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                        background: selected ? "rgba(126,203,161,0.15)" : "#f5f3f0",
+                        border: selected ? "1.5px solid #7ecba1" : "1px solid #e5e2df",
+                        color: selected ? "#2d8a5e" : "#888",
+                        transition: "all 0.15s",
+                      }}>
+                        {bio.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Flags */}
+              <div style={{ display: "flex", gap: 20, marginBottom: 16 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#444", cursor: "pointer" }}>
+                  <input type="checkbox" checked={!!productForm.always30} onChange={e => setProductForm(f => ({ ...f, always30: e.target.checked }))} />
+                  always30
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#444", cursor: "pointer" }}>
+                  <input type="checkbox" checked={!!productForm.fitzCaution} onChange={e => setProductForm(f => ({ ...f, fitzCaution: e.target.checked }))} />
+                  fitzCaution
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#444", cursor: "pointer" }}>
+                  <input type="checkbox" checked={!!productForm.isNew} onChange={e => setProductForm(f => ({ ...f, isNew: e.target.checked }))} />
+                  isNew
+                </label>
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={saveProduct} style={{
+                  padding: "10px 24px", background: "#22c55e", border: "none", borderRadius: 10,
+                  color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
+                }}>
+                  {editingProduct ? "Guardar cambios" : "Agregar producto"}
+                </button>
+                <button onClick={resetProductForm} style={{
+                  padding: "10px 24px", background: "#f0ede9", border: "none", borderRadius: 10,
+                  color: "#666", fontSize: 14, cursor: "pointer",
+                }}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Products list */}
+          <div style={{ display: "grid", gap: 12 }}>
+            {filteredProducts.map(product => (
+              <div key={product.id} style={{
+                background: "#fff", borderRadius: 14, padding: "18px 20px",
+                boxShadow: "0 1px 6px rgba(0,0,0,0.03)", border: "1px solid #f0ede9",
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1a1520", margin: 0 }}>{product.name}</h3>
+                      {product.isNew && (
+                        <span style={{ padding: "1px 8px", borderRadius: 6, background: "#dbeafe", color: "#2563eb", fontSize: 9, fontWeight: 700, textTransform: "uppercase" }}>New</span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                      <span style={{
+                        padding: "2px 10px", borderRadius: 6, fontSize: 10, fontWeight: 600,
+                        background: `${CATEGORY_COLORS[product.category]}18`,
+                        color: CATEGORY_COLORS[product.category],
+                      }}>
+                        {product.category}
+                      </span>
+                      <span style={{
+                        padding: "2px 10px", borderRadius: 6, fontSize: 10, fontWeight: 600,
+                        background: TIER_COLORS[product.tier]?.bg || "#f0ede9",
+                        color: TIER_COLORS[product.tier]?.color || "#888",
+                      }}>
+                        {product.tier}
+                      </span>
+                      <span style={{ padding: "2px 10px", borderRadius: 6, background: "#f0ede9", color: "#888", fontSize: 10 }}>
+                        Fase {product.phase}
+                      </span>
+                      {product.timing && (
+                        <span style={{ padding: "2px 10px", borderRadius: 6, background: "#f0ede9", color: "#888", fontSize: 10 }}>
+                          {product.timing}
+                        </span>
+                      )}
+                      <span style={{ padding: "2px 10px", borderRadius: 6, background: "#f0ede9", color: "#888", fontSize: 10 }}>
+                        {product.minAge}+ a.
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 13, color: "#444", lineHeight: 1.5, marginBottom: 4 }}>{product.what}</p>
+                    <p style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>{product.cost} -- {product.freq}</p>
+                    {product.amazonQuery && (
+                      <a href={`https://www.amazon.com/s?k=${encodeURIComponent(product.amazonQuery)}&tag=insideoutmed-20`}
+                         target="_blank" rel="noopener noreferrer"
+                         style={{ fontSize: 11, color: "#7ecba1", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        Amazon: {product.amazonQuery}
+                      </a>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: 12 }}>
+                    <button onClick={() => editProduct(product)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "#888" }}>Editar</button>
+                    <button onClick={() => deleteProduct(product.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "#ef4444" }}>Eliminar</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredProducts.length === 0 && (
+            <div style={{ padding: 40, textAlign: "center", color: "#888" }}>
+              {products.length === 0 ? "No hay productos. Los productos del seed se cargaran automaticamente." : "Sin resultados para esa busqueda."}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

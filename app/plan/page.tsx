@@ -39,6 +39,7 @@ interface Rec {
   risk: string
   evidence: string
   amazonQuery?: string
+  targetBiomarkers?: string[]
   always30?: boolean
   fitzCaution?: boolean
   isNew?: boolean
@@ -603,14 +604,14 @@ function buildPlan(catalog: Rec[], profile: UserProfile, scores: Scores): Scored
     // Calculate impact based on how much this product addresses the user's weakest biomarkers
     let impactScore = score // start with existing score
 
-    // Map treatments to biomarkers they address
-    const treatmentBiomarkerMap: Record<string, string[]> = {
+    // Use product's own targetBiomarkers (from admin) or fallback to hardcoded map
+    const fallbackMap: Record<string, string[]> = {
       "Protector solar SPF 50": ["sunDamage"],
-      "Vitamina C 15-20%": ["luminosity", "uniformity"],
-      "Retinol 0.3% → 1%": ["wrinkleDepth", "texture", "glycation"],
-      "Niacinamida 10%": ["inflammation", "uniformity", "vascularity"],
+      "Vitamina C 15-20% (AM)": ["luminosity", "uniformity"],
+      "Retinol 0.3% -> 1% (PM)": ["wrinkleDepth", "texture", "glycation"],
+      "Niacinamida 5-10%": ["inflammation", "uniformity", "vascularity"],
       "Limpiador suave + hidratante con ceramidas": ["hydration", "texture"],
-      "Contorno de ojos cafeína + péptidos": ["darkCircles"],
+      "Contorno de ojos con cafeína + péptidos": ["darkCircles"],
       "AHA/BHA exfoliación química": ["texture", "uniformity"],
       "Sérum de péptidos para firmeza": ["wrinkleDepth", "texture"],
       "Colágeno hidrolizado tipo I y III": ["wrinkleDepth", "texture"],
@@ -619,7 +620,9 @@ function buildPlan(catalog: Rec[], profile: UserProfile, scores: Scores): Scored
       "Vitamina D3 + K2": ["inflammation"],
     }
 
-    const addressedBiomarkers = treatmentBiomarkerMap[rec.name] || []
+    const addressedBiomarkers = (rec as any).targetBiomarkers?.length > 0
+      ? (rec as any).targetBiomarkers
+      : (fallbackMap[rec.name] || [])
     for (const bioKey of addressedBiomarkers) {
       const bioValue = (scores as any)[bioKey]
       if (typeof bioValue === "number") {
@@ -1764,9 +1767,21 @@ export default function PlanPage() {
       }
     }
 
+    // Load products from admin (localStorage) or fallback to CATALOG
+    let activeCatalog = CATALOG
+    try {
+      const stored = localStorage.getItem("iom_admin_products")
+      if (stored) {
+        const adminProducts = JSON.parse(stored) as Rec[]
+        if (adminProducts.length > 0) {
+          activeCatalog = adminProducts
+        }
+      }
+    } catch {}
+
     setScores(loadedScores)
     setProfile(loadedProfile)
-    setPlan(buildPlan(CATALOG, loadedProfile, loadedScores))
+    setPlan(buildPlan(activeCatalog, loadedProfile, loadedScores))
   }, [])
 
   const handleDone = useCallback(() => setShowContent(true), [])

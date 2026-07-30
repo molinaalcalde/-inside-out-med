@@ -1,7 +1,10 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useLanguage } from "@/components/providers/language-provider"
+import {
+  type Product, type Category, type Tier,
+  CATEGORY_OPTIONS, loadCatalog, amazonUrl, getAffiliateTag,
+} from "@/lib/catalog"
 
 // ── Types ──────────────────────────────────────────────────────────
 type Scores = {
@@ -13,37 +16,13 @@ type Scores = {
   inflammation: number
   sunDamage: number
   vascularity: number
-  texture?: number
-  wrinkleDepth?: number
-  darkCircles?: number
-  symmetry?: number
   ageApparent?: number
   zoneScores?: Record<string, { score: number; status: string }>
 }
 
-type Category = "skincare" | "supplements" | "habits" | "treatments"
-type Tier = "free" | "mid" | "premium"
 type Priority = "Urgente" | "Importante" | "Complementario"
 
-interface Rec {
-  name: string
-  category: Category
-  tier: Tier
-  minAge: number
-  phase: number
-  timing?: "AM" | "PM"
-  what: string
-  cost: string
-  freq: string
-  results: string
-  risk: string
-  evidence: string
-  amazonQuery?: string
-  targetBiomarkers?: string[]
-  always30?: boolean
-  fitzCaution?: boolean
-  isNew?: boolean
-}
+type Rec = Product
 
 interface UserProfile {
   age: string
@@ -55,454 +34,14 @@ interface UserProfile {
 
 interface ScoredRec extends Rec {
   score: number
-  impactScore: number
   priority: Priority
   personalizedWhy: string
 }
 
-// ── Constants ──────────────────────────────────────────────────────
-const AMAZON_AFFILIATE_TAG = process.env.NEXT_PUBLIC_AMAZON_AFFILIATE_TAG || "insideoutmed-20"
-
-function amazonUrl(query: string) {
-  return `https://www.amazon.com/s?k=${encodeURIComponent(query)}&tag=${AMAZON_AFFILIATE_TAG}`
-}
-
-// CATEGORY_TABS built inside PlanContent for i18n
-
-// ── Catalog ────────────────────────────────────────────────────────
-const CATALOG: Rec[] = [
-  // ── SKINCARE (10) ──
-  {
-    name: "Protector solar SPF 50",
-    category: "skincare",
-    tier: "free",
-    minAge: 18,
-    phase: 1,
-    timing: "AM",
-    what: "FPS 50+ de amplio espectro, cada mañana, reaplicar cada 3-4h con exposición. Sin protección solar, ningún otro activo puede rendir al 100%.",
-    cost: "$8-20/mes",
-    freq: "Diario AM",
-    results: "Prevención desde día 1; menos manchas en 3-6 meses",
-    risk: "Elegir libre de fragancia si piel sensible",
-    evidence: "Hughes et al., Ann Intern Med 2013: el uso diario de FPS redujo el fotoenvejecimiento un 24%.",
-    amazonQuery: "protector solar SPF 50 facial",
-  },
-  {
-    name: "Limpiador suave + hidratante con ceramidas",
-    category: "skincare",
-    tier: "free",
-    minAge: 18,
-    phase: 1,
-    what: "Limpieza AM/PM sin sulfatos agresivos + hidratante con ceramidas y ácido hialurónico. Restaura y protege tu barrera cutánea.",
-    cost: "$15-30/mes",
-    freq: "2x día",
-    results: "Barrera más fuerte en 2-4 semanas",
-    risk: "Bajo",
-    evidence: "Lynde, J Drugs Dermatol 2014: ceramidas restauran la barrera cutánea.",
-    amazonQuery: "CeraVe limpiador hidratante ceramidas",
-  },
-  {
-    name: "Vitamina C 15-20%",
-    category: "skincare",
-    tier: "mid",
-    minAge: 22,
-    phase: 2,
-    timing: "AM",
-    what: "Antioxidante de mañana (ácido L-ascórbico 15-20%) bajo el protector solar. Potencia la fotoprotección y estimula colágeno.",
-    cost: "$20-45/mes",
-    freq: "Diario AM",
-    results: "Más luminosidad en 4-8 semanas",
-    risk: "Puede irritar; empezar 3x/semana",
-    evidence: "Pinnell, Dermatol Surg 2001: vitamina C tópica aumenta síntesis de colágeno y protege del fotodaño.",
-    amazonQuery: "serum vitamina C 20% rostro",
-  },
-  {
-    name: "Retinol 0.3% → 1%",
-    category: "skincare",
-    tier: "mid",
-    minAge: 25,
-    phase: 2,
-    timing: "PM",
-    what: "Retinoide nocturno, subir concentración gradualmente. El activo anti-edad mejor documentado de la dermatología moderna.",
-    cost: "$20-50/mes",
-    freq: "PM, 2-5x/semana",
-    results: "Textura y líneas finas en 8-12 semanas",
-    risk: "Irritación/descamación inicial; evitar en embarazo",
-    evidence: "Mukherjee, Clin Interv Aging 2006: retinoides reducen arrugas y aumentan colágeno de forma comprobada.",
-    amazonQuery: "retinol serum 0.5% facial",
-  },
-  {
-    name: "Niacinamida 10%",
-    category: "skincare",
-    tier: "free",
-    minAge: 20,
-    phase: 2,
-    what: "Reduce rojez, poros y mejora uniformidad de tono. Muy bien tolerada y compatible con casi cualquier activo.",
-    cost: "$10-25/mes",
-    freq: "Diario",
-    results: "Tono más parejo en 4-8 semanas",
-    risk: "Mínimo",
-    evidence: "Bissett, Dermatol Surg 2005: niacinamida mejora textura, poros y manchas.",
-    amazonQuery: "niacinamida 10% serum facial",
-  },
-  {
-    name: "Contorno de ojos cafeína + péptidos",
-    category: "skincare",
-    tier: "mid",
-    minAge: 25,
-    phase: 1,
-    what: "Cafeína para hinchazón y ojeras vasculares + péptidos para firmeza periocular. Resultados visibles en la zona más delicada.",
-    cost: "$18-40/mes",
-    freq: "2x día",
-    results: "Menos hinchazón en 2-4 semanas",
-    risk: "Bajo",
-    evidence: "Herman, Skin Pharmacol 2013: cafeína vasoconstrictora reduce edema periorbital.",
-    amazonQuery: "contorno ojos cafeina peptidos",
-  },
-  {
-    name: "AHA/BHA exfoliación química",
-    category: "skincare",
-    tier: "mid",
-    minAge: 22,
-    phase: 3,
-    timing: "PM",
-    what: "Glicólico o salicílico 1-2x/semana para renovar textura y desobstruir poros. Acelera la renovación celular sin abrasión mecánica.",
-    cost: "$15-35/mes",
-    freq: "1-2x/semana",
-    results: "Suavidad en 3-6 semanas",
-    risk: "No combinar con retinol la misma noche; usar SPF",
-    evidence: "Kornhauser, Clin Cosmet Investig Dermatol 2010: AHAs mejoran textura y firmeza.",
-    amazonQuery: "AHA BHA exfoliante quimico facial",
-  },
-  {
-    name: "Sérum de péptidos para firmeza",
-    category: "skincare",
-    tier: "mid",
-    minAge: 30,
-    phase: 4,
-    what: "Péptidos señalizadores (Matrixyl) para estimular colágeno y firmeza del óvalo facial. Ideal para prevenir flacidez.",
-    cost: "$25-55/mes",
-    freq: "Diario",
-    results: "Firmeza sutil en 8-12 semanas",
-    risk: "Bajo",
-    evidence: "Robinson, Int J Cosmet Sci 2005: Matrixyl estimula colágeno tipo I.",
-    amazonQuery: "serum peptidos matrixyl firmeza",
-  },
-  {
-    name: "Sérum PDRN tópico",
-    category: "skincare",
-    tier: "mid",
-    minAge: 25,
-    phase: 3,
-    timing: "PM",
-    isNew: true,
-    what: "Sérum con polinucleótidos que estimula fibroblastos y reparación de ADN cutáneo. La versión tópica de la terapia regenerativa más trending, sin agujas.",
-    cost: "$30-70/mes",
-    freq: "PM (o AM/PM)",
-    results: "Líneas finas e hidratación en 8 semanas",
-    risk: "Bajo; evitar si hay alergia a derivados de pescado",
-    evidence: "J Cosmet Dermatol 2025: PDRN tópico ~47% menos líneas finas, ~39% más elasticidad a 8 semanas.",
-    amazonQuery: "PDRN serum polinucleotidos facial",
-  },
-  {
-    name: "Bakuchiol",
-    category: "skincare",
-    tier: "mid",
-    minAge: 22,
-    phase: 2,
-    timing: "PM",
-    isNew: true,
-    what: "Retinoide vegetal mejor tolerado: efecto tipo retinol (líneas, textura) con menos irritación. Ideal para piel sensible o rosácea.",
-    cost: "$20-45/mes",
-    freq: "PM, diario",
-    results: "Textura y líneas en 8-12 semanas",
-    risk: "Bajo; muy bien tolerado",
-    evidence: "Dhaliwal, Br J Dermatol 2019: bakuchiol comparable al retinol en arrugas y pigmentación, con menos irritación.",
-    amazonQuery: "bakuchiol serum facial",
-  },
-
-  // ── SUPPLEMENTS (7) ──
-  {
-    name: "Colágeno hidrolizado tipo I y III",
-    category: "supplements",
-    tier: "free",
-    minAge: 25,
-    phase: 1,
-    what: "10 g/día de péptidos de colágeno. Mejora elasticidad e hidratación cutánea desde dentro, con evidencia en estudios doble ciego.",
-    cost: "$15-35/mes",
-    freq: "Diario",
-    results: "Elasticidad medible en 8-12 semanas",
-    risk: "Bajo",
-    evidence: "Proksch, Skin Pharmacol Physiol 2014: péptidos de colágeno mejoran elasticidad cutánea (estudio doble ciego).",
-    amazonQuery: "colageno hidrolizado polvo tipo I III",
-  },
-  {
-    name: "Omega-3 EPA/DHA",
-    category: "supplements",
-    tier: "free",
-    minAge: 18,
-    phase: 1,
-    what: "1-2 g/día. Antiinflamatorio sistémico, mejora barrera lipídica e hidratación de la piel desde dentro.",
-    cost: "$12-25/mes",
-    freq: "Diario",
-    results: "Menos inflamación en 6-10 semanas",
-    risk: "Cuidado si tomas anticoagulantes",
-    evidence: "Pilkington, Exp Dermatol 2011: omega-3 protege de fotodaño e inflamación cutánea.",
-    amazonQuery: "omega 3 EPA DHA capsulas",
-  },
-  {
-    name: "Vitamina D3 + K2",
-    category: "supplements",
-    tier: "free",
-    minAge: 18,
-    phase: 1,
-    what: "2000-4000 UI de D3 con K2. Soporta inmunidad, cicatrización y salud general de la piel.",
-    cost: "$8-18/mes",
-    freq: "Diario",
-    results: "Beneficio sistémico continuo",
-    risk: "Idealmente con nivel sérico medido",
-    evidence: "Umar, Skin Pharmacol 2018: déficit de vitamina D asociado a peor cicatrización y barrera cutánea.",
-    amazonQuery: "vitamina D3 K2 capsulas",
-  },
-  {
-    name: "Astaxantina 4-12 mg",
-    category: "supplements",
-    tier: "mid",
-    minAge: 25,
-    phase: 2,
-    what: "Antioxidante potente de origen marino. Mejora elasticidad y reduce líneas finas con uso sostenido.",
-    cost: "$15-30/mes",
-    freq: "Diario",
-    results: "Elasticidad en 8 semanas",
-    risk: "Bajo",
-    evidence: "Tominaga, Acta Biochim Pol 2012: astaxantina oral+tópica mejora arrugas y elasticidad.",
-    amazonQuery: "astaxantina 12mg capsulas",
-  },
-  {
-    name: "Zinc bisglicinato + Vitamina C oral",
-    category: "supplements",
-    tier: "free",
-    minAge: 18,
-    phase: 2,
-    what: "Cofactores esenciales de la síntesis de colágeno y control de inflamación. Especialmente útil contra brotes de acné.",
-    cost: "$10-20/mes",
-    freq: "Diario",
-    results: "Variable, mejora gradual",
-    risk: "Zinc lejos de hierro; no exceder 30 mg/día",
-    evidence: "Vitamina C es cofactor esencial de la prolil-hidroxilasa en la síntesis de colágeno.",
-    amazonQuery: "zinc bisglicinato vitamina C",
-  },
-  {
-    name: "NMN / NR (precursores de NAD+)",
-    category: "supplements",
-    tier: "premium",
-    minAge: 35,
-    phase: 4,
-    what: "250-500 mg/día. Apoyo a la longevidad celular y reparación de ADN. Evidencia emergente pero prometedora.",
-    cost: "$40-90/mes",
-    freq: "Diario",
-    results: "Largo plazo; marcador sistémico",
-    risk: "Evidencia en humanos aún limitada; consultar médico",
-    evidence: "Yoshino, Science 2021: NMN mejora sensibilidad a insulina; efectos en piel aún en estudio.",
-    amazonQuery: "NMN 500mg capsulas NAD+",
-  },
-  {
-    name: "Magnesio glicinato",
-    category: "supplements",
-    tier: "free",
-    minAge: 18,
-    phase: 1,
-    what: "200-400 mg por la noche. Mejora sueño profundo y reduce cortisol, el enemigo silencioso del colágeno.",
-    cost: "$8-16/mes",
-    freq: "PM, diario",
-    results: "Mejor sueño en 1-2 semanas",
-    risk: "Puede ablandar heces en dosis altas",
-    evidence: "Sueño profundo regula cortisol; cortisol alto degrada colágeno (Sapolsky, revisión neuroendocrina).",
-    amazonQuery: "magnesio glicinato capsulas",
-  },
-
-  // ── HABITS (6) ──
-  {
-    name: "Dormir 7-9 horas",
-    category: "habits",
-    tier: "free",
-    minAge: 18,
-    phase: 1,
-    what: "En sueño profundo el cuerpo libera hormona de crecimiento y repara la piel. Dormir poco sube el cortisol, que degrada colágeno y causa ojeras.",
-    cost: "$0",
-    freq: "Cada noche",
-    results: "Menos ojeras e hinchazón en 1-2 semanas",
-    risk: "Ninguno",
-    evidence: "Revisiones 2024-2026: el sueño regula cortisol y reparación de barrera; su déficit acelera el envejecimiento.",
-  },
-  {
-    name: "Evitar sol pico + sombrero y lentes",
-    category: "habits",
-    tier: "free",
-    minAge: 18,
-    phase: 1,
-    what: "El sol explica ~80% del envejecimiento visible. Evita las 10-16h, usa sombrero y lentes además del SPF.",
-    cost: "$0",
-    freq: "Diario",
-    results: "Prevención: menos manchas y arrugas a mediano plazo",
-    risk: "Ninguno",
-    evidence: "El fotoenvejecimiento (exposoma UV) es el principal factor extrínseco del envejecimiento cutáneo.",
-  },
-  {
-    name: "Dieta anti-glicación",
-    category: "habits",
-    tier: "free",
-    minAge: 18,
-    phase: 1,
-    what: "El azúcar genera glicación, que endurece el colágeno y apaga la piel. Prioriza proteína, vegetales, antioxidantes y omega-3.",
-    cost: "$0",
-    freq: "Diario",
-    results: "Piel más luminosa en 4-8 semanas",
-    risk: "Ninguno",
-    evidence: "PMC 2024-2025: dieta rica en antioxidantes y baja en azúcares reduce glicación y estrés oxidativo cutáneo.",
-  },
-  {
-    name: "Ejercicio 3-5x/semana",
-    category: "habits",
-    tier: "free",
-    minAge: 18,
-    phase: 1,
-    what: "Mejora circulación, oxigenación y función mitocondrial de la piel. Más glow y mejor capacidad de reparación.",
-    cost: "$0",
-    freq: "3-5x/semana",
-    results: "Mejor color y tono en semanas",
-    risk: "Ninguno",
-    evidence: "JMIR Dermatology 2024: ejercicio mejora perfusión, temperatura e hidratación cutánea.",
-  },
-  {
-    name: "No fumar y moderar alcohol",
-    category: "habits",
-    tier: "free",
-    minAge: 18,
-    phase: 1,
-    what: "Fumar y el exceso de alcohol aceleran arrugas, deshidratan y opacan la piel. Dejarlo es de lo que más rejuvenece visiblemente.",
-    cost: "$0",
-    freq: "Siempre",
-    results: "Mejora progresiva de tono e hidratación",
-    risk: "Ninguno",
-    evidence: "Tabaco y alcohol son factores del exposoma asociados a envejecimiento cutáneo acelerado.",
-  },
-  {
-    name: "Manejo del estrés (respiración/meditación)",
-    category: "habits",
-    tier: "free",
-    minAge: 18,
-    phase: 2,
-    what: "El estrés crónico inflama la piel vía cortisol. 10 minutos al día de respiración o meditación bajan la carga inflamatoria.",
-    cost: "$0",
-    freq: "Diario, 10 min",
-    results: "Menos brotes y rojez con el tiempo",
-    risk: "Ninguno",
-    evidence: "El estrés psicosocial forma parte del exposoma y amplifica vías inflamatorias del envejecimiento.",
-  },
-
-  // ── TREATMENTS (7) ──
-  {
-    name: "Hydrafacial",
-    category: "treatments",
-    tier: "mid",
-    minAge: 22,
-    phase: 3,
-    what: "Limpieza profunda, exfoliación e hidratación en consultorio. Resultados inmediatos sin tiempo de recuperación.",
-    cost: "$80-150/sesión",
-    freq: "Mensual",
-    results: "Luminosidad inmediata, efecto acumulativo",
-    risk: "Mínimo",
-    evidence: "Protocolo de hidradermoabrasión: mejora hidratación y textura inmediata en estudios clínicos.",
-  },
-  {
-    name: "Peel químico (mandélico/glicólico)",
-    category: "treatments",
-    tier: "mid",
-    minAge: 25,
-    phase: 3,
-    fitzCaution: true,
-    what: "Exfoliación profesional en consultorio. Mandélico es más seguro en fototipos altos. Mejora textura, manchas y tono.",
-    cost: "$60-120/sesión",
-    freq: "Cada 3-4 semanas (serie de 4-6)",
-    results: "Tono más parejo en 2-3 sesiones",
-    risk: "Riesgo de hiperpigmentación en Fitz IV-VI: usar ácidos suaves + SPF estricto",
-    evidence: "Sharad, J Cutan Aesthet Surg 2013: peels de glicólico mejoran textura y pigmento.",
-  },
-  {
-    name: "Microneedling con radiofrecuencia",
-    category: "treatments",
-    tier: "premium",
-    minAge: 28,
-    phase: 4,
-    what: "Estimula colágeno en profundidad con microagujas y calor controlado. Mejora poros, cicatrices y firmeza.",
-    cost: "$200-400/sesión",
-    freq: "Serie de 3, cada 4-6 semanas",
-    results: "Firmeza y textura en 2-3 meses",
-    risk: "Rojez 1-2 días; cuidado con pigmento en fototipos altos",
-    evidence: "Hou, Dermatol Surg 2017: microneedling+RF mejora firmeza y cicatrices con alta satisfacción.",
-  },
-  {
-    name: "LED rojo terapéutico",
-    category: "treatments",
-    tier: "mid",
-    minAge: 20,
-    phase: 2,
-    what: "Fotobiomodulación: estimula colágeno y calma inflamación. Se puede usar en casa o consultorio.",
-    cost: "$30-60/sesión",
-    freq: "3-5x/semana",
-    results: "Sutil en 8-12 semanas con constancia",
-    risk: "Muy bajo",
-    evidence: "Wunsch, Photomed Laser Surg 2014: luz roja mejora densidad de colágeno y arrugas.",
-  },
-  {
-    name: "Botox preventivo",
-    category: "treatments",
-    tier: "premium",
-    minAge: 28,
-    phase: 4,
-    always30: true,
-    what: "Relaja músculos que crean líneas dinámicas. Después de los 30 es preventivo: frena que las líneas se vuelvan arrugas permanentes.",
-    cost: "$200-400/sesión",
-    freq: "Cada 3-4 meses",
-    results: "Líneas suavizadas en 5-10 días",
-    risk: "Ptosis temporal si mal aplicado; elegir médico certificado",
-    evidence: "Carruthers, Dermatol Surg: toxina botulínica reduce líneas dinámicas de forma reproducible.",
-  },
-  {
-    name: "Skinboosters / mesoterapia",
-    category: "treatments",
-    tier: "premium",
-    minAge: 30,
-    phase: 4,
-    what: "Microinyecciones de ácido hialurónico no reticulado para hidratación profunda y glow desde la dermis.",
-    cost: "$150-300/sesión",
-    freq: "Serie de 3, cada mes",
-    results: "Glow y firmeza en 3-4 semanas",
-    risk: "Hematomas leves",
-    evidence: "Sparavigna 2019: skinboosters mejoran hidratación dérmica y elasticidad.",
-  },
-  {
-    name: "PRP facial",
-    category: "treatments",
-    tier: "premium",
-    minAge: 30,
-    phase: 4,
-    what: "Plasma rico en plaquetas inyectado para mejorar calidad de piel, microcirculación y textura.",
-    cost: "$200-350/sesión",
-    freq: "Serie de 3 sesiones",
-    results: "Textura y tono en 4-8 semanas",
-    risk: "Hematomas leves",
-    evidence: "Mehryan, J Cosmet Dermatol 2014: PRP mejora textura periorbital y color de ojeras.",
-  },
-]
+const CATEGORY_TABS = CATEGORY_OPTIONS
 
 // ── Engine ─────────────────────────────────────────────────────────
 function ageFromRange(ageStr: string): number {
-  // Try exact number first (quiz stores exact age like "38")
-  const exact = parseInt(ageStr, 10)
-  if (!isNaN(exact) && exact >= 14 && exact <= 99) return exact
-  // Fallback: legacy range format
   const map: Record<string, number> = { "18-25": 22, "26-35": 30, "36-45": 40, "46+": 52 }
   return map[ageStr] ?? 30
 }
@@ -517,7 +56,7 @@ function tierValue(t: Tier): number {
   return t === "free" ? 0 : t === "mid" ? 1 : 2
 }
 
-function buildPlan(catalog: Rec[], profile: UserProfile, scores: Scores): ScoredRec[] {
+function buildPlan(catalog: Product[], profile: UserProfile, scores: Scores): ScoredRec[] {
   const userAge = ageFromRange(profile.age)
   const maxTier = tierRank(profile.budget)
 
@@ -563,7 +102,7 @@ function buildPlan(catalog: Rec[], profile: UserProfile, scores: Scores): Scored
     if (
       (concern.includes("arrugas") && (rec.name.toLowerCase().includes("retinol") || rec.name.toLowerCase().includes("péptidos") || rec.name.toLowerCase().includes("botox"))) ||
       (concern.includes("manchas") && (rec.name.toLowerCase().includes("vitamina c") || rec.name.toLowerCase().includes("peel") || rec.name.toLowerCase().includes("spf"))) ||
-      (concern.includes("suavidad") && (rec.name.toLowerCase().includes("ceramidas") || rec.name.toLowerCase().includes("colágeno") || rec.name.toLowerCase().includes("omega"))) ||
+      (concern.includes("hidratación") && (rec.name.toLowerCase().includes("ceramidas") || rec.name.toLowerCase().includes("colágeno") || rec.name.toLowerCase().includes("omega"))) ||
       (concern.includes("firmeza") && (rec.name.toLowerCase().includes("péptidos") || rec.name.toLowerCase().includes("retinol") || rec.name.toLowerCase().includes("microneedling"))) ||
       (concern.includes("ojeras") && (rec.name.toLowerCase().includes("contorno") || rec.name.toLowerCase().includes("dormir") || rec.name.toLowerCase().includes("prp"))) ||
       (concern.includes("acné") && (rec.name.toLowerCase().includes("niacinamida") || rec.name.toLowerCase().includes("zinc") || rec.name.toLowerCase().includes("aha"))) ||
@@ -601,43 +140,9 @@ function buildPlan(catalog: Rec[], profile: UserProfile, scores: Scores): Scored
       priority = "Importante"
     }
 
-    // Calculate impact based on how much this product addresses the user's weakest biomarkers
-    let impactScore = score // start with existing score
-
-    // Use product's own targetBiomarkers (from admin) or fallback to hardcoded map
-    const fallbackMap: Record<string, string[]> = {
-      "Protector solar SPF 50": ["sunDamage"],
-      "Vitamina C 15-20% (AM)": ["luminosity", "uniformity"],
-      "Retinol 0.3% -> 1% (PM)": ["wrinkleDepth", "texture", "glycation"],
-      "Niacinamida 5-10%": ["inflammation", "uniformity", "vascularity"],
-      "Limpiador suave + hidratante con ceramidas": ["hydration", "texture"],
-      "Contorno de ojos con cafeína + péptidos": ["darkCircles"],
-      "AHA/BHA exfoliación química": ["texture", "uniformity"],
-      "Sérum de péptidos para firmeza": ["wrinkleDepth", "texture"],
-      "Colágeno hidrolizado tipo I y III": ["wrinkleDepth", "texture"],
-      "Omega-3 EPA/DHA": ["inflammation"],
-      "Astaxantina 4-12 mg": ["inflammation", "sunDamage"],
-      "Vitamina D3 + K2": ["inflammation"],
-    }
-
-    const addressedBiomarkers = (rec as any).targetBiomarkers?.length > 0
-      ? (rec as any).targetBiomarkers
-      : (fallbackMap[rec.name] || [])
-    for (const bioKey of addressedBiomarkers) {
-      const bioValue = (scores as any)[bioKey]
-      if (typeof bioValue === "number") {
-        // For "lower is better" metrics (glycation, inflammation, sunDamage, vascularity),
-        // high raw value = worse = higher impact potential
-        const isInverse = ["glycation", "inflammation", "sunDamage", "vascularity"].includes(bioKey)
-        const severity = isInverse ? bioValue : (100 - bioValue)
-        impactScore += Math.round(severity * 0.5) // boost score based on how bad this biomarker is
-      }
-    }
-
     scored.push({
       ...rec,
       score,
-      impactScore,
       priority,
       personalizedWhy: getPersonalizedWhy(rec, scores),
     })
@@ -663,10 +168,10 @@ function getPersonalizedWhy(rec: Rec, scores: Scores): string {
     return `Tu luminosidad está en ${scores.luminosity}%. La vitamina C es el antioxidante tópico con mayor evidencia.`
   }
   if (n.includes("colágeno hidrolizado")) {
-    return `Con una suavidad del ${scores.hydration}%, los péptidos de colágeno mejoran elasticidad desde dentro.`
+    return `Con una hidratación del ${scores.hydration}%, los péptidos de colágeno mejoran elasticidad desde dentro.`
   }
   if (n.includes("ceramidas") || n.includes("hidratante")) {
-    return `Tu suavidad de piel está en ${scores.hydration}%. Las ceramidas restauran tu barrera cutánea.`
+    return `Tu hidratación está en ${scores.hydration}%. Las ceramidas restauran tu barrera cutánea.`
   }
   if (n.includes("omega-3")) {
     return `Tu inflamación está en ${scores.inflammation}%. Omega-3 es el antiinflamatorio sistémico con mejor evidencia.`
@@ -712,24 +217,19 @@ function getPersonalizedWhy(rec: Rec, scores: Scores): string {
 }
 
 // ── Analysis steps ─────────────────────────────────────────────────
-// ANALYSIS_STEPS built inside AnalyzingScreen for i18n
+const ANALYSIS_STEPS = [
+  "Procesando tus 7 biomarcadores",
+  "Cruzando con 12.847 perfiles clínicos",
+  "Identificando déficits por zona facial",
+  "Seleccionando ingredientes activos compatibles",
+  "Verificando compatibilidad entre activos",
+  "Protocolo personalizado listo",
+]
 
 const STEP_DURATIONS = [650, 900, 750, 650, 550, 400]
 
 // ── Analyzing screen ────────────────────────────────────────────────
 function AnalyzingScreen({ scores, onDone }: { scores: Scores; onDone: () => void }) {
-  const { locale } = useLanguage()
-  const L = (es: string, en: string) => locale === "en" ? en : es
-
-  const ANALYSIS_STEPS = [
-    L("Procesando tus 7 biomarcadores", "Processing your 7 biomarkers"),
-    L("Cruzando con 12.847 perfiles clínicos", "Cross-referencing 12,847 clinical profiles"),
-    L("Identificando déficits por zona facial", "Identifying deficits by facial zone"),
-    L("Seleccionando ingredientes activos compatibles", "Selecting compatible active ingredients"),
-    L("Verificando compatibilidad entre activos", "Verifying compatibility between actives"),
-    L("Protocolo personalizado listo", "Personalized protocol ready"),
-  ]
-
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
   const [activeStep, setActiveStep] = useState(0)
   const [finished, setFinished] = useState(false)
@@ -808,10 +308,10 @@ function AnalyzingScreen({ scores, onDone }: { scores: Scores; onDone: () => voi
             color: isLast ? "#7ecba1" : "#f5ede8",
             transition: "color 0.4s ease",
           }}>
-            {isLast ? L("Tu protocolo está listo", "Your protocol is ready") : L("Analizando tu caso", "Analyzing your case")}
+            {isLast ? "Tu protocolo está listo" : "Analizando tu caso"}
           </h1>
           <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.32)", letterSpacing: "0.04em" }}>
-            Score {scores.overall}/100 · {isLast ? L("Procesamiento completo", "Processing complete") : L("Un momento, por favor", "One moment, please")}
+            Score {scores.overall}/100 · {isLast ? "Procesamiento completo" : "Un momento, por favor"}
           </p>
         </div>
 
@@ -824,7 +324,7 @@ function AnalyzingScreen({ scores, onDone }: { scores: Scores; onDone: () => voi
             return (
               <div key={i} style={{
                 display: "flex", alignItems: "center", gap: 13,
-                opacity: isPending ? 0.38 : 1,
+                opacity: isPending ? 0.22 : 1,
                 transform: isPending ? "translateX(-4px)" : "translateX(0)",
                 transition: "opacity 0.4s ease, transform 0.4s ease",
               }}>
@@ -879,7 +379,7 @@ function AnalyzingScreen({ scores, onDone }: { scores: Scores; onDone: () => voi
           }} />
         </div>
         <p style={{ fontSize: 10, color: "rgba(245,237,232,0.18)", textAlign: "center", letterSpacing: "0.1em" }}>
-          {progress}% {L("completado", "complete")}
+          {progress}% completado
         </p>
       </div>
 
@@ -914,10 +414,7 @@ function renderRecCard(
   ri: number,
   expandedEvidence: Set<string>,
   toggleEvidence: (id: string) => void,
-  L: (es: string, en: string) => string,
-  topImpactNames: Set<string>,
-  highImpactNames: Set<string>,
-  topImpactProductName: string,
+  affiliateTag?: string,
 ) {
   const colors = PRIORITY_COLORS[rec.priority]
   const cardId = `${rec.category}-${rec.name}-${ri}`
@@ -929,7 +426,7 @@ function renderRecCard(
       style={{
         background: "rgba(245,237,232,0.04)",
         border: "1px solid rgba(245,237,232,0.08)",
-        borderRadius: 14, padding: 16,
+        borderRadius: 14, padding: 20,
         transition: "border-color 0.2s, transform 0.2s",
         animation: `cardIn 0.45s ease ${0.35 + ri * 0.06}s both`,
       }}
@@ -975,35 +472,10 @@ function renderRecCard(
             border: "1px solid rgba(212,175,136,0.2)",
             padding: "3px 8px", borderRadius: 99,
           }}>
-            {L("NUEVO", "NEW")}
+            NUEVO
           </span>
         )}
       </div>
-
-      {/* Impact badges */}
-      {topImpactNames.has(rec.name) && (
-        <span style={{
-          display: "inline-flex", alignItems: "center", gap: 4,
-          padding: "3px 10px", borderRadius: 99, marginBottom: 8,
-          background: "rgba(126,203,161,0.12)", border: "1px solid rgba(126,203,161,0.25)",
-          fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
-          color: "#7ecba1",
-        }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-          {L("Mayor impacto para ti", "Highest impact for you")}
-        </span>
-      )}
-      {highImpactNames.has(rec.name) && !topImpactNames.has(rec.name) && (
-        <span style={{
-          display: "inline-block",
-          padding: "3px 10px", borderRadius: 99, marginBottom: 8,
-          background: "rgba(212,175,136,0.08)", border: "1px solid rgba(212,175,136,0.2)",
-          fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
-          color: "#d4af88",
-        }}>
-          {L("Recomendado", "Recommended")}
-        </span>
-      )}
 
       {/* Title */}
       <h4 style={{
@@ -1012,16 +484,6 @@ function renderRecCard(
       }}>
         {rec.name}
       </h4>
-
-      {/* #1 impact explanation */}
-      {topImpactProductName === rec.name && (
-        <p style={{ fontSize: 11, color: "rgba(126,203,161,0.7)", marginBottom: 8, lineHeight: 1.4 }}>
-          {L(
-            `Basado en tu análisis, este producto aborda tu mayor debilidad directamente.`,
-            `Based on your analysis, this product directly addresses your biggest weakness.`
-          )}
-        </p>
-      )}
 
       {/* What */}
       <p style={{ fontSize: 12, color: "rgba(245,237,232,0.42)", lineHeight: 1.6, marginBottom: 10 }}>
@@ -1040,7 +502,7 @@ function renderRecCard(
         borderRadius: 10, padding: "10px 14px", marginBottom: 14,
       }}>
         <p style={{ fontSize: 10, color: "#e8a4b0", fontWeight: 600, letterSpacing: "0.06em", marginBottom: 4, textTransform: "uppercase" }}>
-          {L("Por qu\u00e9 t\u00fa lo necesitas:", "Why you need this:")}
+          Por qu{"\u00e9"} t{"\u00fa"} lo necesitas:
         </p>
         <p style={{ fontSize: 12, color: "rgba(245,237,232,0.55)", lineHeight: 1.55 }}>
           {rec.personalizedWhy}
@@ -1055,32 +517,39 @@ function renderRecCard(
           borderRadius: 8, padding: "8px 12px", marginBottom: 14,
         }}>
           <p style={{ fontSize: 11, color: "#d4af88", lineHeight: 1.5 }}>
-            {L("Precauci\u00f3n en fototipos altos (Fitz IV-VI): riesgo de hiperpigmentaci\u00f3n. Consultar especialista.", "Caution for high phototypes (Fitz IV-VI): risk of hyperpigmentation. Consult a specialist.")}
+            Precauci{"\u00f3"}n en fototipos altos (Fitz IV-VI): riesgo de hiperpigmentaci{"\u00f3"}n. Consultar especialista.
           </p>
         </div>
       )}
 
       {/* Bottom row: Amazon + Evidence */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        {rec.amazonQuery && (
+        {rec.amazonQuery && (rec.category === "skincare" || rec.category === "supplements") && (
           <a
-            href={amazonUrl(rec.amazonQuery)}
+            href={amazonUrl(rec.amazonQuery, affiliateTag)}
             target="_blank" rel="noopener noreferrer"
             style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              marginTop: 10, padding: "7px 14px",
-              background: "rgba(212,175,136,0.08)",
-              border: "1px solid rgba(212,175,136,0.2)",
-              borderRadius: 10, fontSize: 11, fontWeight: 600,
-              color: "#d4af88", textDecoration: "none",
-              transition: "all 0.2s",
+              display: "inline-flex", alignItems: "center", gap: 7,
+              background: "rgba(245,237,232,0.06)",
+              border: "1px solid rgba(245,237,232,0.12)",
+              color: "#f5ede8", borderRadius: 10,
+              padding: "9px 16px", fontSize: 12, fontWeight: 600,
+              textDecoration: "none", whiteSpace: "nowrap",
+              transition: "background 0.2s, border-color 0.2s",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(245,237,232,0.11)"
+              e.currentTarget.style.borderColor = "rgba(245,237,232,0.22)"
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "rgba(245,237,232,0.06)"
+              e.currentTarget.style.borderColor = "rgba(245,237,232,0.12)"
             }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-              <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
+            Ver en Amazon
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            {L("Ver producto", "View product")}
           </a>
         )}
         <button
@@ -1095,7 +564,7 @@ function renderRecCard(
           onMouseEnter={e => { e.currentTarget.style.color = "rgba(245,237,232,0.6)" }}
           onMouseLeave={e => { e.currentTarget.style.color = "rgba(245,237,232,0.3)" }}
         >
-          {L("Evidencia", "Evidence")} {showingEvidence ? "\u25be" : "\u25b8"}
+          Evidencia {showingEvidence ? "\u25be" : "\u25b8"}
         </button>
       </div>
 
@@ -1112,7 +581,7 @@ function renderRecCard(
           </p>
           {rec.risk && rec.risk !== "Ninguno" && rec.risk !== "Bajo" && (
             <p style={{ fontSize: 11, color: "rgba(212,175,136,0.6)", marginTop: 6, lineHeight: 1.5 }}>
-              {L("Riesgo:", "Risk:")} {rec.risk}
+              Riesgo: {rec.risk}
             </p>
           )}
         </div>
@@ -1122,41 +591,17 @@ function renderRecCard(
 }
 
 // ── Plan content ───────────────────────────────────────────────────
-function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserProfile; plan: ScoredRec[] }) {
-  const { locale } = useLanguage()
-  const L = (es: string, en: string) => locale === "en" ? en : es
-
-  const CATEGORY_TABS: { key: Category; label: string }[] = [
-    { key: "skincare", label: "Skincare" },
-    { key: "supplements", label: L("Suplementos", "Supplements") },
-    { key: "habits", label: L("Hábitos", "Habits") },
-    { key: "treatments", label: L("Tratamientos", "Treatments") },
-  ]
-
+function PlanContent({ scores, profile, plan, affiliateTag }: { scores: Scores; profile: UserProfile; plan: ScoredRec[]; affiliateTag?: string }) {
   const [activeTab, setActiveTab] = useState<Category>("skincare")
   const [expandedEvidence, setExpandedEvidence] = useState<Set<string>>(new Set())
-  const [scanHistory, setScanHistory] = useState<Array<{ scan_date: string; overall: number; visible_age: number }>>([])
-
-  useEffect(() => {
-    const profileData = (() => { try { return JSON.parse(localStorage.getItem("insideoutmed_profile") || "{}") } catch { return {} } })()
-    if (profileData.email) {
-      fetch(`/api/scan?email=${encodeURIComponent(profileData.email)}`)
-        .then(r => r.json())
-        .then(d => { if (d.scans?.length > 1) setScanHistory(d.scans) })
-        .catch(() => {})
-    }
-  }, [])
 
   const realAge = ageFromRange(profile.age)
   const ageApparent = scores.ageApparent ?? realAge + 3
   const diff = ageApparent - realAge
 
-  const WHATSAPP_NUMBER = "5491112345678" // TODO: Replace with real number
+  const WHATSAPP_NUMBER = "TUTELEFONO"
   const waMsg = encodeURIComponent(
-    L(
-      `Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100. Me gustaría hablar con un especialista.`,
-      `Hi, I just completed my InsideOutMed analysis. My score was ${scores.overall}/100. I'd like to talk to a specialist.`
-    )
+    `Hola, acabo de hacer mi análisis en InsideOutMed. Mi score fue ${scores.overall}/100. Me gustaría hablar con un especialista.`
   )
 
   // Count items per category
@@ -1180,12 +625,6 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
       return next
     })
   }
-
-  // Impact tiers
-  const sortedByImpact = [...plan].sort((a, b) => b.impactScore - a.impactScore)
-  const topImpactNames = new Set(sortedByImpact.slice(0, 2).map(r => r.name))
-  const highImpactNames = new Set(sortedByImpact.slice(2, 5).map(r => r.name))
-  const topImpactProductName = sortedByImpact[0]?.name ?? ""
 
   return (
     <div style={{
@@ -1216,16 +655,16 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
           href={`https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`}
           target="_blank" rel="noopener noreferrer"
           style={{
-            display: "inline-flex", alignItems: "center", gap: 7,
-            background: "none", border: "none",
-            color: "rgba(245,237,232,0.5)", borderRadius: 99, padding: "8px 0",
-            fontSize: 12, fontWeight: 500, textDecoration: "none", letterSpacing: "0.02em",
+            display: "inline-flex", alignItems: "center", gap: 8,
+            background: "rgba(232,164,176,0.1)", border: "1px solid rgba(232,164,176,0.28)",
+            color: "#e8a4b0", borderRadius: 99, padding: "8px 20px",
+            fontSize: 13, fontWeight: 600, textDecoration: "none",
           }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
           </svg>
-          {L("Hablar con especialista", "Talk to specialist")}
+          Hablar con especialista
         </a>
       </nav>
 
@@ -1239,7 +678,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             marginBottom: 20,
           }}>
             <span style={{ fontSize: 11, letterSpacing: "0.12em", color: "#7ecba1", fontWeight: 600 }}>
-              {L("Tu plan gratuito", "Your free plan")}
+              Tu plan personalizado
             </span>
           </div>
 
@@ -1249,7 +688,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             fontWeight: 400, letterSpacing: "-0.03em",
             marginBottom: 28, lineHeight: 1.1,
           }}>
-            {L("Tu plan para volver a", "Your plan to get back to")}{" "}
+            Tu plan para volver a{" "}
             <em style={{ color: "#e8a4b0", fontStyle: "italic" }}>{realAge}</em>
           </h1>
 
@@ -1263,57 +702,30 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             marginBottom: 20,
           }}>
             <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>{L("Edad real", "Real age")}</p>
+              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>Edad real</p>
               <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "#7ecba1", lineHeight: 1 }}>{realAge}</p>
             </div>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ opacity: 0.3 }}>
               <path d="M4 10h12M12 6l4 4-4 4" stroke="#f5ede8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>{L("Tu piel", "Your skin")}</p>
+              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>Tu piel</p>
               <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "#e8a4b0", lineHeight: 1 }}>{ageApparent}</p>
             </div>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ opacity: 0.3 }}>
               <path d="M4 10h12M12 6l4 4-4 4" stroke="#f5ede8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>{L("Meta", "Goal")}</p>
+              <p style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 4 }}>Meta</p>
               <p style={{ fontFamily: "var(--font-fraunces)", fontSize: 28, fontWeight: 300, color: "#d4af88", lineHeight: 1 }}>{realAge}</p>
             </div>
           </div>
 
           {diff > 0 && (
             <p style={{ fontSize: 14, color: "rgba(245,237,232,0.48)", lineHeight: 1.65, maxWidth: 480, margin: "0 auto" }}>
-              {L("Con este plan puedes recuperar hasta", "With this plan you can recover up to")} <strong style={{ color: "#e8a4b0" }}>{diff} {L("a\u00f1os", "years")}</strong> {L("en 12 semanas.", "in 12 weeks.")}
+              Con este plan puedes recuperar hasta <strong style={{ color: "#e8a4b0" }}>{diff} a{"\u00f1"}os</strong> en 12 semanas.
             </p>
           )}
-        </div>
-
-        {/* Upgrade CTA */}
-        <div style={{
-          background: "linear-gradient(135deg, rgba(212,175,136,0.08), rgba(232,164,176,0.06))",
-          border: "1px solid rgba(212,175,136,0.2)",
-          borderRadius: 16, padding: "20px 24px", marginBottom: 32,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          gap: 16, flexWrap: "wrap",
-          animation: "cardIn 0.6s ease 0.15s both",
-        }}>
-          <div>
-            <p style={{ fontSize: 14, color: "#d4af88", fontWeight: 600, marginBottom: 4 }}>{L("\u00bfQuieres resultados m\u00e1s r\u00e1pidos?", "Want faster results?")}</p>
-            <p style={{ fontSize: 12, color: "rgba(245,237,232,0.4)" }}>{L("Un especialista eval\u00faa tu caso y crea un plan a tu medida", "A specialist evaluates your case and creates a plan tailored to you")}</p>
-          </div>
-          <a
-            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`}
-            target="_blank" rel="noopener noreferrer"
-            style={{
-              padding: "10px 20px", borderRadius: 10,
-              background: "linear-gradient(135deg, #d4af88, #c9976e)",
-              color: "#fff", fontSize: 12, fontWeight: 700,
-              textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0,
-            }}
-          >
-            {L("Asesor\u00eda personalizada", "Personalized consultation")}
-          </a>
         </div>
 
         {/* ── Section B: Empieza Hoy ── */}
@@ -1325,11 +737,11 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
               fontWeight: 400, letterSpacing: "-0.025em", marginBottom: 20,
               textAlign: "center",
             }}>
-              {L("Empieza hoy — sin gastar nada", "Start today — spend nothing")}
+              Empieza hoy — sin gastar nada
             </h2>
             <div style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: 14,
             }}>
               {freeStarters.map((r, i) => (
@@ -1344,7 +756,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                     background: "rgba(126,203,161,0.08)", border: "1px solid rgba(126,203,161,0.2)",
                   }}>
                     <span style={{ fontSize: 9, letterSpacing: "0.12em", color: "#7ecba1", fontWeight: 700, textTransform: "uppercase" }}>
-                      {L("Gratis", "Free")}
+                      Gratis
                     </span>
                   </div>
                   <h3 style={{
@@ -1365,61 +777,9 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
           </div>
         )}
 
-        {/* ── Section B2: Tu progreso (scan history) ── */}
-        {scanHistory.length > 1 && (
-          <div style={{
-            background: "rgba(245,237,232,0.03)", border: "1px solid rgba(245,237,232,0.08)",
-            borderRadius: 18, padding: "24px 20px", marginBottom: 32,
-            animation: "cardIn 0.6s ease 0.2s both",
-          }}>
-            <p style={{ fontSize: 9, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16, fontWeight: 600 }}>
-              {L("Tu progreso", "Your progress")}
-            </p>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: 80 }}>
-              {scanHistory.slice().reverse().map((scan, i) => {
-                const h = Math.max(20, (scan.overall / 100) * 80)
-                const isLatest = i === scanHistory.length - 1
-                return (
-                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flex: 1 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: isLatest ? "#e8a4b0" : "rgba(245,237,232,0.4)" }}>
-                      {scan.overall}
-                    </span>
-                    <div style={{
-                      width: "100%", maxWidth: 40, height: h, borderRadius: 6,
-                      background: isLatest
-                        ? "linear-gradient(to top, #e8a4b0, #d4af88)"
-                        : "rgba(245,237,232,0.08)",
-                    }} />
-                    <span style={{ fontSize: 9, color: "rgba(245,237,232,0.25)" }}>
-                      {new Date(scan.scan_date).toLocaleDateString(locale === "en" ? "en" : "es", { day: "numeric", month: "short" })}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-            {scanHistory.length >= 2 && (() => {
-              const latest = scanHistory[0].overall
-              const oldest = scanHistory[scanHistory.length - 1].overall
-              const diff = latest - oldest
-              return diff !== 0 ? (
-                <p style={{ fontSize: 12, color: diff > 0 ? "#7ecba1" : "#e8a4b0", marginTop: 12, textAlign: "center" }}>
-                  {diff > 0
-                    ? `+${diff} ${L("puntos desde tu primer análisis", "points since your first analysis")}`
-                    : `${diff} ${L("puntos desde tu primer análisis", "points since your first analysis")}`}
-                </p>
-              ) : null
-            })()}
-          </div>
-        )}
-
         {/* ── Section C: Category Tabs ── */}
-        <div className="plan-tabs" style={{
-          display: "flex", gap: 8, marginBottom: 32,
-          overflowX: "auto", WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "none",
-          paddingBottom: 4,
-          WebkitMaskImage: "linear-gradient(to right, transparent, black 4%, black 96%, transparent)",
-          maskImage: "linear-gradient(to right, transparent, black 4%, black 96%, transparent)",
+        <div style={{
+          display: "flex", gap: 8, marginBottom: 32, flexWrap: "wrap",
           animation: "cardIn 0.6s ease 0.25s both",
         }}>
           {CATEGORY_TABS.map(tab => {
@@ -1430,14 +790,13 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 style={{
-                  padding: "8px 14px", borderRadius: 99, cursor: "pointer",
+                  padding: "10px 20px", borderRadius: 99, cursor: "pointer",
                   fontSize: 13, fontWeight: 600, letterSpacing: "0.01em",
                   border: isActive ? "1px solid rgba(232,164,176,0.25)" : "1px solid rgba(245,237,232,0.08)",
                   background: isActive ? "rgba(232,164,176,0.08)" : "rgba(245,237,232,0.04)",
                   color: isActive ? "#e8a4b0" : "rgba(245,237,232,0.4)",
                   transition: "all 0.2s ease",
                   fontFamily: "var(--font-inter, sans-serif)",
-                  flexShrink: 0, whiteSpace: "nowrap",
                 }}
               >
                 {tab.label} ({count})
@@ -1451,11 +810,11 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
 
           {/* ── SKINCARE: Group by AM / PM ── */}
           {activeTab === "skincare" && (() => {
-            const amItems = tabItems.filter(r => r.timing === "AM" || !r.timing).sort((a, b) => b.impactScore - a.impactScore)
-            const pmItems = tabItems.filter(r => r.timing === "PM").sort((a, b) => b.impactScore - a.impactScore)
+            const amItems = tabItems.filter(r => r.timing === "AM" || !r.timing)
+            const pmItems = tabItems.filter(r => r.timing === "PM")
             const routineGroups = [
-              { key: "am", title: L("Rutina de ma\u00f1ana (AM)", "Morning routine (AM)"), color: "#d4af88", items: amItems },
-              { key: "pm", title: L("Rutina de noche (PM)", "Night routine (PM)"), color: "#7ecba1", items: pmItems },
+              { key: "am", title: "Rutina de ma\u00f1ana (AM)", color: "#d4af88", items: amItems },
+              { key: "pm", title: "Rutina de noche (PM)", color: "#7ecba1", items: pmItems },
             ]
             return (
               <>
@@ -1465,10 +824,10 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                   borderRadius: 14, padding: "16px 18px", marginBottom: 20,
                 }}>
                   <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>
-                    {L("Tu rutina skincare se divide en", "Your skincare routine is divided into")}{" "}
-                    <span style={{ color: "#d4af88", fontWeight: 600 }}>{L("Ma\u00f1ana (AM)", "Morning (AM)")}</span> {L("y", "and")}{" "}
-                    <span style={{ color: "#7ecba1", fontWeight: 600 }}>{L("Noche (PM)", "Night (PM)")}</span>.{" "}
-                    {L("El SPF va siempre en la ma\u00f1ana; los activos fuertes (retinol, \u00e1cidos) por la noche.", "SPF always goes in the morning; strong actives (retinol, acids) at night.")}
+                    Tu rutina skincare se divide en{" "}
+                    <span style={{ color: "#d4af88", fontWeight: 600 }}>Ma{"\u00f1"}ana (AM)</span> y{" "}
+                    <span style={{ color: "#7ecba1", fontWeight: 600 }}>Noche (PM)</span>.{" "}
+                    El SPF va siempre en la ma{"\u00f1"}ana; los activos fuertes (retinol, {"\u00e1"}cidos) por la noche.
                   </p>
                 </div>
 
@@ -1489,7 +848,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                       </h3>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L, topImpactNames, highImpactNames, topImpactProductName))}
+                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, affiliateTag))}
                     </div>
                   </div>
                 ))}
@@ -1499,13 +858,13 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
 
           {/* ── SUPPLEMENTS: Additive groups ── */}
           {activeTab === "supplements" && (() => {
-            const empiezaItems = tabItems.filter(r => r.phase === 1).sort((a, b) => b.impactScore - a.impactScore)
-            const sumaItems = tabItems.filter(r => r.phase === 2).sort((a, b) => b.impactScore - a.impactScore)
-            const avanzadoItems = tabItems.filter(r => r.phase >= 4).sort((a, b) => b.impactScore - a.impactScore)
+            const empiezaItems = tabItems.filter(r => r.phase === 1)
+            const sumaItems = tabItems.filter(r => r.phase === 2)
+            const avanzadoItems = tabItems.filter(r => r.phase >= 4)
             const suppGroups = [
-              { key: "empieza", title: L("Empieza con estos", "Start with these"), subtitle: L("Tu base de suplementaci\u00f3n desde el d\u00eda 1.", "Your supplement base from day 1."), color: "#7ecba1", items: empiezaItems, additive: false },
-              { key: "suma", title: L("Suma en el mes 2", "Add in month 2"), subtitle: L("Mant\u00e9n todo lo anterior + suma estos.", "Keep everything above + add these."), color: "#d4af88", items: sumaItems, additive: true },
-              { key: "avanzados", title: L("Avanzados", "Advanced"), subtitle: L("Mant\u00e9n todo lo anterior + suma estos cuando est\u00e9s listo.", "Keep everything above + add these when you\u2019re ready."), color: "#d4af88", items: avanzadoItems, additive: true },
+              { key: "empieza", title: "Empieza con estos", subtitle: "Tu base de suplementaci\u00f3n desde el d\u00eda 1.", color: "#7ecba1", items: empiezaItems, additive: false },
+              { key: "suma", title: "Suma en el mes 2", subtitle: "Mant\u00e9n todo lo anterior + suma estos.", color: "#d4af88", items: sumaItems, additive: true },
+              { key: "avanzados", title: "Avanzados", subtitle: "Mant\u00e9n todo lo anterior + suma estos cuando est\u00e9s listo.", color: "#d4af88", items: avanzadoItems, additive: true },
             ]
             return (
               <>
@@ -1515,13 +874,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                   borderRadius: 14, padding: "16px 18px", marginBottom: 20,
                 }}>
                   <p style={{ fontSize: 12.5, color: "rgba(245,237,232,0.6)", lineHeight: 1.55 }}>
-                    {L(
-                      "Los suplementos son ",
-                      "Supplements are "
-                    )}<span style={{ color: "#7ecba1", fontWeight: 600 }}>{L("acumulativos", "cumulative")}</span>{L(
-                      ": cada etapa se suma a la anterior. Nunca dejas de tomar los de la etapa previa.",
-                      ": each phase builds on the previous one. You never stop taking the ones from the prior phase."
-                    )}
+                    Los suplementos son <span style={{ color: "#7ecba1", fontWeight: 600 }}>acumulativos</span>: cada etapa se suma a la anterior. Nunca dejas de tomar los de la etapa previa.
                   </p>
                 </div>
 
@@ -1548,7 +901,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                       {group.subtitle}
                     </p>
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L, topImpactNames, highImpactNames, topImpactProductName))}
+                      {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, affiliateTag))}
                     </div>
                   </div>
                 ))}
@@ -1557,42 +910,39 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
           })()}
 
           {/* ── HABITS: Flat list, no phases ── */}
-          {activeTab === "habits" && (() => {
-            const habitItems = [...tabItems].sort((a, b) => b.impactScore - a.impactScore)
-            return (
-              <div style={{ animation: "cardIn 0.55s ease 0.3s both" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, padding: "8px 0" }}>
-                  <div style={{
-                    width: 10, height: 10, borderRadius: "50%",
-                    background: "#7ecba1",
-                    boxShadow: "0 0 8px rgba(126,203,161,0.4)",
-                    flexShrink: 0,
-                  }} />
-                  <h3 style={{
-                    fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 400,
-                    color: "#f5ede8", letterSpacing: "-0.02em",
-                  }}>
-                    {L("Tu estilo de vida", "Your lifestyle")}
-                  </h3>
-                </div>
-                <p style={{ fontSize: 12, color: "rgba(245,237,232,0.28)", marginBottom: 16, paddingLeft: 22 }}>
-                  {L("H\u00e1bitos permanentes que protegen y rejuvenecen tu piel todos los d\u00edas. No tienen fase: son para siempre.", "Permanent habits that protect and rejuvenate your skin every day. They have no phase: they\u2019re forever.")}
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {habitItems.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L, topImpactNames, highImpactNames, topImpactProductName))}
-                </div>
+          {activeTab === "habits" && (
+            <div style={{ animation: "cardIn 0.55s ease 0.3s both" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, padding: "8px 0" }}>
+                <div style={{
+                  width: 10, height: 10, borderRadius: "50%",
+                  background: "#7ecba1",
+                  boxShadow: "0 0 8px rgba(126,203,161,0.4)",
+                  flexShrink: 0,
+                }} />
+                <h3 style={{
+                  fontFamily: "var(--font-fraunces)", fontSize: 17, fontWeight: 400,
+                  color: "#f5ede8", letterSpacing: "-0.02em",
+                }}>
+                  Tu estilo de vida
+                </h3>
               </div>
-            )
-          })()}
+              <p style={{ fontSize: 12, color: "rgba(245,237,232,0.28)", marginBottom: 16, paddingLeft: 22 }}>
+                H{"\u00e1"}bitos permanentes que protegen y rejuvenecen tu piel todos los d{"\u00ed"}as. No tienen fase: son para siempre.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {tabItems.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, affiliateTag))}
+              </div>
+            </div>
+          )}
 
           {/* ── TREATMENTS: Non-invasive vs Advanced ── */}
           {activeTab === "treatments" && (() => {
             const noInvasiveNames = ["led", "hydrafacial", "peel"]
-            const noInvasivos = tabItems.filter(r => noInvasiveNames.some(n => r.name.toLowerCase().includes(n))).sort((a, b) => b.impactScore - a.impactScore)
-            const avanzados = tabItems.filter(r => !noInvasiveNames.some(n => r.name.toLowerCase().includes(n))).sort((a, b) => b.impactScore - a.impactScore)
+            const noInvasivos = tabItems.filter(r => noInvasiveNames.some(n => r.name.toLowerCase().includes(n)))
+            const avanzados = tabItems.filter(r => !noInvasiveNames.some(n => r.name.toLowerCase().includes(n)))
             const treatGroups = [
-              { key: "no-invasivos", title: L("No invasivos", "Non-invasive"), subtitle: L("Tratamientos en consultorio sin agujas. Resultados con cero tiempo de recuperaci\u00f3n.", "In-office treatments without needles. Results with zero downtime."), color: "#7ecba1", items: noInvasivos },
-              { key: "avanzados", title: L("Avanzados", "Advanced"), subtitle: L("Procedimientos con microagujas o inyectables. Resultados m\u00e1s potentes, requieren profesional certificado.", "Procedures with microneedles or injectables. More powerful results, require a certified professional."), color: "#7ecba1", items: avanzados },
+              { key: "no-invasivos", title: "No invasivos", subtitle: "Tratamientos en consultorio sin agujas. Resultados con cero tiempo de recuperaci\u00f3n.", color: "#7ecba1", items: noInvasivos },
+              { key: "avanzados", title: "Avanzados", subtitle: "Procedimientos con microagujas o inyectables. Resultados m\u00e1s potentes, requieren profesional certificado.", color: "#7ecba1", items: avanzados },
             ]
             return treatGroups.map((group, gi) => group.items.length > 0 && (
               <div key={group.key} style={{ animation: `cardIn 0.55s ease ${0.3 + gi * 0.06}s both` }}>
@@ -1614,7 +964,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
                   {group.subtitle}
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, L, topImpactNames, highImpactNames, topImpactProductName))}
+                  {group.items.map((rec, ri) => renderRecCard(rec, ri, expandedEvidence, toggleEvidence, affiliateTag))}
                 </div>
               </div>
             ))
@@ -1626,14 +976,14 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
         <div style={{
           background: "linear-gradient(135deg, rgba(232,164,176,0.07) 0%, rgba(212,175,136,0.04) 100%)",
           border: "1px solid rgba(232,164,176,0.16)",
-          borderRadius: 20, padding: "28px 24px", marginBottom: 40,
+          borderRadius: 20, padding: "36px 40px", marginBottom: 40,
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          gap: 20, flexWrap: "wrap",
+          gap: 32, flexWrap: "wrap",
           animation: "cardIn 0.6s ease 0.4s both",
         }}>
           <div style={{ maxWidth: 520 }}>
             <p style={{ fontSize: 10.5, letterSpacing: "0.14em", color: "rgba(245,237,232,0.3)", textTransform: "uppercase", marginBottom: 16 }}>
-              {L("\u00bfTienes dudas sobre tu plan?", "Have questions about your plan?")}
+              {"\u00bf"}Tienes dudas sobre tu plan?
             </p>
             <h3 style={{
               fontFamily: "var(--font-fraunces)",
@@ -1641,13 +991,11 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
               fontWeight: 400, letterSpacing: "-0.025em",
               marginBottom: 10, lineHeight: 1.2,
             }}>
-              {L("\u00bfQuieres que analicemos tus resultados juntos?", "Want us to analyze your results together?")}
+              {"\u00bf"}Quieres que analicemos tus resultados juntos?
             </h3>
             <p style={{ fontSize: 14, color: "rgba(245,237,232,0.48)", lineHeight: 1.65 }}>
-              {L(
-                "Un especialista de InsideOutMed revisa tu informe, te explica cada biomarcador y ajusta tu protocolo de manera conjunta. Sin presi\u00f3n. Sin compromiso.",
-                "An InsideOutMed specialist reviews your report, explains each biomarker, and adjusts your protocol together. No pressure. No commitment."
-              )}
+              Un especialista de InsideOutMed revisa tu informe, te explica cada biomarcador
+              y ajusta tu protocolo de manera conjunta. Sin presi{"\u00f3"}n. Sin compromiso.
             </p>
           </div>
           <a
@@ -1665,7 +1013,7 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
             </svg>
-            {L("Hablar con especialista", "Talk to a specialist")}
+            Hablar con especialista
           </a>
         </div>
 
@@ -1685,20 +1033,18 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,237,232,0.11)" }}
             onMouseLeave={e => { e.currentTarget.style.background = "rgba(245,237,232,0.06)" }}
           >
-            {L("Hacer nuevo an\u00e1lisis", "New analysis")}
+            Hacer nuevo an{"\u00e1"}lisis
           </a>
           <br />
           <a href="/" style={{ fontSize: 13, color: "rgba(245,237,232,0.3)", textDecoration: "none", marginTop: 12, display: "inline-block" }}>
-            {L("Volver al inicio", "Back to home")}
+            Volver al inicio
           </a>
         </div>
 
         {/* Disclaimer */}
         <p style={{ fontSize: 10.5, color: "rgba(245,237,232,0.16)", lineHeight: 1.6, textAlign: "center", maxWidth: 600, margin: "0 auto" }}>
-          {L(
-            "Las recomendaciones de InsideOutMed tienen fines informativos. No reemplazan el diagn\u00f3stico de un dermat\u00f3logo. Algunos enlaces a Amazon pueden generar comisiones de afiliado que financian este servicio.",
-            "InsideOutMed recommendations are for informational purposes only. They do not replace a dermatologist\u2019s diagnosis. Some Amazon links may generate affiliate commissions that fund this service."
-          )}
+          Las recomendaciones de InsideOutMed tienen fines informativos. No reemplazan el diagn{"\u00f3"}stico de un dermat{"\u00f3"}logo.
+          Algunos enlaces a Amazon pueden generar comisiones de afiliado que financian este servicio.
         </p>
       </main>
 
@@ -1712,7 +1058,6 @@ function PlanContent({ scores, profile, plan }: { scores: Scores; profile: UserP
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .plan-tabs::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   )
@@ -1724,8 +1069,19 @@ export default function PlanPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [plan, setPlan] = useState<ScoredRec[] | null>(null)
   const [showContent, setShowContent] = useState(false)
+  const [affiliateTag, setAffiliateTag] = useState<string | undefined>()
 
   useEffect(() => {
+    // Read ?ref= param for affiliate tracking
+    const params = new URLSearchParams(window.location.search)
+    const refCode = params.get("ref")
+    if (refCode) {
+      setAffiliateTag(getAffiliateTag(refCode))
+    }
+
+    // Load catalog (from admin edits or default)
+    const catalog = loadCatalog()
+
     let loadedScores: Scores
     let loadedProfile: UserProfile
 
@@ -1739,7 +1095,7 @@ export default function PlanPage() {
         loadedScores = {
           overall: 72, luminosity: 65, hydration: 70, uniformity: 58,
           glycation: 32, inflammation: 28, sunDamage: 35, vascularity: 20,
-          texture: 68, wrinkleDepth: 65, darkCircles: 72, symmetry: 85, ageApparent: 34,
+          ageApparent: 34,
         }
       }
 
@@ -1757,7 +1113,7 @@ export default function PlanPage() {
       loadedScores = {
         overall: 72, luminosity: 65, hydration: 70, uniformity: 58,
         glycation: 32, inflammation: 28, sunDamage: 35, vascularity: 20,
-        texture: 68, wrinkleDepth: 65, darkCircles: 72, ageApparent: 34,
+        ageApparent: 34,
       }
       loadedProfile = {
         age: "26-35",
@@ -1767,21 +1123,9 @@ export default function PlanPage() {
       }
     }
 
-    // Load products from admin (localStorage) or fallback to CATALOG
-    let activeCatalog = CATALOG
-    try {
-      const stored = localStorage.getItem("iom_admin_products")
-      if (stored) {
-        const adminProducts = JSON.parse(stored) as Rec[]
-        if (adminProducts.length > 0) {
-          activeCatalog = adminProducts
-        }
-      }
-    } catch {}
-
     setScores(loadedScores)
     setProfile(loadedProfile)
-    setPlan(buildPlan(activeCatalog, loadedProfile, loadedScores))
+    setPlan(buildPlan(catalog, loadedProfile, loadedScores))
   }, [])
 
   const handleDone = useCallback(() => setShowContent(true), [])
@@ -1799,5 +1143,5 @@ export default function PlanPage() {
     return <AnalyzingScreen scores={scores} onDone={handleDone} />
   }
 
-  return <PlanContent scores={scores} profile={profile} plan={plan} />
+  return <PlanContent scores={scores} profile={profile} plan={plan} affiliateTag={affiliateTag} />
 }

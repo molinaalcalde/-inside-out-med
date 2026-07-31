@@ -170,8 +170,8 @@ export default function BrainPage() {
             minAge: p.min_age, phase: p.phase, timing: p.timing,
             what: p.what, cost: p.cost, freq: p.freq, results: p.results,
             risk: p.risk, evidence: p.evidence, amazonQuery: p.amazon_query,
-            always30: p.always30, fitzCaution: p.fitz_caution, isNew: p.is_new,
-            problems: p.problems || [],
+            link: p.link || undefined, always30: p.always30,
+            fitzCaution: p.fitz_caution, isNew: p.is_new, problems: p.problems || [],
           }))
           setProducts(mapped)
           saveCatalog(mapped)
@@ -495,15 +495,15 @@ export default function BrainPage() {
                   </div>
                 )}
 
-                {/* Amazon link preview */}
-                {p.amazonQuery && (
+                {/* Product link */}
+                {(p.link || p.amazonQuery) && (
                   <div style={{ fontSize: 11, color: "#16a34a", marginBottom: 10 }}>
                     <a
-                      href={amazonUrl(p.amazonQuery)}
+                      href={p.link || amazonUrl(p.amazonQuery!)}
                       target="_blank" rel="noopener noreferrer"
-                      style={{ color: "#16a34a", textDecoration: "none" }}
+                      style={{ color: "#16a34a", textDecoration: "none", wordBreak: "break-all" }}
                     >
-                      Ver en Amazon →
+                      {p.link ? "Ver producto →" : "Ver en Amazon →"}
                     </a>
                   </div>
                 )}
@@ -905,14 +905,29 @@ function ProductEditor({ product, onSave, onCancel, S }: {
           style={{ ...s.input, minHeight: 60, resize: "vertical" as const }} />
       </div>
 
-      {/* Row 8: Amazon query + generated link */}
+      {/* Row 8: Direct link */}
       <div style={{ marginBottom: 14 }}>
-        <label style={s.label}>Término de búsqueda Amazon</label>
+        <label style={s.label}>Link del producto (URL directa)</label>
+        <input value={p.link || ""} onChange={e => setP(x => ({ ...x, link: e.target.value || undefined }))}
+          placeholder="https://www.amazon.com/dp/... o cualquier URL" style={s.input} />
+        {p.link && (
+          <div style={{ marginTop: 6 }}>
+            <a href={p.link} target="_blank" rel="noopener noreferrer"
+              style={{ fontSize: 11, color: "#16a34a", wordBreak: "break-all" }}>
+              {p.link}
+            </a>
+          </div>
+        )}
+      </div>
+
+      {/* Row 8b: Amazon search (auto-genera link si no hay link directo) */}
+      <div style={{ marginBottom: 14 }}>
+        <label style={s.label}>Término de búsqueda Amazon (opcional, si no tienes link directo)</label>
         <input value={p.amazonQuery || ""} onChange={e => setP(x => ({ ...x, amazonQuery: e.target.value || undefined }))}
           placeholder="ej. protector solar SPF 50 facial" style={s.input} />
-        {generatedUrl && (
-          <div style={{ marginTop: 8, padding: "8px 12px", background: "#f0fdf4", borderRadius: 8, border: "1px solid #bbf7d0" }}>
-            <span style={{ fontSize: 11, color: "#888" }}>Link generado: </span>
+        {!p.link && generatedUrl && (
+          <div style={{ marginTop: 6, padding: "8px 12px", background: "#f0fdf4", borderRadius: 8, border: "1px solid #bbf7d0" }}>
+            <span style={{ fontSize: 11, color: "#888" }}>Link auto-generado: </span>
             <a href={generatedUrl} target="_blank" rel="noopener noreferrer"
               style={{ fontSize: 11, color: "#16a34a", wordBreak: "break-all" }}>
               {generatedUrl}

@@ -40,6 +40,7 @@ export async function POST(req: Request) {
       risk: product.risk,
       evidence: product.evidence,
       amazon_query: product.amazonQuery || null,
+      link: product.link || null,
       always30: product.always30 || false,
       fitz_caution: product.fitzCaution || false,
       is_new: product.isNew || false,

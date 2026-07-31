@@ -18,6 +18,7 @@ export interface Product {
   risk: string
   evidence: string
   amazonQuery?: string
+  link?: string
   always30?: boolean
   fitzCaution?: boolean
   isNew?: boolean

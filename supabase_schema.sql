@@ -171,6 +171,7 @@ create table if not exists public.products (
   risk text default '',
   evidence text default '',
   amazon_query text,
+  link text,
   always30 boolean default false,
   fitz_caution boolean default false,
   is_new boolean default false,

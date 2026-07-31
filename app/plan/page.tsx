@@ -524,9 +524,9 @@ function renderRecCard(
 
       {/* Bottom row: Amazon + Evidence */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        {rec.amazonQuery && (rec.category === "skincare" || rec.category === "supplements") && (
+        {(rec.link || rec.amazonQuery) && (rec.category === "skincare" || rec.category === "supplements") && (
           <a
-            href={amazonUrl(rec.amazonQuery, affiliateTag)}
+            href={rec.link || amazonUrl(rec.amazonQuery!, affiliateTag)}
             target="_blank" rel="noopener noreferrer"
             style={{
               display: "inline-flex", alignItems: "center", gap: 7,
@@ -1092,8 +1092,8 @@ export default function PlanPage() {
               minAge: p.min_age, phase: p.phase, timing: p.timing,
               what: p.what, cost: p.cost, freq: p.freq, results: p.results,
               risk: p.risk, evidence: p.evidence, amazonQuery: p.amazon_query,
-              always30: p.always30, fitzCaution: p.fitz_caution, isNew: p.is_new,
-              problems: p.problems || [],
+              link: p.link || undefined, always30: p.always30,
+              fitzCaution: p.fitz_caution, isNew: p.is_new, problems: p.problems || [],
             }))
           }
         }

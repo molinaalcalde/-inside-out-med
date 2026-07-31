@@ -155,6 +155,43 @@ create index if not exists idx_leads_email on public.leads(email);
 create index if not exists idx_leads_session on public.leads(session_id);
 create index if not exists idx_leads_stage on public.leads(funnel_stage);
 
+-- Products catalog (admin-managed)
+create table if not exists public.products (
+  id uuid default uuid_generate_v4() primary key,
+  name text not null,
+  category text not null default 'skincare',
+  tier text not null default 'free',
+  min_age integer default 18,
+  phase integer default 1,
+  timing text,
+  what text not null default '',
+  cost text default '',
+  freq text default '',
+  results text default '',
+  risk text default '',
+  evidence text default '',
+  amazon_query text,
+  always30 boolean default false,
+  fitz_caution boolean default false,
+  is_new boolean default false,
+  problems text[] default '{}',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Referral partners (affiliate tracking)
+create table if not exists public.referrals (
+  id uuid default uuid_generate_v4() primary key,
+  name text not null,
+  code text not null unique,
+  amazon_tag text not null,
+  active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists idx_referrals_code on public.referrals(code);
+
 -- RLS for new tables
 alter table public.funnel_events enable row level security;
 alter table public.papers enable row level security;
@@ -175,10 +212,38 @@ create policy "Anyone can update their own lead"
 create policy "Anyone can read papers"
   on public.papers for select using (true);
 
+-- Products: public read, anyone can insert/update (admin-only in practice via UI)
+alter table public.products enable row level security;
+create policy "Anyone can read products"
+  on public.products for select using (true);
+create policy "Anyone can insert products"
+  on public.products for insert with check (true);
+create policy "Anyone can update products"
+  on public.products for update using (true);
+create policy "Anyone can delete products"
+  on public.products for delete using (true);
+
+-- Referrals: public read, anyone can manage
+alter table public.referrals enable row level security;
+create policy "Anyone can read referrals"
+  on public.referrals for select using (true);
+create policy "Anyone can insert referrals"
+  on public.referrals for insert with check (true);
+create policy "Anyone can update referrals"
+  on public.referrals for update using (true);
+create policy "Anyone can delete referrals"
+  on public.referrals for delete using (true);
+
 -- Triggers for updated_at
 create trigger on_lead_updated
   before update on public.leads
   for each row execute procedure public.handle_updated_at();
 create trigger on_paper_updated
   before update on public.papers
+  for each row execute procedure public.handle_updated_at();
+create trigger on_product_updated
+  before update on public.products
+  for each row execute procedure public.handle_updated_at();
+create trigger on_referral_updated
+  before update on public.referrals
   for each row execute procedure public.handle_updated_at();

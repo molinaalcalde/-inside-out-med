@@ -73,8 +73,8 @@ export default function BrainPage() {
 
   useEffect(() => {
     loadPapersData()
-    setProducts(loadCatalog())
-    setReferrals(loadReferrals())
+    loadProductsData()
+    loadReferralsData()
   }, [])
 
   // ── Paper functions ──
@@ -158,6 +158,32 @@ export default function BrainPage() {
   }
 
   // ── Product functions ──
+  async function loadProductsData() {
+    try {
+      const res = await fetch("/api/admin/products")
+      if (res.ok) {
+        const data = await res.json()
+        if (data.products && data.products.length > 0) {
+          // Map snake_case from DB to camelCase
+          const mapped = data.products.map((p: Record<string, unknown>) => ({
+            id: p.id, name: p.name, category: p.category, tier: p.tier,
+            minAge: p.min_age, phase: p.phase, timing: p.timing,
+            what: p.what, cost: p.cost, freq: p.freq, results: p.results,
+            risk: p.risk, evidence: p.evidence, amazonQuery: p.amazon_query,
+            always30: p.always30, fitzCaution: p.fitz_caution, isNew: p.is_new,
+            problems: p.problems || [],
+          }))
+          setProducts(mapped)
+          saveCatalog(mapped)
+          return
+        }
+      }
+    } catch {}
+    // Fallback to localStorage or default
+    const local = loadCatalog()
+    setProducts(local)
+  }
+
   function saveProduct(p: Product) {
     const updated = products.some(x => x.id === p.id)
       ? products.map(x => x.id === p.id ? p : x)
@@ -165,20 +191,59 @@ export default function BrainPage() {
     setProducts(updated)
     saveCatalog(updated)
     setEditProduct(null)
+    // Persist to Supabase
+    fetch("/api/admin/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(p),
+    }).catch(() => {})
   }
 
   function deleteProduct(id: string) {
     const updated = products.filter(p => p.id !== id)
     setProducts(updated)
     saveCatalog(updated)
+    fetch("/api/admin/products", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }).catch(() => {})
   }
 
   function resetCatalog() {
     setProducts(DEFAULT_CATALOG)
     saveCatalog(DEFAULT_CATALOG)
+    // Seed all to Supabase
+    for (const p of DEFAULT_CATALOG) {
+      fetch("/api/admin/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(p),
+      }).catch(() => {})
+    }
   }
 
   // ── Referral functions ──
+  async function loadReferralsData() {
+    try {
+      const res = await fetch("/api/admin/referrals")
+      if (res.ok) {
+        const data = await res.json()
+        if (data.referrals && data.referrals.length > 0) {
+          const mapped = data.referrals.map((r: Record<string, unknown>) => ({
+            id: r.id, name: r.name, code: r.code,
+            amazonTag: r.amazon_tag, active: r.active,
+            createdAt: r.created_at,
+          }))
+          setReferrals(mapped)
+          saveReferrals(mapped)
+          return
+        }
+      }
+    } catch {}
+    setReferrals(loadReferrals())
+  }
+
   function saveReferral(r: ReferralPartner) {
     const updated = referrals.some(x => x.id === r.id)
       ? referrals.map(x => x.id === r.id ? r : x)
@@ -186,12 +251,22 @@ export default function BrainPage() {
     setReferrals(updated)
     saveReferrals(updated)
     setEditReferral(null)
+    fetch("/api/admin/referrals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(r),
+    }).catch(() => {})
   }
 
   function deleteReferral(id: string) {
     const updated = referrals.filter(r => r.id !== id)
     setReferrals(updated)
     saveReferrals(updated)
+    fetch("/api/admin/referrals", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }).catch(() => {})
   }
 
   // ── Filter products ──

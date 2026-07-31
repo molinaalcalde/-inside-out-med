@@ -1079,54 +1079,57 @@ export default function PlanPage() {
       setAffiliateTag(getAffiliateTag(refCode))
     }
 
-    // Load catalog (from admin edits or default)
-    const catalog = loadCatalog()
-
-    let loadedScores: Scores
-    let loadedProfile: UserProfile
-
-    try {
-      const savedScores = localStorage.getItem("insideoutmed_scores")
-      const savedProfile = localStorage.getItem("insideoutmed_profile")
-
-      if (savedScores) {
-        loadedScores = JSON.parse(savedScores)
-      } else {
-        loadedScores = {
-          overall: 72, luminosity: 65, hydration: 70, uniformity: 58,
-          glycation: 32, inflammation: 28, sunDamage: 35, vascularity: 20,
-          ageApparent: 34,
+    // Load catalog: try API first, then localStorage
+    async function loadAndBuild() {
+      let catalog = loadCatalog()
+      try {
+        const res = await fetch("/api/admin/products")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.products && data.products.length > 0) {
+            catalog = data.products.map((p: Record<string, unknown>) => ({
+              id: p.id, name: p.name, category: p.category, tier: p.tier,
+              minAge: p.min_age, phase: p.phase, timing: p.timing,
+              what: p.what, cost: p.cost, freq: p.freq, results: p.results,
+              risk: p.risk, evidence: p.evidence, amazonQuery: p.amazon_query,
+              always30: p.always30, fitzCaution: p.fitz_caution, isNew: p.is_new,
+              problems: p.problems || [],
+            }))
+          }
         }
-      }
+      } catch {}
 
-      if (savedProfile) {
-        loadedProfile = JSON.parse(savedProfile)
-      } else {
-        loadedProfile = {
-          age: "26-35",
-          fitzpatrick: "III",
-          concern: "arrugas",
-          budget: "30-80",
-        }
-      }
-    } catch {
-      loadedScores = {
+      const loadedData = loadProfileAndScores()
+      setScores(loadedData.scores)
+      setProfile(loadedData.profile)
+      setPlan(buildPlan(catalog, loadedData.profile, loadedData.scores))
+    }
+
+    loadAndBuild()
+  }, [])
+
+  function loadProfileAndScores(): { scores: Scores; profile: UserProfile } {
+    const defaults = {
+      scores: {
         overall: 72, luminosity: 65, hydration: 70, uniformity: 58,
         glycation: 32, inflammation: 28, sunDamage: 35, vascularity: 20,
         ageApparent: 34,
-      }
-      loadedProfile = {
-        age: "26-35",
-        fitzpatrick: "III",
-        concern: "arrugas",
-        budget: "30-80",
-      }
+      } as Scores,
+      profile: {
+        age: "26-35", fitzpatrick: "III", concern: "arrugas", budget: "30-80",
+      } as UserProfile,
     }
-
-    setScores(loadedScores)
-    setProfile(loadedProfile)
-    setPlan(buildPlan(catalog, loadedProfile, loadedScores))
-  }, [])
+    try {
+      const savedScores = localStorage.getItem("insideoutmed_scores")
+      const savedProfile = localStorage.getItem("insideoutmed_profile")
+      return {
+        scores: savedScores ? JSON.parse(savedScores) : defaults.scores,
+        profile: savedProfile ? JSON.parse(savedProfile) : defaults.profile,
+      }
+    } catch {
+      return defaults
+    }
+  }
 
   const handleDone = useCallback(() => setShowContent(true), [])
 

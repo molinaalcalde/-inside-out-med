@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogin = () => {
     // Simple password gate — matches ADMIN_PASSWORD in .env.local
-    if (password === "iom-admin-2026") {
+    if (password === "lili1509") {
       setAuthed(true)
       sessionStorage.setItem("iom_admin_auth", "true")
       setError("")

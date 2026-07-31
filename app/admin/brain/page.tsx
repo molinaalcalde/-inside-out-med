@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   type Product, type Category, type Tier, type ReferralPartner,
   PROBLEM_OPTIONS, CATEGORY_OPTIONS, DEFAULT_AFFILIATE_TAG,
@@ -83,18 +83,26 @@ export default function BrainPage() {
       const res = await fetch("/api/admin/brain")
       if (res.ok) {
         const data = await res.json()
-        setPapers(data.papers || [])
-        return
+        const p = data.papers || []
+        if (p.length > 0) {
+          setPapers(p)
+          return
+        }
       }
     } catch {}
+    // Fallback: localStorage or seed
     const stored = localStorage.getItem("iom_brain_papers")
     if (stored) {
-      setPapers(JSON.parse(stored))
-    } else {
-      const seeded = SEED_PAPERS.map((p, i) => ({ ...p, id: `seed-${i}` }))
-      setPapers(seeded)
-      localStorage.setItem("iom_brain_papers", JSON.stringify(seeded))
+      const parsed = JSON.parse(stored)
+      if (parsed.length > 0) {
+        setPapers(parsed)
+        return
+      }
     }
+    // Seed papers
+    const seeded = SEED_PAPERS.map((p, i) => ({ ...p, id: `seed-${i}` }))
+    setPapers(seeded)
+    localStorage.setItem("iom_brain_papers", JSON.stringify(seeded))
   }
 
   function savePaperAction() {
@@ -332,9 +340,10 @@ export default function BrainPage() {
             </button>
           </div>
 
-          {/* Product editor modal */}
+          {/* Product editor */}
           {editProduct && (
             <ProductEditor
+              key={editProduct.id}
               product={editProduct}
               onSave={saveProduct}
               onCancel={() => setEditProduct(null)}
@@ -709,12 +718,17 @@ function ProductEditor({ product, onSave, onCancel, S }: {
   S: Record<string, unknown>
 }) {
   const [p, setP] = useState<Product>(product)
+  const ref = useRef<HTMLDivElement>(null)
   const s = S as { input: React.CSSProperties; select: React.CSSProperties; label: React.CSSProperties; chip: (a: boolean) => React.CSSProperties; btnPrimary: React.CSSProperties; btnSecondary: React.CSSProperties; card: React.CSSProperties }
+
+  useEffect(() => {
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [])
 
   const generatedUrl = p.amazonQuery ? amazonUrl(p.amazonQuery) : null
 
   return (
-    <div style={{ ...s.card, padding: 28, marginBottom: 24 }}>
+    <div ref={ref} style={{ ...s.card, padding: 28, marginBottom: 24 }}>
       <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1a1520", marginBottom: 20 }}>
         {product.name ? `Editar: ${product.name}` : "Nuevo producto"}
       </h3>

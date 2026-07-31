@@ -793,12 +793,38 @@ function ProductEditor({ product, onSave, onCancel, S }: {
   S: Record<string, unknown>
 }) {
   const [p, setP] = useState<Product>(product)
+  const [scraping, setScraping] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const s = S as { input: React.CSSProperties; select: React.CSSProperties; label: React.CSSProperties; chip: (a: boolean) => React.CSSProperties; btnPrimary: React.CSSProperties; btnSecondary: React.CSSProperties; card: React.CSSProperties }
 
   useEffect(() => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }, [])
+
+  async function scrapeLink(url: string) {
+    if (!url || !url.startsWith("http")) return
+    setScraping(true)
+    try {
+      const res = await fetch("/api/admin/scrape-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.name || data.description || data.price) {
+          setP(x => ({
+            ...x,
+            name: x.name || data.name || "",
+            what: x.what || data.description || "",
+            cost: x.cost || data.price || "",
+            category: (x.category === "skincare" && data.category) ? data.category as Category : x.category,
+          }))
+        }
+      }
+    } catch {}
+    setScraping(false)
+  }
 
   const generatedUrl = p.amazonQuery ? amazonUrl(p.amazonQuery) : null
 
@@ -905,12 +931,33 @@ function ProductEditor({ product, onSave, onCancel, S }: {
           style={{ ...s.input, minHeight: 60, resize: "vertical" as const }} />
       </div>
 
-      {/* Row 8: Direct link */}
+      {/* Row 8: Direct link — auto-fills product info */}
       <div style={{ marginBottom: 14 }}>
-        <label style={s.label}>Link del producto (URL directa)</label>
-        <input value={p.link || ""} onChange={e => setP(x => ({ ...x, link: e.target.value || undefined }))}
-          placeholder="https://www.amazon.com/dp/... o cualquier URL" style={s.input} />
-        {p.link && (
+        <label style={s.label}>Link del producto (pega URL y se auto-completa)</label>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={p.link || ""}
+            onChange={e => setP(x => ({ ...x, link: e.target.value || undefined }))}
+            onPaste={e => {
+              const pasted = e.clipboardData.getData("text").trim()
+              if (pasted.startsWith("http")) {
+                setTimeout(() => scrapeLink(pasted), 100)
+              }
+            }}
+            placeholder="Pega un link de Amazon, MercadoLibre, etc."
+            style={{ ...s.input, flex: 1 }} />
+          {p.link && (
+            <button onClick={() => scrapeLink(p.link!)} disabled={scraping}
+              style={{ ...s.btnSecondary, whiteSpace: "nowrap" as const, fontSize: 12, padding: "10px 14px" }}>
+              {scraping ? "Leyendo..." : "Re-leer"}
+            </button>
+          )}
+        </div>
+        {scraping && (
+          <div style={{ marginTop: 6, fontSize: 12, color: "#e8a4b0" }}>
+            Extrayendo info del producto...
+          </div>
+        )}
+        {p.link && !scraping && (
           <div style={{ marginTop: 6 }}>
             <a href={p.link} target="_blank" rel="noopener noreferrer"
               style={{ fontSize: 11, color: "#16a34a", wordBreak: "break-all" }}>

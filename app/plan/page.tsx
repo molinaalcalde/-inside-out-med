@@ -40,7 +40,54 @@ interface ScoredRec extends Rec {
 
 const CATEGORY_TABS = CATEGORY_OPTIONS
 
-// ── Engine ─────────────────────────────────────────────────────────
+// ── Brain-powered Engine ──────────────────────────────────────────
+
+// Maps each biomarker to the problems it reveals and how to read the score
+const BIOMARKER_MAP: Record<string, { problems: string[]; invert: boolean; label: string }> = {
+  luminosity:    { problems: ["Luminosidad"],                    invert: false, label: "luminosidad" },
+  hydration:     { problems: ["Hidratación"],                    invert: false, label: "hidratación" },
+  uniformity:    { problems: ["Textura", "Manchas", "Suavidad"], invert: false, label: "uniformidad" },
+  glycation:     { problems: ["Glicación", "Arrugas", "Firmeza"],invert: true,  label: "glicación" },
+  inflammation:  { problems: ["Rojez/Inflamación", "Acné"],      invert: true,  label: "inflamación" },
+  sunDamage:     { problems: ["Daño solar", "Manchas"],          invert: true,  label: "daño solar" },
+  vascularity:   { problems: ["Vascularidad", "Ojeras"],         invert: true,  label: "vascularidad" },
+}
+
+// Convert a concern string to problem tags
+const CONCERN_TO_PROBLEMS: Record<string, string[]> = {
+  arrugas: ["Arrugas", "Firmeza", "Glicación"],
+  manchas: ["Manchas", "Daño solar", "Luminosidad"],
+  hidratación: ["Hidratación"],
+  firmeza: ["Firmeza", "Arrugas", "Glicación"],
+  ojeras: ["Ojeras", "Vascularidad"],
+  acné: ["Acné", "Rojez/Inflamación", "Poros"],
+  rojez: ["Rojez/Inflamación"],
+  poros: ["Poros", "Textura"],
+  luminosidad: ["Luminosidad"],
+  textura: ["Textura", "Suavidad"],
+}
+
+interface Paper {
+  key_findings: string
+  applicable_treatments: string[]
+  full_citation: string
+}
+
+// Calculate severity (0-100) for each problem tag based on scan scores
+function getProblemSeverities(scores: Scores): Map<string, number> {
+  const sev = new Map<string, number>()
+  for (const [biomarker, cfg] of Object.entries(BIOMARKER_MAP)) {
+    const raw = (scores as Record<string, number>)[biomarker] ?? 50
+    // severity: how bad is this problem (0 = fine, 100 = critical)
+    const severity = cfg.invert ? raw : (100 - raw)
+    for (const problem of cfg.problems) {
+      const existing = sev.get(problem) ?? 0
+      sev.set(problem, Math.max(existing, severity))
+    }
+  }
+  return sev
+}
+
 function ageFromRange(ageStr: string): number {
   const map: Record<string, number> = { "18-25": 22, "26-35": 30, "36-45": 40, "46+": 52 }
   return map[ageStr] ?? 30
@@ -56,164 +103,145 @@ function tierValue(t: Tier): number {
   return t === "free" ? 0 : t === "mid" ? 1 : 2
 }
 
-function buildPlan(catalog: Product[], profile: UserProfile, scores: Scores): ScoredRec[] {
+function buildPlan(
+  catalog: Product[],
+  profile: UserProfile,
+  scores: Scores,
+  papers?: Paper[],
+): ScoredRec[] {
   const userAge = ageFromRange(profile.age)
   const maxTier = tierRank(profile.budget)
+  const severities = getProblemSeverities(scores)
 
-  // Get weakest zones from zoneScores
-  let weakZones: string[] = []
-  if (scores.zoneScores) {
-    weakZones = Object.entries(scores.zoneScores)
-      .sort((a, b) => a[1].score - b[1].score)
-      .slice(0, 4)
-      .map(([z]) => z)
+  // Problems from user's stated concern
+  const concernProblems = new Set<string>()
+  const concern = (profile.concern || "").toLowerCase()
+  for (const [key, problems] of Object.entries(CONCERN_TO_PROBLEMS)) {
+    if (concern.includes(key)) {
+      problems.forEach(p => concernProblems.add(p))
+    }
   }
 
   const scored: ScoredRec[] = []
 
   for (const rec of catalog) {
-    // always30 override: include if age >= 30
     const ageOk = rec.always30 ? userAge >= 30 : (userAge >= rec.minAge - 2)
     const budgetOk = tierValue(rec.tier) <= maxTier
-
     if (!ageOk || !budgetOk) continue
 
     let score = 0
+    const productProblems = rec.problems || []
 
-    // Zone matches (if we have zone data)
-    if (weakZones.length > 0) {
-      const nameLower = rec.name.toLowerCase()
-      for (const z of weakZones) {
-        const zoneLower = z.toLowerCase()
-        if (
-          (zoneLower.includes("frente") && (nameLower.includes("spf") || nameLower.includes("retinol") || nameLower.includes("botox"))) ||
-          (zoneLower.includes("mejilla") && (nameLower.includes("vitamina c") || nameLower.includes("niacinamida") || nameLower.includes("hydrafacial"))) ||
-          (zoneLower.includes("periocular") && (nameLower.includes("contorno") || nameLower.includes("cafeína") || nameLower.includes("prp"))) ||
-          (zoneLower.includes("mandibula") && (nameLower.includes("péptidos") || nameLower.includes("firmeza") || nameLower.includes("microneedling"))) ||
-          (zoneLower.includes("labios") && (nameLower.includes("retinol") || nameLower.includes("colágeno")))
-        ) {
-          score += 3
-        }
+    // ── Core: match product problems against scan severities ──
+    // A product that targets severe problems scores highest
+    let worstMatch = 0
+    let worstProblem = ""
+    for (const problem of productProblems) {
+      const severity = severities.get(problem) ?? 0
+      if (severity > 25) {
+        // Weight by severity: a product targeting a 70-severity problem
+        // gets 7 points; a 30-severity problem gets 3 points
+        score += Math.round(severity / 10)
+      }
+      if (severity > worstMatch) {
+        worstMatch = severity
+        worstProblem = problem
       }
     }
 
-    // Concern match
-    const concern = (profile.concern || "").toLowerCase()
-    if (
-      (concern.includes("arrugas") && (rec.name.toLowerCase().includes("retinol") || rec.name.toLowerCase().includes("péptidos") || rec.name.toLowerCase().includes("botox"))) ||
-      (concern.includes("manchas") && (rec.name.toLowerCase().includes("vitamina c") || rec.name.toLowerCase().includes("peel") || rec.name.toLowerCase().includes("spf"))) ||
-      (concern.includes("hidratación") && (rec.name.toLowerCase().includes("ceramidas") || rec.name.toLowerCase().includes("colágeno") || rec.name.toLowerCase().includes("omega"))) ||
-      (concern.includes("firmeza") && (rec.name.toLowerCase().includes("péptidos") || rec.name.toLowerCase().includes("retinol") || rec.name.toLowerCase().includes("microneedling"))) ||
-      (concern.includes("ojeras") && (rec.name.toLowerCase().includes("contorno") || rec.name.toLowerCase().includes("dormir") || rec.name.toLowerCase().includes("prp"))) ||
-      (concern.includes("acné") && (rec.name.toLowerCase().includes("niacinamida") || rec.name.toLowerCase().includes("zinc") || rec.name.toLowerCase().includes("aha"))) ||
-      (concern.includes("rojez") && (rec.name.toLowerCase().includes("niacinamida") || rec.name.toLowerCase().includes("led") || rec.name.toLowerCase().includes("omega")))
-    ) {
-      score += 4
+    // ── Concern match: user explicitly said they care about this ──
+    for (const problem of productProblems) {
+      if (concernProblems.has(problem)) {
+        score += 3
+      }
     }
 
-    // Free tier bonus
+    // ── Structural bonuses ──
     if (rec.tier === "free") score += 1
-
-    // always30 bonus
-    if (rec.always30) score += 6
-
-    // Phase 1 items get a small boost
     if (rec.phase === 1) score += 2
+    if (rec.always30 && userAge >= 30) score += 5
 
-    // Priority
+    // ── Priority: driven by severity match + phase ──
     let priority: Priority
-    if (rec.phase <= 1 && score >= 4) {
+    if (worstMatch >= 50 && rec.phase <= 2) {
       priority = "Urgente"
-    } else if (rec.phase <= 3) {
+    } else if (worstMatch >= 30 || rec.phase <= 3) {
       priority = "Importante"
     } else {
       priority = "Complementario"
     }
+    // Phase-1 free items always urgent (basics)
+    if (rec.phase === 1 && rec.tier === "free") priority = "Urgente"
+    if (rec.always30 && priority === "Complementario") priority = "Importante"
 
-    // Phase-1 free items are always urgent
-    if (rec.phase === 1 && rec.tier === "free") {
-      priority = "Urgente"
-    }
+    // ── Build personalized "why" from brain ──
+    const why = buildPersonalizedWhy(rec, scores, severities, worstProblem, worstMatch, papers)
 
-    // always30 items are always important or higher
-    if (rec.always30 && priority === "Complementario") {
-      priority = "Importante"
-    }
-
-    scored.push({
-      ...rec,
-      score,
-      priority,
-      personalizedWhy: getPersonalizedWhy(rec, scores),
-    })
+    scored.push({ ...rec, score, priority, personalizedWhy: why })
   }
 
   scored.sort((a, b) => b.score - a.score)
   return scored
 }
 
-function getPersonalizedWhy(rec: Rec, scores: Scores): string {
-  const n = rec.name.toLowerCase()
+// Generate "why you need this" using actual scan data + papers
+function buildPersonalizedWhy(
+  rec: Rec,
+  scores: Scores,
+  severities: Map<string, number>,
+  worstProblem: string,
+  worstSeverity: number,
+  papers?: Paper[],
+): string {
+  const parts: string[] = []
 
-  if (n.includes("spf") || n.includes("protector solar")) {
-    return `Tu protección solar está en ${100 - scores.sunDamage}%. Sin SPF, ningún activo puede funcionar al 100%.`
-  }
-  if (n.includes("niacinamida")) {
-    return `Tu control de inflamación está en ${100 - scores.inflammation}%. La niacinamida la reduce en 4-6 semanas.`
-  }
-  if (n.includes("retinol")) {
-    return `Tu salud del colágeno está en ${100 - scores.glycation}%. El retinol es el activo anti-edad más documentado.`
-  }
-  if (n.includes("vitamina c") && rec.category === "skincare") {
-    return `Tu luminosidad está en ${scores.luminosity}%. La vitamina C es el antioxidante tópico con mayor evidencia.`
-  }
-  if (n.includes("colágeno hidrolizado")) {
-    return `Con una hidratación del ${scores.hydration}%, los péptidos de colágeno mejoran elasticidad desde dentro.`
-  }
-  if (n.includes("ceramidas") || n.includes("hidratante")) {
-    return `Tu hidratación está en ${scores.hydration}%. Las ceramidas restauran tu barrera cutánea.`
-  }
-  if (n.includes("omega-3")) {
-    return `Tu inflamación está en ${scores.inflammation}%. Omega-3 es el antiinflamatorio sistémico con mejor evidencia.`
-  }
-  if (n.includes("astaxantina")) {
-    return `Con un daño solar del ${scores.sunDamage}%, la astaxantina refuerza tu defensa antioxidante desde dentro.`
-  }
-  if (n.includes("bakuchiol")) {
-    return `Tu uniformidad está en ${scores.uniformity}%. El bakuchiol ofrece beneficios tipo retinol sin la irritación.`
-  }
-  if (n.includes("contorno de ojos")) {
-    return `Tu vascularidad está en ${scores.vascularity}%. La cafeína reduce hinchazón y ojeras visiblemente.`
-  }
-  if (n.includes("dormir")) {
-    return `El sueño regula cortisol y reparación. Con tu score de ${scores.overall}/100, dormir bien es la base gratuita más potente.`
-  }
-  if (n.includes("dieta")) {
-    return `Tu glicación está en ${scores.glycation}%. Reducir azúcar frena el proceso que endurece tu colágeno.`
-  }
-  if (n.includes("ejercicio")) {
-    return `Tu luminosidad está en ${scores.luminosity}%. El ejercicio mejora la oxigenación que da glow natural.`
-  }
-  if (n.includes("pdrn")) {
-    return `Con una uniformidad del ${scores.uniformity}%, el PDRN repara tu ADN cutáneo y mejora líneas finas.`
-  }
-  if (n.includes("aha") || n.includes("bha")) {
-    return `Tu uniformidad está en ${scores.uniformity}%. La exfoliación química renueva textura en semanas.`
-  }
-  if (n.includes("péptidos")) {
-    return `Tu glicación está en ${scores.glycation}%. Los péptidos señalizadores estimulan la producción de colágeno.`
-  }
-  if (n.includes("botox")) {
-    return `A partir de los 30, el botox preventivo frena que las líneas de expresión se conviertan en arrugas permanentes.`
-  }
-  if (n.includes("microneedling")) {
-    return `Tu firmeza necesita apoyo. El microneedling RF estimula colágeno en profundidad.`
-  }
-  if (n.includes("led")) {
-    return `Tu inflamación está en ${scores.inflammation}%. La luz roja calma y estimula colágeno sin efectos secundarios.`
+  // Part 1: What the scan detected (data-driven)
+  if (worstProblem && worstSeverity > 25) {
+    // Find the biomarker that drives this problem
+    let bioLabel = ""
+    let healthPct = 0
+    for (const [biomarker, cfg] of Object.entries(BIOMARKER_MAP)) {
+      if (cfg.problems.includes(worstProblem)) {
+        const raw = (scores as Record<string, number>)[biomarker] ?? 50
+        healthPct = cfg.invert ? (100 - raw) : raw
+        bioLabel = cfg.label
+        break
+      }
+    }
+
+    const severity = worstSeverity >= 60 ? "necesita atención urgente" :
+                     worstSeverity >= 40 ? "está por debajo de lo ideal" :
+                     "tiene margen de mejora"
+
+    parts.push(`Tu ${bioLabel} ${severity} (${healthPct}% de salud).`)
   }
 
-  return rec.what
+  // Part 2: What the product does about it
+  if (rec.results) {
+    parts.push(rec.results + ".")
+  }
+
+  // Part 3: Paper-backed evidence (from Brain)
+  if (papers && papers.length > 0) {
+    const nameLower = rec.name.toLowerCase()
+    const matchingPaper = papers.find(p =>
+      p.applicable_treatments?.some(t => {
+        const tLower = t.toLowerCase()
+        // Match if treatment name overlaps with product name
+        return nameLower.includes(tLower.slice(0, 10)) || tLower.includes(nameLower.slice(0, 10))
+      })
+    )
+    if (matchingPaper) {
+      parts.push(matchingPaper.key_findings)
+    }
+  }
+
+  // Fallback: use product description
+  if (parts.length === 0) {
+    return rec.what
+  }
+
+  return parts.join(" ")
 }
 
 // ── Analysis steps ─────────────────────────────────────────────────
@@ -546,7 +574,7 @@ function renderRecCard(
               e.currentTarget.style.borderColor = "rgba(245,237,232,0.12)"
             }}
           >
-            Ver en Amazon
+            {rec.link ? "Ver producto" : "Ver en Amazon"}
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
               <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -1082,27 +1110,33 @@ export default function PlanPage() {
     // Load catalog: try API first, then localStorage
     async function loadAndBuild() {
       let catalog = loadCatalog()
-      try {
-        const res = await fetch("/api/admin/products")
-        if (res.ok) {
-          const data = await res.json()
-          if (data.products && data.products.length > 0) {
-            catalog = data.products.map((p: Record<string, unknown>) => ({
-              id: p.id, name: p.name, category: p.category, tier: p.tier,
-              minAge: p.min_age, phase: p.phase, timing: p.timing,
-              what: p.what, cost: p.cost, freq: p.freq, results: p.results,
-              risk: p.risk, evidence: p.evidence, amazonQuery: p.amazon_query,
-              link: p.link || undefined, always30: p.always30,
-              fitzCaution: p.fitz_caution, isNew: p.is_new, problems: p.problems || [],
-            }))
-          }
-        }
-      } catch {}
+      let papers: Paper[] = []
+
+      // Load products and papers in parallel
+      const [productsRes, papersRes] = await Promise.allSettled([
+        fetch("/api/admin/products").then(r => r.ok ? r.json() : null),
+        fetch("/api/admin/brain").then(r => r.ok ? r.json() : null),
+      ])
+
+      if (productsRes.status === "fulfilled" && productsRes.value?.products?.length > 0) {
+        catalog = productsRes.value.products.map((p: Record<string, unknown>) => ({
+          id: p.id, name: p.name, category: p.category, tier: p.tier,
+          minAge: p.min_age, phase: p.phase, timing: p.timing,
+          what: p.what, cost: p.cost, freq: p.freq, results: p.results,
+          risk: p.risk, evidence: p.evidence, amazonQuery: p.amazon_query,
+          link: p.link || undefined, always30: p.always30,
+          fitzCaution: p.fitz_caution, isNew: p.is_new, problems: p.problems || [],
+        }))
+      }
+
+      if (papersRes.status === "fulfilled" && papersRes.value?.papers?.length > 0) {
+        papers = papersRes.value.papers
+      }
 
       const loadedData = loadProfileAndScores()
       setScores(loadedData.scores)
       setProfile(loadedData.profile)
-      setPlan(buildPlan(catalog, loadedData.profile, loadedData.scores))
+      setPlan(buildPlan(catalog, loadedData.profile, loadedData.scores, papers))
     }
 
     loadAndBuild()
